@@ -57,6 +57,16 @@ public class RedisShardedClusterTest {
 	}
 
 	@Test
+	public void shouldAllowSubsequentRuns() throws IOException {
+		cluster.stop();
+		cluster.start();
+		try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getPort()))) {
+			jc.set("somekey", "somevalue");
+			assertEquals("the value should be equal", "somevalue", jc.get("somekey"));
+		}
+	}
+
+	@Test
 	public void shouldAllowSubsequentRunsInSameDirectory() throws IOException {
 		cluster.stop();
 		//
