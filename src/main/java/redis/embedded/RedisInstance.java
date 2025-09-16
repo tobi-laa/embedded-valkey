@@ -1,18 +1,33 @@
 package redis.embedded;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.embedded.model.RedisConfig;
+import redis.embedded.util.IO;
+import redis.embedded.util.RedisConfigParser;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AccessDeniedException;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import static redis.embedded.util.IO.*;
 
 public abstract class RedisInstance implements Redis {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisInstance.class);
 
     private final Pattern readyPattern;
     private final int port;
@@ -46,7 +61,7 @@ public abstract class RedisInstance implements Redis {
 
         try {
             process = new ProcessBuilder(args)
-                .directory(executable.getParentFile())
+                .directory(getRedisDir().toFile())
                 .start();
             addShutdownHook("RedisInstanceCleaner", checkedToRuntime(this::stop));
             awaitServerReady(process, readyPattern, soutListener, serrListener);
@@ -60,6 +75,10 @@ public abstract class RedisInstance implements Redis {
         } catch (final IOException e) {
             throw new IOException("Failed to start Redis service", e);
         }
+    }
+
+    private Path getRedisDir() {
+        return Paths.get(args.get(0)).getParent();
     }
 
     // You might get an error when you try to start the default binary without having openssl installed. The default
@@ -116,7 +135,32 @@ public abstract class RedisInstance implements Redis {
             active = false;
         } catch (final InterruptedException e) {
             throw new IOException("Failed to stop redis service", e);
+        } finally {
+            findAndDeleteClusterConfigFiles();
         }
+    }
+
+    private void findAndDeleteClusterConfigFiles() {
+        findRedisConfigFile().ifPresent(this::findAndDeleteClusterConfigFiles);
+    }
+
+    private Optional<Path> findRedisConfigFile() {
+        return args.stream().filter(arg -> arg.endsWith(".conf")).findFirst().map(Paths::get);
+    }
+
+    private void findAndDeleteClusterConfigFiles(final Path redisConfig) {
+        try {
+            final RedisConfig config = new RedisConfigParser().parse(redisConfig);
+            config.directives("cluster-config-file")
+                    .stream()
+                    .map(RedisConfig.Directive::arguments)
+                    .flatMap(List::stream)
+                    .map(clusterConfFile -> getRedisDir().resolve(clusterConfFile))
+                    .forEach(IO::deleteSafely);
+        } catch (IOException e) {
+            LOGGER.error("Unable to parse redis config file", e);
+        }
+
     }
 
     public boolean isActive() {
