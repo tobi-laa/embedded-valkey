@@ -1,5 +1,6 @@
 package redis.embedded;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.embedded.model.RedisConfig;
@@ -9,6 +10,13 @@ import redis.embedded.util.RedisConfigParser;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.AccessDeniedException;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +52,12 @@ public abstract class RedisInstance implements Redis {
 
     public synchronized void start() throws IOException {
         if (active) return;
+        final File executable = new File(args.get(0));
+
+        if (!executable.isFile())
+            throw new FileNotFoundException("Redis binary " + args.get(0) + " could not be found");
+        if (!executable.canExecute())
+            throw new AccessDeniedException("Redis binary " + args.get(0) + " is not executable");
 
         try {
             process = new ProcessBuilder(args)
