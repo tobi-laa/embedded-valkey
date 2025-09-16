@@ -9,22 +9,22 @@ import static redis.embedded.util.IO.processToLines;
 
 public enum Architecture {
     @Deprecated
-    x86,
-    x86_64,
-    aarch64;
+    X86,
+    X86_64,
+    AARCH64;
 
     public static Architecture detectWindowsArchitecture() {
         final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
         final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
 
-        return isWindows64Bit(arch, wow64Arch) ? x86_64 : x86;
+        return isWindows64Bit(arch, wow64Arch) ? X86_64 : X86;
     }
 
     public static Architecture detectUnixMacOSXArchitecture() {
         try (final Stream<String> lines = processToLines("uname -m")) {
             return lines.filter(Architecture::isUnix64Bit)
-                .map(line -> line.contains("aarch64") || line.contains("arm64") ? aarch64:  x86_64)
-                .findFirst().orElse(x86);
+                    .map(line -> line.contains("aarch64") || line.contains("arm64") ? AARCH64 : X86_64)
+                    .findFirst().orElse(X86);
         } catch (IOException e) {
             throw new OsArchitectureNotFound(e);
         }

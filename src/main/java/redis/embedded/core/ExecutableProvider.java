@@ -4,7 +4,11 @@ import redis.embedded.model.OsArchitecture;
 import redis.embedded.util.IO;
 import redis.embedded.util.IOSupplier;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Path;
@@ -12,10 +16,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.net.HttpURLConnection.HTTP_OK;
-import static java.nio.file.Files.*;
-import static java.nio.file.StandardOpenOption.*;
-import static redis.embedded.util.IO.*;
-import static redis.embedded.model.OsArchitecture.*;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.isRegularFile;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+import static redis.embedded.model.OsArchitecture.MAC_OS_X_ARM64;
+import static redis.embedded.model.OsArchitecture.MAC_OS_X_X86_64;
+import static redis.embedded.model.OsArchitecture.UNIX_AARCH64;
+import static redis.embedded.model.OsArchitecture.UNIX_X86_64;
+import static redis.embedded.model.OsArchitecture.WINDOWS_X86_64;
+import static redis.embedded.util.IO.findBinaryInPath;
+import static redis.embedded.util.IO.newTempDirForBinary;
+import static redis.embedded.util.IO.writeResourceToExecutableFile;
 
 public interface ExecutableProvider {
 
@@ -23,13 +37,13 @@ public interface ExecutableProvider {
     String PROPERTY_EXECUTABLE_LOCATION = "embedded.redis.executable";
 
     URI
-        // Downloaded from https://github.com/zkteco-home/redis-windows/raw/master/redis-server.exe
-        REDIS_7_2_5_WINDOWS_ZKTECO = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-server-7.2.5-windows"),
-        REDIS_7_2_MACOSX_14_SONOMA_HANKCP = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-server-7.2-darwin-arm64"),
-        // Downloaded from: https://packages.redis.io/redis-stack/redis-stack-server-7.2.0-v6.jammy.x86_64.tar.gz
-        REDIS_7_2_LINUX_JAMMY_X86_64 = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-stack-server-7.2.0-v6.jammy.x86_64"),
-        // Downloaded from: https://packages.redis.io/redis-stack/redis-stack-server-7.2.0-v6.jammy.arm64.tar.gz
-        REDIS_7_2_LINUX_JAMMY_ARM_64 = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-stack-server-7.2.0-v6.jammy.arm64");
+            // Downloaded from https://github.com/zkteco-home/redis-windows/raw/master/redis-server.exe
+            REDIS_7_2_5_WINDOWS_ZKTECO = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-server-7.2.5-windows"),
+            REDIS_7_2_MACOSX_14_SONOMA_HANKCP = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-server-7.2-darwin-arm64"),
+    // Downloaded from: https://packages.redis.io/redis-stack/redis-stack-server-7.2.0-v6.jammy.x86_64.tar.gz
+    REDIS_7_2_LINUX_JAMMY_X86_64 = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-stack-server-7.2.0-v6.jammy.x86_64"),
+    // Downloaded from: https://packages.redis.io/redis-stack/redis-stack-server-7.2.0-v6.jammy.arm64.tar.gz
+    REDIS_7_2_LINUX_JAMMY_ARM_64 = URI.create("https://github.com/codemonstur/embedded-redis/raw/master/src/main/binaries/redis-stack-server-7.2.0-v6.jammy.arm64");
 
     File get() throws IOException;
 
@@ -42,6 +56,7 @@ public interface ExecutableProvider {
         final Map<OsArchitecture, String> map = newProvidedVersionsMap();
         return newJarResourceProvider(() -> tempDirectory, map);
     }
+
     static ExecutableProvider newJarResourceProvider(final IOSupplier<File> tempDirectorySupplier) {
         final Map<OsArchitecture, String> map = newProvidedVersionsMap();
         return newJarResourceProvider(tempDirectorySupplier, map);
@@ -68,6 +83,7 @@ public interface ExecutableProvider {
     static ExecutableProvider newEnvironmentVariableProvider() {
         return newEnvironmentVariableProvider(ENVIRONMENT_EXECUTABLE_LOCATION);
     }
+
     static ExecutableProvider newEnvironmentVariableProvider(final String envName) {
         return () -> new File(System.getenv(envName));
     }
@@ -75,6 +91,7 @@ public interface ExecutableProvider {
     static ExecutableProvider newSystemPropertyProvider() {
         return newSystemPropertyProvider(PROPERTY_EXECUTABLE_LOCATION);
     }
+
     static ExecutableProvider newSystemPropertyProvider(final String propertyName) {
         return () -> new File(System.getProperty(propertyName));
     }
@@ -98,7 +115,8 @@ public interface ExecutableProvider {
                      final InputStream in = connection.getInputStream()) {
 
                     final byte[] buffer = new byte[8192];
-                    int length; while ((length = in.read(buffer)) != -1) {
+                    int length;
+                    while ((length = in.read(buffer)) != -1) {
                         out.write(buffer, 0, length);
                     }
                 }
@@ -113,10 +131,10 @@ public interface ExecutableProvider {
 
     static Map<OsArchitecture, String> newProvidedVersionsMap() {
         final Map<OsArchitecture, String> map = new HashMap<>();
-        map.put(UNIX_x86_64, "/redis-server-6.2.6-v5-linux-amd64");
+        map.put(UNIX_X86_64, "/redis-server-6.2.6-v5-linux-amd64");
         map.put(UNIX_AARCH64, "/redis-server-6.2.7-linux-arm64");
-        map.put(WINDOWS_x86_64, "/redis-server-5.0.14.1-windows-amd64.exe");
-        map.put(MAC_OS_X_x86_64, "/redis-server-6.2.6-v5-darwin-amd64");
+        map.put(WINDOWS_X86_64, "/redis-server-5.0.14.1-windows-amd64.exe");
+        map.put(MAC_OS_X_X86_64, "/redis-server-6.2.6-v5-darwin-amd64");
         map.put(MAC_OS_X_ARM64, "/redis-server-6.2.6-v5-darwin-arm64");
         return map;
     }
