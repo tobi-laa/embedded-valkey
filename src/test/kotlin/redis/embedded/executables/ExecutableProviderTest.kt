@@ -37,7 +37,12 @@ class ExecutableProviderTest {
         }
 
         fun identifyLatestAvailableValkeyVersion(): String {
-            val githubClient = RestClient.builder().baseUrl("https://api.github.com").build()
+            val githubClientBuilder = RestClient.builder().baseUrl("https://api.github.com")
+            val token = System.getenv("GITHUB_TOKEN")
+            if (token != null) {
+                githubClientBuilder.defaultHeader("Authorization: Bearer $token")
+            }
+            val githubClient = githubClientBuilder.build()
             val response =
                 githubClient.get().uri("/repos/valkey-io/valkey/releases/latest").retrieve().body(String::class.java)
             val version = ObjectMapper().readTree(response).get("tag_name").asText()!!
