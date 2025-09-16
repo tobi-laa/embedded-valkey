@@ -2,8 +2,14 @@ package redis.embedded.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.embedded.resource.ResourceSupplier;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,9 +20,11 @@ import java.util.stream.Stream;
 
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createTempDirectory;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
-public enum IO {;
+public enum IO {
+    ;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IO.class);
 
@@ -26,15 +34,12 @@ public enum IO {;
         return tempDirectory;
     }
 
-    public static File writeResourceToExecutableFile(final File tempDirectory, final String resourcePath) throws IOException {
-        final File executable = new File(tempDirectory, resourcePath);
-        try (final InputStream in = IO.class.getResourceAsStream(resourcePath)) {
-            if (in == null) throw new FileNotFoundException("Could not find Redis executable at " + resourcePath);
-            Files.copy(in, executable.toPath(), REPLACE_EXISTING);
-        }
+    public static File writeResourceToExecutableFile(final File tempDirectory, final ResourceSupplier resourceSupplier) throws IOException {
+        final File executable = new File(tempDirectory, resourceSupplier.resourceName());
+        Files.write(executable.toPath(), resourceSupplier.resolveResource(), CREATE, TRUNCATE_EXISTING);
         executable.deleteOnExit();
         if (!executable.setExecutable(true))
-            throw new IOException("Failed to set executable permission for binary " + resourcePath + " at temporary location " + executable);
+            throw new IOException("Failed to set executable permission for binary " + resourceSupplier + " at temporary location " + executable);
         return executable;
     }
 
@@ -54,10 +59,12 @@ public enum IO {;
 
     public static void logStream(final InputStream stream, final Consumer<String> logConsumer) {
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
-            String line; while ((line = reader.readLine()) != null) {
+            String line;
+            while ((line = reader.readLine()) != null) {
                 logConsumer.accept(line);
             }
-        } catch (final IOException ignored) {}
+        } catch (final IOException ignored) {
+        }
     }
 
     public static Thread newDaemonThread(final Runnable run) {
@@ -69,7 +76,8 @@ public enum IO {;
     public static boolean findMatchInStream(final InputStream in, final Pattern pattern
             , final Consumer<String> soutListener, final StringBuilder processOutput) throws IOException {
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-            String line; while ((line = reader.readLine()) != null) {
+            String line;
+            while ((line = reader.readLine()) != null) {
                 if (soutListener != null) soutListener.accept(line);
                 processOutput.append('\n').append(line);
                 if (pattern.matcher(line).matches())
@@ -82,11 +90,13 @@ public enum IO {;
     public static String readFully(final InputStream in, final Consumer<String> listener) {
         final StringBuilder ret = new StringBuilder();
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-            String line; while ((line = reader.readLine()) != null) {
+            String line;
+            while ((line = reader.readLine()) != null) {
                 if (listener != null) listener.accept(line);
                 ret.append(line);
             }
-        } catch (final IOException ignored) {}
+        } catch (final IOException ignored) {
+        }
         return ret.toString();
     }
 
@@ -101,11 +111,11 @@ public enum IO {;
 
     private static Path findBinaryInPath(final String name, final String pathVar) throws FileNotFoundException {
         final Optional<Path> location = Stream.of(pathVar
-            .split(Pattern.quote(File.pathSeparator)))
-            .map(Paths::get)
-            .map(path -> path.resolve(name))
-            .filter(Files::isRegularFile)
-            .findAny();
+                        .split(Pattern.quote(File.pathSeparator)))
+                .map(Paths::get)
+                .map(path -> path.resolve(name))
+                .filter(Files::isRegularFile)
+                .findAny();
         if (!location.isPresent()) throw new FileNotFoundException("Could not find binary '" + name + "' in PATH");
         return location.get();
     }
