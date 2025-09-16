@@ -4,5 +4,8 @@
     "config:best-practices"
   ],
   "automerge": true,
-  "automergeType": "branch"
+  "automergeType": "branch",
+  "baseBranches": [
+    "main"
+  ]
 }
