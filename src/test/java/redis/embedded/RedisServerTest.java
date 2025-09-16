@@ -97,7 +97,6 @@ public class RedisServerTest {
     @Test
     public void shouldOverrideDefaultExecutable() throws IOException {
 		final Map<OsArchitecture, String> map = new HashMap<>();
-		map.put(UNIX_x86, "/redis-server-6.2.7-linux-386");
 		map.put(UNIX_x86_64, "/redis-server-6.2.6-v5-linux-amd64");
 		map.put(UNIX_AARCH64, "/redis-server-6.2.7-linux-arm64");
 		map.put(WINDOWS_x86_64, "/redis-server-5.0.14.1-windows-amd64.exe");
@@ -112,10 +111,8 @@ public class RedisServerTest {
     @Test(expected = FileNotFoundException.class)
     public void shouldFailWhenBadExecutableGiven() throws IOException {
 		final Map<OsArchitecture, String> buggyMap = new HashMap<>();
-		buggyMap.put(UNIX_x86, "some");
 		buggyMap.put(UNIX_x86_64, "some");
 		buggyMap.put(UNIX_AARCH64, "some");
-		buggyMap.put(WINDOWS_x86, "some");
 		buggyMap.put(WINDOWS_x86_64, "some");
 		buggyMap.put(MAC_OS_X_x86_64, "some");
 		buggyMap.put(MAC_OS_X_ARM64, "some");
