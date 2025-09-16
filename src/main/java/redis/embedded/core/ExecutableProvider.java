@@ -14,9 +14,8 @@ import java.util.Map;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.nio.file.Files.*;
 import static java.nio.file.StandardOpenOption.*;
-import static java.nio.file.attribute.PosixFilePermissions.fromString;
-import static redis.embedded.model.OsArchitecture.*;
 import static redis.embedded.util.IO.*;
+import static redis.embedded.model.OsArchitecture.*;
 
 public interface ExecutableProvider {
 
@@ -53,13 +52,13 @@ public interface ExecutableProvider {
     }
 
     static ExecutableProvider newJarResourceProvider(final IOSupplier<File> tempDirectory, final Map<OsArchitecture, String> executables) {
-        final OsArchitecture osArch = detectOSandArchitecture();
+        final OsArchitecture osArch = OsArchitecture.Companion.detectOSandArchitecture();
         return () -> writeResourceToExecutableFile(tempDirectory.get(), executables.get(osArch));
     }
 
     static ExecutableProvider newFileThenJarResourceProvider(final Map<OsArchitecture, String> executables) {
         return () -> {
-            final String executablePath = executables.get(detectOSandArchitecture());
+            final String executablePath = executables.get(OsArchitecture.Companion.detectOSandArchitecture());
             final File executable = new File(executablePath);
             final File tempDir = newTempDirForBinary();
             return executable.isFile() ? executable : writeResourceToExecutableFile(tempDir, executablePath);

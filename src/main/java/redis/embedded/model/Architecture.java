@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import static redis.embedded.util.IO.processToLines;
 
 public enum Architecture {
+    @Deprecated
     x86,
     x86_64,
     aarch64;
