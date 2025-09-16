@@ -40,7 +40,7 @@ class ExecutableProviderTest {
             val githubClientBuilder = RestClient.builder().baseUrl("https://api.github.com")
             val token = System.getenv("GITHUB_TOKEN")
             if (token != null) {
-                githubClientBuilder.defaultHeader("Authorization: Bearer $token")
+                githubClientBuilder.defaultHeader("Authorization", "Bearer $token")
             }
             val githubClient = githubClientBuilder.build()
             val response =
