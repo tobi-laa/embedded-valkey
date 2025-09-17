@@ -15,7 +15,7 @@ val PROVIDED_VERSIONS: Map<OsArchitecture, ResourceSupplier> = mapOf(
         "/valkey-8.1.3-jammy-arm64.tar.gz",
         "valkey-8.1.3-jammy-arm64/bin/valkey-server"
     ),
-    OsArchitecture.WINDOWS_X86_64 to SimpleResourceSupplier("/redis-server-5.0.14.1-windows-amd64.exe"),
+    OsArchitecture.WINDOWS_X86_64 to TarGzipResourceSupplier("/Memurai-Developer-v4.3.2.tar.gz", "memurai.exe"),
     OsArchitecture.MAC_OS_X_X86_64 to SimpleResourceSupplier("/redis-server-6.2.6-v5-darwin-amd64"),
     OsArchitecture.MAC_OS_X_ARM64 to SimpleResourceSupplier("/redis-server-6.2.6-v5-darwin-arm64")
 )

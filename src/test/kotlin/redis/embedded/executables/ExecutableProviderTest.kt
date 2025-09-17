@@ -1,6 +1,8 @@
 package redis.embedded.executables
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.params.ParameterizedTest
@@ -8,6 +10,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.web.client.RestClient
 import redis.embedded.model.OS
 import redis.embedded.model.OsArchitecture
+
 
 @DisplayName("Tests for ExecutableProvider")
 class ExecutableProviderTest {
@@ -23,7 +26,7 @@ class ExecutableProviderTest {
             val providedVersion = PROVIDED_VERSIONS[osArchitecture]!!.resourceName()
                 .replace(Regex("^.*?((:?[0-9]+\\.)+[0-9]+).*?$"), "$1")
             val newestAvailableVersion = when (osArchitecture.os) {
-                OS.WINDOWS -> null
+                OS.WINDOWS -> identifyLatestAvailableMemuraiForValkeyVersion()
                 OS.MAC_OS_X -> null
                 OS.UNIX -> identifyLatestAvailableValkeyVersion()
             }
@@ -48,5 +51,22 @@ class ExecutableProviderTest {
             val version = ObjectMapper().readTree(response).get("tag_name").asText()!!
             return version
         }
+
+        fun identifyLatestAvailableMemuraiForValkeyVersion(): String {
+            return getDownloadMemuraiForValkeyPage() //
+                .select("#__NEXT_DATA__") //
+                .map { extractMemurayValkeyWindowsVersion(it.html()) } //
+                .first()
+        }
+
+        private fun getDownloadMemuraiForValkeyPage(): Document =
+            Jsoup.connect("https://www.memurai.com/thanks-for-downloading?version=windows-valkey").get()
+
+        private fun extractMemurayValkeyWindowsVersion(nextDataJson: String): String =
+            ObjectMapper().readTree(nextDataJson).get("props")
+                .get("pageProps")
+                .get("variables")
+                .get("MEMURAI_VALKEY_WINDOWS_VERSION_SHORT")
+                .asText()
     }
 }
