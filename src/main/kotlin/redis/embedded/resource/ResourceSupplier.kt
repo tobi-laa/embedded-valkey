@@ -1,15 +1,15 @@
 package redis.embedded.resource
 
 import java.io.IOException
+import java.nio.file.Path
 
 /**
  * Supplier of a resource bundled within a jar file, e.g. a Redis executable.
  */
-@FunctionalInterface
 interface ResourceSupplier {
 
     @Throws(IOException::class)
-    fun resolveResource(): ByteArray
+    fun supplyResource(targetDirectory: Path): Path
 
     fun resourceName(): String
 }

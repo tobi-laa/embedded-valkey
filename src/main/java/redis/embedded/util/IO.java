@@ -20,8 +20,6 @@ import java.util.stream.Stream;
 
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createTempDirectory;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public enum IO {
     ;
@@ -35,8 +33,7 @@ public enum IO {
     }
 
     public static File writeResourceToExecutableFile(final File tempDirectory, final ResourceSupplier resourceSupplier) throws IOException {
-        final File executable = new File(tempDirectory, resourceSupplier.resourceName());
-        Files.write(executable.toPath(), resourceSupplier.resolveResource(), CREATE, TRUNCATE_EXISTING);
+        final File executable = resourceSupplier.supplyResource(tempDirectory.toPath()).toFile();
         executable.deleteOnExit();
         if (!executable.setExecutable(true))
             throw new IOException("Failed to set executable permission for binary " + resourceSupplier + " at temporary location " + executable);

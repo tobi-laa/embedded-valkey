@@ -4,32 +4,44 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.FileNotFoundException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import kotlin.text.RegexOption.IGNORE_CASE
 
 
 internal class TarGzipResourceSupplier(val tarPath: String, val resourceWithinTar: String) :
     ResourceSupplier {
 
-    override fun resolveResource(): ByteArray {
+    override fun supplyResource(targetDirectory: Path): Path {
         this.javaClass.getResourceAsStream(tarPath).use { resourceStream ->
-            if (resourceStream == null) throw FileNotFoundException("Could not find Tar archive at " + tarPath)
+            if (resourceStream == null) {
+                throw FileNotFoundException("Could not find Tar archive at " + tarPath)
+            }
             GzipCompressorInputStream(resourceStream).use { gzipStream ->
                 TarArchiveInputStream(gzipStream).use {
-                    return findResourceInTar(it)
+                    extractTarGzip(it, targetDirectory)
+                    var resource = targetDirectory.resolve(resourceWithinTar)
+                    if (Files.notExists(resource)) {
+                        throw FileNotFoundException("Could not find resource $resourceWithinTar in Tar archive $tarPath")
+                    } else {
+                        return resource
+                    }
                 }
             }
         }
     }
 
-    internal fun findResourceInTar(tarStream: TarArchiveInputStream): ByteArray {
+    internal fun extractTarGzip(tarStream: TarArchiveInputStream, targetDirectory: Path) {
         var entry: ArchiveEntry? = tarStream.nextEntry
         while (entry != null) {
-            if (entry.name == resourceWithinTar) {
-                return tarStream.readAllBytes()
+            val extractTo: Path = targetDirectory.resolve(entry.getName())
+            if (entry.isDirectory) {
+                Files.createDirectories(extractTo)
+            } else {
+                Files.copy(tarStream, extractTo, REPLACE_EXISTING)
             }
-            entry = tarStream.nextEntry
         }
-        throw FileNotFoundException("Could not find resource $resourceWithinTar in Tar archive $tarPath")
     }
 
     override fun resourceName(): String {
