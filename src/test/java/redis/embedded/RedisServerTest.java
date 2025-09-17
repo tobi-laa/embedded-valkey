@@ -106,11 +106,11 @@ public class RedisServerTest {
     @Test
     public void shouldOverrideDefaultExecutable() throws IOException {
         final Map<OsArchitecture, String> map = new HashMap<>();
-        map.put(UNIX_X86_64, "/redis-server-6.2.6-v5-linux-amd64");
-        map.put(UNIX_ARM64, "/redis-server-6.2.7-linux-arm64");
-        map.put(WINDOWS_X86_64, "/redis-server-5.0.14.1-windows-amd64.exe");
-        map.put(MAC_OS_X_X86_64, "/redis-server-6.2.6-v5-darwin-amd64");
-        map.put(MAC_OS_X_ARM64, "/redis-server-6.2.6-v5-darwin-arm64");
+        map.put(UNIX_X86_64, "redis-server-6.2.6-v5-linux-amd64");
+        map.put(UNIX_ARM64, "redis-server-6.2.7-linux-arm64");
+        map.put(WINDOWS_X86_64, "redis-server-5.0.14.1-windows-amd64.exe");
+        map.put(MAC_OS_X_X86_64, "redis-server-6.2.6-v5-darwin-amd64");
+        map.put(MAC_OS_X_ARM64, "redis-server-6.2.6-v5-darwin-arm64");
 
         redisServer = newRedisServer()
                 .executableProvider(newJarResourceProvider(map))

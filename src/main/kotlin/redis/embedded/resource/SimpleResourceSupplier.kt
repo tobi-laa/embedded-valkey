@@ -8,7 +8,7 @@ import java.nio.file.StandardOpenOption
 internal class SimpleResourceSupplier(val path: String) : ResourceSupplier {
 
     override fun supplyResource(targetDirectory: Path): Path {
-        this.javaClass.getResourceAsStream(path).use {
+        this.javaClass.getResourceAsStream('/' + path).use {
             if (it == null) {
                 throw FileNotFoundException("Could not find resource at " + path)
             }

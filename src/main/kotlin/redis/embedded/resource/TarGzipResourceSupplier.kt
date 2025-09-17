@@ -14,7 +14,7 @@ internal class TarGzipResourceSupplier(val tarPath: String, val resourceWithinTa
     ResourceSupplier {
 
     override fun supplyResource(targetDirectory: Path): Path {
-        this.javaClass.getResourceAsStream(tarPath).use { resourceStream ->
+        this.javaClass.getResourceAsStream('/' + tarPath).use { resourceStream ->
             if (resourceStream == null) {
                 throw FileNotFoundException("Could not find Tar archive at " + tarPath)
             }
