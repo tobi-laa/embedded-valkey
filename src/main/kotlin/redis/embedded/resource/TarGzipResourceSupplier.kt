@@ -41,6 +41,7 @@ internal class TarGzipResourceSupplier(val tarPath: String, val resourceWithinTa
             } else {
                 Files.copy(tarStream, extractTo, REPLACE_EXISTING)
             }
+            entry = tarStream.nextEntry
         }
     }
 
