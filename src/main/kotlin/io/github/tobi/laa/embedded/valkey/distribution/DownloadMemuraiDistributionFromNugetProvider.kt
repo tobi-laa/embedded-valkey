@@ -83,10 +83,11 @@ class DownloadMemuraiDistributionFromNugetProvider(
     internal fun extractZip(zipStream: ZipArchiveInputStream, targetDirectory: Path) {
         var entry: ArchiveEntry? = zipStream.nextEntry
         while (entry != null) {
-            val extractTo: Path = targetDirectory.resolve(entry.getName())
+            val extractTo: Path = targetDirectory.resolve(entry.name)
             if (entry.isDirectory) {
                 Files.createDirectories(extractTo)
             } else {
+                Files.createDirectories(extractTo.parent)
                 Files.copy(zipStream, extractTo, REPLACE_EXISTING)
             }
             entry = zipStream.nextEntry
