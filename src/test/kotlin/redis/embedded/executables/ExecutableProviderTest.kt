@@ -31,12 +31,8 @@ class ExecutableProviderTest {
                 OS.MAC_OS_X -> identifyLatestAvailableMacportsValkeyVersion()
                 OS.UNIX -> identifyLatestAvailableValkeyVersion()
             }
-            if (newestAvailableVersion == null) {
-                println("\uD83E\uDD14 No version information available for ${osArchitecture.os}, skipping test for now.")
-            } else {
-                assert(providedVersion == newestAvailableVersion) {
-                    "\uD83D\uDC74 Provided version $providedVersion is not the latest available version $newestAvailableVersion for ${osArchitecture.os}"
-                }
+            assert(providedVersion == newestAvailableVersion) {
+                "\uD83D\uDC74 Provided version $providedVersion is not the latest available version $newestAvailableVersion for ${osArchitecture.os}"
             }
         }
 
