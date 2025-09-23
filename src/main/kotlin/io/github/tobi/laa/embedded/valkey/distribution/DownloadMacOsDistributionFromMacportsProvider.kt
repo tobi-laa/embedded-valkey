@@ -75,7 +75,7 @@ class DownloadMacOsDistributionFromMacportsProvider(
     }
 
     internal fun extractValkeyDistribution() {
-        logger.info("Extract Valkey $valkeyVersion for architecture ${architecture.name} to $installationPath")
+        logger.debug("Extract Valkey {} for architecture {} to {}", valkeyVersion, architecture.name, installationPath)
         cachedFile.inputStream().use { cachedFileStream ->
             BZip2CompressorInputStream(cachedFileStream).use { gzipStream ->
                 TarArchiveInputStream(gzipStream).use {
@@ -83,7 +83,7 @@ class DownloadMacOsDistributionFromMacportsProvider(
                 }
             }
         }
-        logger.info("Downloaded and extracted Valkey to $installationPath")
+        logger.debug("Extracted Valkey to {}", installationPath)
     }
 
     internal fun extractTarBZip2(tarStream: TarArchiveInputStream, targetDirectory: Path) {

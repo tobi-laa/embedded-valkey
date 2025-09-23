@@ -68,7 +68,7 @@ class DownloadLinuxDistributionFromValkeyIoProvider(
     }
 
     internal fun extractValkeyDistribution() {
-        logger.info("Extract Valkey $valkeyVersion for architecture ${architecture.name} to $installationPath")
+        logger.debug("Extract Valkey {} for architecture {} to {}", valkeyVersion, architecture.name, installationPath)
         cachedFile.inputStream().use { cachedFileStream ->
             GzipCompressorInputStream(cachedFileStream).use { gzipStream ->
                 TarArchiveInputStream(gzipStream).use {
@@ -76,7 +76,7 @@ class DownloadLinuxDistributionFromValkeyIoProvider(
                 }
             }
         }
-        logger.info("Downloaded and extracted Valkey to $installationPath")
+        logger.debug("Extracted Valkey to {}", installationPath)
     }
 
     internal fun extractTarGzip(tarStream: TarArchiveInputStream, targetDirectory: Path) {

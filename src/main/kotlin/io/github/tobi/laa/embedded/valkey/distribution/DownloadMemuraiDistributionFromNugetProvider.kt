@@ -66,13 +66,18 @@ class DownloadMemuraiDistributionFromNugetProvider(
     }
 
     internal fun extractMemuraiDistribution() {
-        logger.info("Extract Memurai Developer $memuraiVersion for architecture ${architecture.name} to $installationPath")
+        logger.debug(
+            "Extract Memurai Developer {} for architecture {} to {}",
+            memuraiVersion,
+            architecture.name,
+            installationPath
+        )
         cachedFile.inputStream().use { cachedFileStream ->
             ZipArchiveInputStream(cachedFileStream).use {
                 extractZip(it, installationPath)
             }
         }
-        logger.info("Downloaded and extracted Memurai Developer to $installationPath")
+        logger.debug("Extracted Memurai Developer to {}", installationPath)
     }
 
     internal fun extractZip(zipStream: ZipArchiveInputStream, targetDirectory: Path) {
