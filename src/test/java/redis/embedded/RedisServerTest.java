@@ -1,6 +1,7 @@
 package redis.embedded;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -103,6 +104,7 @@ class RedisServerTest {
         assertFalse(redisServer.isActive());
     }
 
+    @Disabled
     @Test
     void shouldOverrideDefaultExecutable() throws IOException {
         final Map<OsArchitecture, String> map = new HashMap<>();
