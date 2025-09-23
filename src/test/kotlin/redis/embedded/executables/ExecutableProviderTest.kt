@@ -27,7 +27,7 @@ class ExecutableProviderTest {
             val providedVersion = PROVIDED_VERSIONS[osArchitecture]!!.resourceName()
                 .replace(Regex("^.*?((:?[0-9]+\\.)+[0-9]+).*?$"), "$1")
             val newestAvailableVersion = when (osArchitecture.os) {
-                OS.WINDOWS -> identifyLatestAvailableMemuraiForValkeyVersion()
+                OS.WINDOWS -> identifyLatestAvailableMemuraiVersionOnNuget()
                 OS.MAC_OS_X -> identifyLatestAvailableMacportsValkeyVersion()
                 OS.UNIX -> identifyLatestAvailableValkeyVersion()
             }
@@ -70,22 +70,15 @@ class ExecutableProviderTest {
             0
         }
 
-        fun identifyLatestAvailableMemuraiForValkeyVersion(): String {
-            return getDownloadMemuraiForValkeyPage() //
-                .select("#__NEXT_DATA__") //
-                .map { extractMemurayValkeyWindowsVersion(it.html()) } //
+        fun identifyLatestAvailableMemuraiVersionOnNuget(): String {
+            return getMemuraiDeveloperNugetPage() //
+                .select(".version-title") //
+                .map { it.text().replace(Regex("^((:?[0-9]+\\.)+[0-9]+).*?$"), "$1") } //
                 .first()
         }
 
-        private fun getDownloadMemuraiForValkeyPage(): Document =
-            Jsoup.connect("https://www.memurai.com/thanks-for-downloading?version=windows-valkey").get()
-
-        private fun extractMemurayValkeyWindowsVersion(nextDataJson: String): String =
-            ObjectMapper().readTree(nextDataJson).get("props")
-                .get("pageProps")
-                .get("variables")
-                .get("MEMURAI_VALKEY_WINDOWS_VERSION_SHORT")
-                .asText()
+        private fun getMemuraiDeveloperNugetPage(): Document =
+            Jsoup.connect("https://www.nuget.org/packages/MemuraiDeveloper").get()
 
         fun identifyLatestAvailableMacportsValkeyVersion(): String {
             return Jsoup.connect("https://packages.macports.com/valkey/") //

@@ -43,7 +43,7 @@ class DownloadMacOsDistributionFromMacportsProvider(
 ) :
     ValkeyDistributionProvider {
 
-    internal val logger = LoggerFactory.getLogger(DownloadLinuxDistributionFromValkeyIoProvider::class.java)
+    internal val logger = LoggerFactory.getLogger(DownloadMacOsDistributionFromMacportsProvider::class.java)
 
     internal val downloadUri = URI("https://packages.macports.com/valkey/$buildFilePath")
 
