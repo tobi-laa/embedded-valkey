@@ -11,7 +11,7 @@ public enum Architecture {
     @Deprecated
     X86,
     X86_64,
-    AARCH64;
+    ARM64;
 
     public static Architecture detectWindowsArchitecture() {
         final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
@@ -23,7 +23,7 @@ public enum Architecture {
     public static Architecture detectUnixMacOSXArchitecture() {
         try (final Stream<String> lines = processToLines("uname -m")) {
             return lines.filter(Architecture::isUnix64Bit)
-                    .map(line -> line.contains("aarch64") || line.contains("arm64") ? AARCH64 : X86_64)
+                    .map(line -> line.contains("aarch64") || line.contains("arm64") ? ARM64 : X86_64)
                     .findFirst().orElse(X86);
         } catch (IOException e) {
             throw new OsArchitectureNotFound(e);

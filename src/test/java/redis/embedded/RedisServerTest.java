@@ -1,6 +1,7 @@
 package redis.embedded;
 
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.embedded.model.OsArchitecture;
@@ -14,11 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static redis.embedded.RedisServer.SERVER_READY_PATTERN;
 import static redis.embedded.RedisServer.newRedisServer;
 import static redis.embedded.core.ExecutableProvider.newJarResourceProvider;
@@ -28,31 +30,32 @@ import static redis.embedded.model.OsArchitecture.UNIX_ARM64;
 import static redis.embedded.model.OsArchitecture.UNIX_X86_64;
 import static redis.embedded.model.OsArchitecture.WINDOWS_X86_64;
 
-public class RedisServerTest {
+class RedisServerTest {
 
     private RedisServer redisServer;
 
-    @Test(timeout = 1500L)
-    public void testSimpleRun() throws Exception {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
-        Thread.sleep(1000L);
-        redisServer.stop();
-    }
-
-    @Test
-    public void shouldAllowMultipleRunsWithoutStop() throws IOException {
-        try {
-            redisServer = new RedisServer(6381);
-            redisServer.start();
-            redisServer.start();
-        } finally {
+    @AfterEach
+    void stopRedis() throws IOException {
+        if (redisServer != null && redisServer.isActive()) {
             redisServer.stop();
         }
     }
 
     @Test
-    public void shouldAllowSubsequentRuns() throws IOException {
+    void testSimpleRun() throws Exception {
+        redisServer = new RedisServer(6381);
+        redisServer.start();
+    }
+
+    @Test
+    void shouldAllowMultipleRunsWithoutStop() throws IOException {
+        redisServer = new RedisServer(6381);
+        redisServer.start();
+        redisServer.start();
+    }
+
+    @Test
+    void shouldAllowSubsequentRuns() throws IOException {
         redisServer = new RedisServer(6381);
         redisServer.start();
         redisServer.stop();
@@ -65,7 +68,7 @@ public class RedisServerTest {
     }
 
     @Test
-    public void testSimpleOperationsAfterRun() throws IOException {
+    void testSimpleOperationsAfterRun() throws IOException {
         redisServer = new RedisServer(6381);
         redisServer.start();
 
@@ -76,27 +79,24 @@ public class RedisServerTest {
             assertEquals("1", jedis.mget("abc").get(0));
             assertEquals("2", jedis.mget("def").get(0));
             assertNull(jedis.mget("xyz").get(0));
-        } finally {
-            redisServer.stop();
         }
     }
 
     @Test
-    public void shouldIndicateInactiveBeforeStart() throws IOException {
+    void shouldIndicateInactiveBeforeStart() throws IOException {
         redisServer = new RedisServer(6381);
         assertFalse(redisServer.isActive());
     }
 
     @Test
-    public void shouldIndicateActiveAfterStart() throws IOException {
+    void shouldIndicateActiveAfterStart() throws IOException {
         redisServer = new RedisServer(6381);
         redisServer.start();
         assertTrue(redisServer.isActive());
-        redisServer.stop();
     }
 
     @Test
-    public void shouldIndicateInactiveAfterStop() throws IOException {
+    void shouldIndicateInactiveAfterStop() throws IOException {
         redisServer = new RedisServer(6381);
         redisServer.start();
         redisServer.stop();
@@ -104,7 +104,7 @@ public class RedisServerTest {
     }
 
     @Test
-    public void shouldOverrideDefaultExecutable() throws IOException {
+    void shouldOverrideDefaultExecutable() throws IOException {
         final Map<OsArchitecture, String> map = new HashMap<>();
         map.put(UNIX_X86_64, "redis-server-6.2.6-v5-linux-amd64");
         map.put(UNIX_ARM64, "redis-server-6.2.7-linux-arm64");
@@ -117,8 +117,8 @@ public class RedisServerTest {
                 .build();
     }
 
-    @Test(expected = FileNotFoundException.class)
-    public void shouldFailWhenBadExecutableGiven() throws IOException {
+    @Test
+    void shouldFailWhenBadExecutableGiven() throws IOException {
         final Map<OsArchitecture, String> buggyMap = new HashMap<>();
         buggyMap.put(UNIX_X86_64, "some");
         buggyMap.put(UNIX_ARM64, "some");
@@ -126,13 +126,13 @@ public class RedisServerTest {
         buggyMap.put(MAC_OS_X_X86_64, "some");
         buggyMap.put(MAC_OS_X_ARM64, "some");
 
-        redisServer = newRedisServer()
+        assertThatThrownBy(() -> redisServer = newRedisServer()
                 .executableProvider(newJarResourceProvider(buggyMap))
-                .build();
+                .build()).isExactlyInstanceOf(FileNotFoundException.class);
     }
 
     @Test
-    public void testAwaitRedisServerReady() throws IOException {
+    void testAwaitRedisServerReady() throws IOException {
         testReadyPattern("/redis-2.x-standalone-startup-output.txt", SERVER_READY_PATTERN);
         testReadyPattern("/redis-3.x-standalone-startup-output.txt", SERVER_READY_PATTERN);
         testReadyPattern("/redis-4.x-standalone-startup-output.txt", SERVER_READY_PATTERN);

@@ -1,6 +1,7 @@
 package redis.embedded.executables
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.DisplayName
@@ -27,7 +28,7 @@ class ExecutableProviderTest {
                 .replace(Regex("^.*?((:?[0-9]+\\.)+[0-9]+).*?$"), "$1")
             val newestAvailableVersion = when (osArchitecture.os) {
                 OS.WINDOWS -> identifyLatestAvailableMemuraiForValkeyVersion()
-                OS.MAC_OS_X -> null
+                OS.MAC_OS_X -> identifyLatestAvailableMacportsValkeyVersion()
                 OS.UNIX -> identifyLatestAvailableValkeyVersion()
             }
             if (newestAvailableVersion == null) {
@@ -47,9 +48,26 @@ class ExecutableProviderTest {
             }
             val githubClient = githubClientBuilder.build()
             val response =
-                githubClient.get().uri("/repos/valkey-io/valkey/releases/latest").retrieve().body(String::class.java)
-            val version = ObjectMapper().readTree(response).get("tag_name").asText()!!
-            return version
+                githubClient.get().uri("/repos/valkey-io/valkey/releases").retrieve().body(String::class.java)
+            val jsonArray = ObjectMapper().readTree(response) as ArrayNode
+            return jsonArray.valueStream().map { it.get("tag_name").asText()!! }
+                .filter { !it.contains("rc") && !it.contains("beta") && !it.contains("alpha") }
+                .max(semanticVersionComparator)
+                .orElseThrow { IllegalStateException("No releases found on GitHub") }
+        }
+
+        internal val semanticVersionComparator: Comparator<String> = Comparator { v1, v2 ->
+            val parts1 = v1.split(".").map { it.toIntOrNull() ?: 0 }
+            val parts2 = v2.split(".").map { it.toIntOrNull() ?: 0 }
+            val length = maxOf(parts1.size, parts2.size)
+            for (i in 0 until length) {
+                val part1 = if (i < parts1.size) parts1[i] else 0
+                val part2 = if (i < parts2.size) parts2[i] else 0
+                if (part1 != part2) {
+                    return@Comparator part1 - part2
+                }
+            }
+            0
         }
 
         fun identifyLatestAvailableMemuraiForValkeyVersion(): String {
@@ -68,5 +86,14 @@ class ExecutableProviderTest {
                 .get("variables")
                 .get("MEMURAI_VALKEY_WINDOWS_VERSION_SHORT")
                 .asText()
+
+        fun identifyLatestAvailableMacportsValkeyVersion(): String {
+            return Jsoup.connect("https://packages.macports.com/valkey/") //
+                .get() //
+                .select("a") //
+                .map { it.attribute("href")!!.value }
+                .map { it.replace(Regex("^valkey-((:?[0-9]+\\.)+[0-9]+).*?$"), "$1") }
+                .maxWith(semanticVersionComparator)
+        }
     }
 }
