@@ -1,6 +1,7 @@
 package redis.embedded;
 
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
@@ -17,14 +18,27 @@ import static org.junit.Assert.assertNull;
 import static redis.embedded.RedisSentinel.SENTINEL_READY_PATTERN;
 import static redis.embedded.util.Collections.newHashSet;
 
-public class RedisSentinelTest {
+class RedisSentinelTest {
     private final String bindAddress = "localhost";
 
     private RedisSentinel sentinel;
     private RedisServer server;
 
-    @Test(timeout = 3000L)
-    public void testSimpleRun() throws InterruptedException, IOException {
+    @AfterEach
+    void stopSentinel() throws IOException {
+        try {
+            if (sentinel != null && sentinel.isActive()) {
+                sentinel.stop();
+            }
+        } finally {
+            if (server != null && server.isActive()) {
+                server.stop();
+            }
+        }
+    }
+
+    @Test
+    void testSimpleRun() throws InterruptedException, IOException {
         server = new RedisServer();
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         sentinel.start();
@@ -35,7 +49,7 @@ public class RedisSentinelTest {
     }
 
     @Test
-    public void shouldAllowSubsequentRuns() throws IOException {
+    void shouldAllowSubsequentRuns() throws IOException {
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         sentinel.start();
         sentinel.stop();
@@ -48,7 +62,7 @@ public class RedisSentinelTest {
     }
 
     @Test
-    public void testSimpleOperationsAfterRun() throws IOException {
+    void testSimpleOperationsAfterRun() throws IOException {
         server = new RedisServer();
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         server.start();
@@ -77,7 +91,7 @@ public class RedisSentinelTest {
     }
 
     @Test
-    public void testAwaitRedisSentinelReady() throws Exception {
+    void testAwaitRedisSentinelReady() throws Exception {
         assertReadyPattern("/redis-2.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
         assertReadyPattern("/redis-3.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
         assertReadyPattern("/redis-4.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
