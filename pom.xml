@@ -1,39 +1,54 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.codemonstur</groupId>
-    <artifactId>embedded-redis</artifactId>
-    <version>1.4.3</version>
+    <groupId>io.github.tobi-laa</groupId>
+    <artifactId>embedded-valkey</artifactId>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
-    <name>embedded-redis</name>
-    <description>Redis embedded server for Java integration testing.
-        Project forked from https://github.com/ozimov/embedded-redis
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Valkey embedded server for Java integration testing.
+        Project forked from https://github.com/codemonstur/embedded-redis
+        Which was forked from https://github.com/ozimov/embedded-redis
         Which was forked from https://github.com/kstyrc/embedded-redis
     </description>
-    <url>https://github.com/codemonstur/embedded-redis</url>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <scm>
-        <url>https://github.com/codemonstur/embedded-redis</url>
-        <connection>scm:git:https://github.com/codemonstur/embedded-redis.git</connection>
-        <developerConnection>scm:git:https://github.com/codemonstur/embedded-redis.git</developerConnection>
-    </scm>
-
+    <url>https://github.com/tobi-laa/embedded-valkey.git</url>
     <developers>
         <developer>
-            <name>Jurgen Voorneveld</name>
-            <email>jegvoorneveld@gmail.com</email>
+            <id>tobi-laa</id>
+            <name>Tobias Laatsch</name>
+            <email>tobias.laatsch@posteo.de</email>
+            <organizationUrl>https://github.com/tobi-laa</organizationUrl>
         </developer>
     </developers>
-
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:git@github.com:tobi-laa/embedded-valkey.git</connection>
+        <developerConnection>scm:git:git@github.com:tobi-laa/embedded-valkey.git</developerConnection>
+        <url>https://github.com/tobi-laa/embedded-valkey/tree/master</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/tobi-laa/embedded-valkey/issues</url>
+    </issueManagement>
+    <inceptionYear>2025</inceptionYear>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
