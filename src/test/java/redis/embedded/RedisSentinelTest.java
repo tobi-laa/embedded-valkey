@@ -1,6 +1,5 @@
 package redis.embedded;
 
-import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
@@ -9,28 +8,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Inet4Address;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static redis.embedded.RedisSentinel.SENTINEL_READY_PATTERN;
 import static redis.embedded.util.Collections.newHashSet;
 
 public class RedisSentinelTest {
-    private String bindAddress;
+    private final String bindAddress = "localhost";
 
     private RedisSentinel sentinel;
     private RedisServer server;
-
-    @Before
-    public void setup() throws Exception {
-        // Jedis translates ”localhost” to getLocalHost().getHostAddress() (see Jedis HostAndPort#getLocalHostQuietly),
-        // which can vary from 127.0.0.1 (most notably, Debian/Ubuntu return 127.0.1.1)
-        if (bindAddress == null) {
-            bindAddress = Inet4Address.getLocalHost().getHostAddress();
-        }
-    }
 
     @Test(timeout = 3000L)
     public void testSimpleRun() throws InterruptedException, IOException {
@@ -57,12 +48,11 @@ public class RedisSentinelTest {
     }
 
     @Test
-    public void testSimpleOperationsAfterRun() throws InterruptedException, IOException {
+    public void testSimpleOperationsAfterRun() throws IOException {
         server = new RedisServer();
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         server.start();
         sentinel.start();
-        TimeUnit.SECONDS.sleep(1);
 
         JedisSentinelPool pool = null;
         Jedis jedis = null;

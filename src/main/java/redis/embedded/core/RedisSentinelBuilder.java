@@ -16,13 +16,13 @@ import static redis.embedded.core.ExecutableProvider.newJarResourceProvider;
 public final class RedisSentinelBuilder {
 
     private static final String
-        LINE_SEPARATOR = System.getProperty("line.separator"),
-        CONF_FILENAME = "embedded-redis-sentinel",
-        LINE_MASTER_MONITOR = "sentinel monitor %s 127.0.0.1 %d %d",
-        LINE_DOWN_AFTER = "sentinel down-after-milliseconds %s %d",
-        LINE_FAIL_OVER = "sentinel failover-timeout %s %d",
-        LINE_PARALLEL_SYNCS = "sentinel parallel-syncs %s %d",
-        LINE_PORT = "port %d";
+            LINE_SEPARATOR = System.lineSeparator(),
+            CONF_FILENAME = "embedded-redis-sentinel",
+            LINE_MASTER_MONITOR = "sentinel monitor %s 127.0.0.1 %d %d",
+            LINE_DOWN_AFTER = "sentinel down-after-milliseconds %s %d",
+            LINE_FAIL_OVER = "sentinel failover-timeout %s %d",
+            LINE_PARALLEL_SYNCS = "sentinel parallel-syncs %s %d",
+            LINE_PORT = "port %d";
 
     private File executable;
 
@@ -101,7 +101,8 @@ public final class RedisSentinelBuilder {
     }
 
     public RedisSentinelBuilder setting(final String configLine) {
-        if (sentinelConf != null) throw new IllegalArgumentException("Redis configuration is already set using redis conf file");
+        if (sentinelConf != null)
+            throw new IllegalArgumentException("Redis configuration is already set using redis conf file");
         if (redisConfigBuilder == null) redisConfigBuilder = new StringBuilder();
 
         redisConfigBuilder.append(configLine).append(LINE_SEPARATOR);
@@ -117,6 +118,7 @@ public final class RedisSentinelBuilder {
         this.soutListener = soutListener;
         return this;
     }
+
     public RedisSentinelBuilder serrListener(final Consumer<String> serrListener) {
         this.serrListener = serrListener;
         return this;

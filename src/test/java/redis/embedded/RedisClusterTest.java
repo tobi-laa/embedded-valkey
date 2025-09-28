@@ -8,7 +8,6 @@ import redis.embedded.core.RedisSentinelBuilder;
 import redis.embedded.util.JedisUtil;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
@@ -40,13 +39,6 @@ public class RedisClusterTest {
         sentinel2 = mock(Redis.class);
         master1 = mock(Redis.class);
         master2 = mock(Redis.class);
-
-        // Jedis translates ”localhost” to getLocalHost().getHostAddress() (see Jedis HostAndPort#getLocalHostQuietly),
-        // which can vary from 127.0.0.1 (most notably, Debian/Ubuntu return 127.0.1.1)
-        if (bindAddress == null) {
-            bindAddress = Inet4Address.getLocalHost().getHostAddress();
-            sentinelBuilder.bind(bindAddress);
-        }
     }
 
     @Test
@@ -104,10 +96,10 @@ public class RedisClusterTest {
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterNoSlavesCluster() throws IOException {
         final RedisCluster cluster = newRedisCluster()
-            .withSentinelBuilder(sentinelBuilder)
-            .sentinelCount(1)
-            .replicationGroup("ourmaster", 0)
-            .build();
+                .withSentinelBuilder(sentinelBuilder)
+                .sentinelCount(1)
+                .replicationGroup("ourmaster", 0)
+                .build();
         cluster.start();
 
         JedisSentinelPool pool = null;
@@ -129,10 +121,10 @@ public class RedisClusterTest {
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterAndOneSlave() throws IOException {
         final RedisCluster cluster = newRedisCluster()
-            .withSentinelBuilder(sentinelBuilder)
-            .sentinelCount(1)
-            .replicationGroup("ourmaster", 1)
-            .build();
+                .withSentinelBuilder(sentinelBuilder)
+                .sentinelCount(1)
+                .replicationGroup("ourmaster", 1)
+                .build();
         cluster.start();
 
         JedisSentinelPool pool = null;
@@ -154,10 +146,10 @@ public class RedisClusterTest {
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterMultipleSlaves() throws IOException {
         final RedisCluster cluster = newRedisCluster()
-            .withSentinelBuilder(sentinelBuilder)
-            .sentinelCount(1)
-            .replicationGroup("ourmaster", 2)
-            .build();
+                .withSentinelBuilder(sentinelBuilder)
+                .sentinelCount(1)
+                .replicationGroup("ourmaster", 2)
+                .build();
         cluster.start();
 
         JedisSentinelPool pool = null;
@@ -179,10 +171,10 @@ public class RedisClusterTest {
     @Test
     public void testSimpleOperationsAfterRunWithTwoSentinelsSingleMasterMultipleSlaves() throws IOException {
         final RedisCluster cluster = newRedisCluster()
-            .withSentinelBuilder(sentinelBuilder)
-            .sentinelCount(2)
-            .replicationGroup("ourmaster", 2)
-            .build();
+                .withSentinelBuilder(sentinelBuilder)
+                .sentinelCount(2)
+                .replicationGroup("ourmaster", 2)
+                .build();
         cluster.start();
 
         JedisSentinelPool pool = null;
