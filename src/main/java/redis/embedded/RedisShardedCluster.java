@@ -82,11 +82,11 @@ public final class RedisShardedCluster implements Redis {
     private List<Exception> safelyPerformFlushAllAndSoftClusterResetOnMainNodes() {
         final List<Exception> errors = new ArrayList<>();
         for (final Integer mainNodePort : replicasPortsByMainNodePort.keySet()) {
-            try (final Jedis jedis = new Jedis(CLUSTER_IP, mainNodePort)) {
+            try (final Jedis jedis = new Jedis(CLUSTER_IP, mainNodePort, 10_000)) {
                 jedis.flushAll();
                 jedis.clusterReset(ClusterResetType.SOFT);
             } catch (final RuntimeException e) {
-                LOGGER.error("Failed to flush main node at port: " + mainNodePort, e);
+                LOGGER.error("Failed to flush main node at port: {}", mainNodePort, e);
                 errors.add(e);
             }
         }
