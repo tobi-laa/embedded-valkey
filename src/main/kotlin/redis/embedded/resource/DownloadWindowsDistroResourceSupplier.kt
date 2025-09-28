@@ -1,7 +1,7 @@
 package redis.embedded.resource
 
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_MEMURAI_VERSION
-import io.github.tobi.laa.embedded.valkey.distribution.DownloadMemuraiDistributionFromNugetProvider
+import io.github.tobi.laa.embedded.valkey.distribution.downloadMemuraiDeveloperForX64FromNuget
 import redis.embedded.model.Architecture
 import java.nio.file.Path
 
@@ -9,11 +9,10 @@ import java.nio.file.Path
 class DownloadWindowsDistroResourceSupplier(val architecture: Architecture) : ResourceSupplier {
 
     override fun supplyResource(targetDirectory: Path): Path {
-        val valkeyDisto = DownloadMemuraiDistributionFromNugetProvider(
-            architecture = architecture,
+        val valkeyDistro = downloadMemuraiDeveloperForX64FromNuget(
             installationPath = targetDirectory
         ).provideDistribution()
-        return valkeyDisto.binaryPath
+        return valkeyDistro.binaryPath
     }
 
     override fun resourceName(): String {

@@ -1,7 +1,7 @@
 package redis.embedded.resource
 
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_VALKEY_MAC_OS_VERSION
-import io.github.tobi.laa.embedded.valkey.distribution.DownloadMacOsDistributionFromMacportsProvider
+import io.github.tobi.laa.embedded.valkey.distribution.downloadMacOsDistroFromMacports
 import redis.embedded.model.Architecture
 import java.nio.file.Path
 
@@ -9,11 +9,11 @@ import java.nio.file.Path
 class DownloadMacOsDistroResourceSupplier(val architecture: Architecture) : ResourceSupplier {
 
     override fun supplyResource(targetDirectory: Path): Path {
-        val valkeyDisto = DownloadMacOsDistributionFromMacportsProvider(
+        val valkeyDistro = downloadMacOsDistroFromMacports(
             architecture = architecture,
             installationPath = targetDirectory
         ).provideDistribution()
-        return valkeyDisto.binaryPath
+        return valkeyDistro.binaryPath
     }
 
     override fun resourceName(): String {

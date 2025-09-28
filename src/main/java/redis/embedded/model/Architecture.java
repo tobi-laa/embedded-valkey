@@ -8,8 +8,6 @@ import java.util.stream.Stream;
 import static redis.embedded.util.IO.processToLines;
 
 public enum Architecture {
-    @Deprecated
-    X86,
     X86_64,
     ARM64;
 
@@ -17,14 +15,18 @@ public enum Architecture {
         final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
         final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
 
-        return isWindows64Bit(arch, wow64Arch) ? X86_64 : X86;
+        if (isWindows64Bit(arch, wow64Arch)) {
+            return X86_64;
+        } else {
+            throw new OsArchitectureNotFound(null);
+        }
     }
 
     public static Architecture detectUnixMacOSXArchitecture() {
         try (final Stream<String> lines = processToLines("uname -m")) {
             return lines.filter(Architecture::isUnix64Bit)
                     .map(line -> line.contains("aarch64") || line.contains("arm64") ? ARM64 : X86_64)
-                    .findFirst().orElse(X86);
+                    .findFirst().orElseThrow();
         } catch (IOException e) {
             throw new OsArchitectureNotFound(e);
         }
