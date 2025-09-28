@@ -32,7 +32,10 @@ jobs:
       - name: Set OpenSSL path on macOS
         if: runner.os == 'macOS'
         run: |
-          export DYLD_LIBRARY_PATH=$(brew --prefix openssl@3)/lib:$DYLD_LIBRARY_PATH
+          export DYLD_FALLBACK_FRAMEWORK_PATH=$(brew --prefix openssl@3)/lib:$DYLD_FALLBACK_FRAMEWORK_PATH
+          echo "DYLD_FALLBACK_FRAMEWORK_PATH=$(brew --prefix openssl@3)/lib:\$DYLD_FALLBACK_FRAMEWORK_PATH" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix openssl@3)/lib:\$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "DYLD_FRAMEWORK_PATH=$(brew --prefix openssl@3)/lib:\$DYLD_FRAMEWORK_PATH" >> $GITHUB_ENV
       - name: Set up JDK 21
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
         with:
