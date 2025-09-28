@@ -5,12 +5,19 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.args.ClusterResetType;
 import redis.embedded.core.RedisShardedClusterBuilder;
 import redis.embedded.error.RedisClusterSetupException;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -37,7 +44,9 @@ public final class RedisShardedCluster implements Redis {
         this.initializationTimeout = initializationTimeout;
     }
 
-    public static RedisShardedClusterBuilder newRedisCluster() { return new RedisShardedClusterBuilder(); }
+    public static RedisShardedClusterBuilder newRedisCluster() {
+        return new RedisShardedClusterBuilder();
+    }
 
     @Override
     public boolean isActive() {
@@ -61,12 +70,27 @@ public final class RedisShardedCluster implements Redis {
     @Override
     public void stop() throws IOException {
         final List<Exception> exceptions = new ArrayList<>();
+        exceptions.addAll(safelyPerformFlushAllAndSoftClusterResetOnMainNodes());
         for (final Redis redis : servers) {
             stopSafely(redis).ifPresent(exceptions::add);
         }
         if (!exceptions.isEmpty()) {
             throw new IOException("Failed to stop Redis cluster", exceptions.get(0));
         }
+    }
+
+    private List<Exception> safelyPerformFlushAllAndSoftClusterResetOnMainNodes() {
+        final List<Exception> errors = new ArrayList<>();
+        for (final Integer mainNodePort : replicasPortsByMainNodePort.keySet()) {
+            try (final Jedis jedis = new Jedis(CLUSTER_IP, mainNodePort)) {
+                jedis.flushAll();
+                jedis.clusterReset(ClusterResetType.SOFT);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Failed to flush main node at port: " + mainNodePort, e);
+                errors.add(e);
+            }
+        }
+        return errors;
     }
 
     private Optional<Exception> stopSafely(final Redis redis) {
@@ -80,9 +104,13 @@ public final class RedisShardedCluster implements Redis {
     }
 
     @Override
-    public List<Integer> ports() { return new ArrayList<>(serverPorts()); }
+    public List<Integer> ports() {
+        return new ArrayList<>(serverPorts());
+    }
 
-    public List<Redis> servers() { return new LinkedList<>(servers); }
+    public List<Redis> servers() {
+        return new LinkedList<>(servers);
+    }
 
     public List<Integer> serverPorts() {
         final List<Integer> ports = new ArrayList<>();
@@ -92,7 +120,9 @@ public final class RedisShardedCluster implements Redis {
         return ports;
     }
 
-    public int getPort() { return this.ports().get(0); }
+    public int getPort() {
+        return this.ports().get(0);
+    }
 
     private void linkReplicasAndShards() {
         try {
@@ -120,8 +150,8 @@ public final class RedisShardedCluster implements Redis {
             final Integer port = shardsMainNodePorts.get(i);
             final int startSlot = i * slotsPerShard;
             final int endSlot = i == shardsMainNodePorts.size() - 1
-                          ? MAX_NUMBER_OF_SLOTS_PER_CLUSTER - 1
-                          : startSlot + slotsPerShard - 1;
+                    ? MAX_NUMBER_OF_SLOTS_PER_CLUSTER - 1
+                    : startSlot + slotsPerShard - 1;
             try (final Jedis jedis = new Jedis(CLUSTER_IP, port)) {
                 if (!port.equals(clusterMeetTarget)) {
                     jedis.clusterMeet(CLUSTER_IP, clusterMeetTarget);
@@ -155,12 +185,16 @@ public final class RedisShardedCluster implements Redis {
 
     private void waitForNodeToAppearInCluster(final Jedis jedis, final String nodeId) throws RedisClusterSetupException {
         final boolean nodeReady = waitForPredicateToPass(() -> jedis.clusterNodes().contains(nodeId));
-        if (!nodeReady) { throw new RedisClusterSetupException("Node was not ready before timeout"); }
+        if (!nodeReady) {
+            throw new RedisClusterSetupException("Node was not ready before timeout");
+        }
     }
 
     private void waitForClusterToHaveStatusOK(final Jedis jedis) throws RedisClusterSetupException {
         final boolean clusterIsReady = waitForPredicateToPass(() -> jedis.clusterInfo().contains("cluster_state:ok"));
-        if (!clusterIsReady) { throw new RedisClusterSetupException("Cluster did not have status OK before timeout"); }
+        if (!clusterIsReady) {
+            throw new RedisClusterSetupException("Cluster did not have status OK before timeout");
+        }
     }
 
     private void waitForClusterToBeInteractReady() throws RedisClusterSetupException {
@@ -173,7 +207,9 @@ public final class RedisShardedCluster implements Redis {
                 return false;
             }
         });
-        if (!clusterIsReady) { throw new RedisClusterSetupException("Cluster was not stable before timeout"); }
+        if (!clusterIsReady) {
+            throw new RedisClusterSetupException("Cluster was not stable before timeout");
+        }
     }
 
     private boolean waitForPredicateToPass(final Supplier<Boolean> predicate) throws RedisClusterSetupException {

@@ -2,7 +2,6 @@ package redis.embedded.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.embedded.resource.ResourceSupplier;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,14 +29,6 @@ public enum IO {
         final File tempDirectory = createDirectories(createTempDirectory("redis-")).toFile();
         tempDirectory.deleteOnExit();
         return tempDirectory;
-    }
-
-    public static File writeResourceToExecutableFile(final File tempDirectory, final ResourceSupplier resourceSupplier) throws IOException {
-        final File executable = resourceSupplier.supplyResource(tempDirectory.toPath()).toFile();
-        executable.deleteOnExit();
-        if (!executable.setExecutable(true))
-            throw new IOException("Failed to set executable permission for binary " + resourceSupplier + " at temporary location " + executable);
-        return executable;
     }
 
     public static Runnable checkedToRuntime(final CheckedRunnable runnable) {

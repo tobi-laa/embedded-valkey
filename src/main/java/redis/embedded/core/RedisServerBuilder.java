@@ -1,9 +1,8 @@
 package redis.embedded.core;
 
-import redis.embedded.RedisCluster;
+import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider;
 import redis.embedded.RedisServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -13,15 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistroProvidersKt.DEFAULT_PROVIDERS;
+import static io.github.tobi.laa.embedded.valkey.operatingsystem.DetectOperatingSystemKt.detectOperatingSystem;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static redis.embedded.Redis.DEFAULT_REDIS_PORT;
-import static redis.embedded.core.ExecutableProvider.newJarResourceProvider;
 
 public final class RedisServerBuilder {
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private ExecutableProvider provider = newJarResourceProvider();
+    private ValkeyDistributionProvider distributionProvider = DEFAULT_PROVIDERS.get(detectOperatingSystem());
     private String bindAddress = "127.0.0.1";
     private int bindPort = DEFAULT_REDIS_PORT;
     private InetSocketAddress slaveOf;
@@ -31,8 +31,8 @@ public final class RedisServerBuilder {
 
     private StringBuilder redisConfigBuilder = new StringBuilder();
 
-    public RedisServerBuilder executableProvider(final ExecutableProvider provider) {
-        this.provider = provider;
+    public RedisServerBuilder distributionProvider(final ValkeyDistributionProvider distributionProvider) {
+        this.distributionProvider = distributionProvider;
         return this;
     }
 
@@ -59,6 +59,7 @@ public final class RedisServerBuilder {
     public RedisServerBuilder configFile(final String redisConf) throws IOException {
         return configFile(Paths.get(redisConf));
     }
+
     public RedisServerBuilder configFile(final Path redisConf) throws IOException {
         Files.lines(redisConf).forEach(line -> redisConfigBuilder.append(line).append(LINE_SEPARATOR));
         return this;
@@ -83,6 +84,7 @@ public final class RedisServerBuilder {
         this.soutListener = soutListener;
         return this;
     }
+
     public RedisServerBuilder serrListener(final Consumer<String> serrListener) {
         this.serrListener = serrListener;
         return this;
@@ -100,10 +102,12 @@ public final class RedisServerBuilder {
         setting("bind " + bindAddress);
 
         final Path redisConfigFile =
-            writeNewRedisConfigFile("embedded-redis-server_" + bindPort, redisConfigBuilder.toString());
+                writeNewRedisConfigFile("embedded-redis-server_" + bindPort, redisConfigBuilder.toString());
+
+        final var valkeyDistribution = distributionProvider.provideDistribution();
 
         final List<String> args = new ArrayList<>();
-        args.add(provider.get().getAbsolutePath());
+        args.add(valkeyDistribution.getBinaryPath().toAbsolutePath().toString());
         args.add(redisConfigFile.toAbsolutePath().toString());
         args.add("--port");
         args.add(Integer.toString(bindPort));

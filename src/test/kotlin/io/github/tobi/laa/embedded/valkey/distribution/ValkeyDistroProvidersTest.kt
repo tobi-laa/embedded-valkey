@@ -1,7 +1,9 @@
-package redis.embedded.executables
+package io.github.tobi.laa.embedded.valkey.distribution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
+import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.DisplayName
@@ -9,30 +11,26 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.web.client.RestClient
-import redis.embedded.model.OS
-import redis.embedded.model.OsArchitecture
 
-
-@DisplayName("Tests for ExecutableProvider")
-class ExecutableProviderTest {
+@DisplayName("Tests for default Valkey distribution providers")
+class ValkeyDistroProvidersTest {
 
     @Nested
-    @DisplayName("Ensure that the latest Redis versions are provided by this project")
-    inner class LatestRedisVersionsAreProvided {
+    @DisplayName("Ensure that the latest Valkey (or Memurai) versions are provided by default")
+    inner class LatestVersionsAreProvided {
 
         @DisplayName("Latest stable Valkey/Redis/Memurai version is provided")
         @ParameterizedTest(name = "Latest available stable version for OS/Architecture {0} is provided")
-        @EnumSource(OsArchitecture::class)
-        fun `latest available version is provided`(osArchitecture: OsArchitecture) {
-            val providedVersion = PROVIDED_VERSIONS[osArchitecture]!!.resourceName()
-                .replace(Regex("^.*?((:?[0-9]+\\.)+[0-9]+).*?$"), "$1")
-            val newestAvailableVersion = when (osArchitecture.os) {
-                OS.WINDOWS -> identifyLatestAvailableMemuraiVersionOnNuget()
-                OS.MAC_OS_X -> identifyLatestAvailableMacportsValkeyVersion()
-                OS.UNIX -> identifyLatestAvailableValkeyVersion()
+        @EnumSource(OperatingSystem::class)
+        fun `latest available version is provided`(operatingSystem: OperatingSystem) {
+            val providedVersion = DEFAULT_PROVIDERS[operatingSystem]!!.provideDistribution().version
+            val newestAvailableVersion = when (operatingSystem) {
+                WINDOWS_X86_64 -> identifyLatestAvailableMemuraiVersionOnNuget()
+                MAC_OS_X86_64, MAC_OS_ARM64 -> identifyLatestAvailableMacportsValkeyVersion()
+                LINUX_X86_64, LINUX_ARM64 -> identifyLatestAvailableValkeyVersion()
             }
             assert(providedVersion == newestAvailableVersion) {
-                "\uD83D\uDC74 Provided version $providedVersion is not the latest available version $newestAvailableVersion for ${osArchitecture.os}"
+                "\uD83D\uDC74 Provided version $providedVersion is not the latest available version $newestAvailableVersion for ${operatingSystem.displayName}"
             }
         }
 

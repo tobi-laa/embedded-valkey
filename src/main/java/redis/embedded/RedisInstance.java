@@ -7,23 +7,24 @@ import redis.embedded.model.RedisConfig;
 import redis.embedded.util.IO;
 import redis.embedded.util.RedisConfigParser;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.AccessDeniedException;
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static redis.embedded.util.IO.*;
+import static redis.embedded.util.IO.addShutdownHook;
+import static redis.embedded.util.IO.checkedToRuntime;
+import static redis.embedded.util.IO.findMatchInStream;
+import static redis.embedded.util.IO.logStream;
+import static redis.embedded.util.IO.newDaemonThread;
+import static redis.embedded.util.IO.readFully;
 
 public abstract class RedisInstance implements Redis {
 
@@ -61,8 +62,8 @@ public abstract class RedisInstance implements Redis {
 
         try {
             process = new ProcessBuilder(args)
-                .directory(getRedisDir().toFile())
-                .start();
+                    .directory(getRedisDir().toFile())
+                    .start();
             addShutdownHook("RedisInstanceCleaner", checkedToRuntime(this::stop));
             awaitServerReady(process, readyPattern, soutListener, serrListener);
 
@@ -112,12 +113,13 @@ public abstract class RedisInstance implements Redis {
             final String stdErr = readFully(process.getErrorStream(), serrListener);
 
             throw new IOException("Redis-server process appears not to have started. "
-                + (isNullOrEmpty(stdOut) ? "No output was found in standard-out." : "stdandard-out contains this: " + stdOut)
-                + " "
-                + (isNullOrEmpty(stdErr) ? "No output was found in standard-err." : "stdandard-err contains this: " + stdErr)
+                    + (isNullOrEmpty(stdOut) ? "No output was found in standard-out." : "stdandard-out contains this: " + stdOut)
+                    + " "
+                    + (isNullOrEmpty(stdErr) ? "No output was found in standard-err." : "stdandard-err contains this: " + stdErr)
             );
         }
     }
+
     private static boolean isNullOrEmpty(final String value) {
         return value == null || value.isEmpty();
     }
@@ -136,8 +138,14 @@ public abstract class RedisInstance implements Redis {
         } catch (final InterruptedException e) {
             throw new IOException("Failed to stop redis service", e);
         } finally {
+            findAndDeleteDumpRdbFile();
             findAndDeleteClusterConfigFiles();
         }
+    }
+
+    private void findAndDeleteDumpRdbFile() {
+        final Path dumpRdb = getRedisDir().resolve("dump.rdb");
+        IO.deleteSafely(dumpRdb);
     }
 
     private void findAndDeleteClusterConfigFiles() {

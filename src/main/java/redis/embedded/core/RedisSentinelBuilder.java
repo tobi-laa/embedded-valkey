@@ -1,5 +1,7 @@
 package redis.embedded.core;
 
+import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistribution;
+import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider;
 import redis.embedded.RedisSentinel;
 
 import java.io.File;
@@ -9,9 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistroProvidersKt.DEFAULT_PROVIDERS;
+import static io.github.tobi.laa.embedded.valkey.operatingsystem.DetectOperatingSystemKt.detectOperatingSystem;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static redis.embedded.Redis.DEFAULT_REDIS_PORT;
-import static redis.embedded.core.ExecutableProvider.newJarResourceProvider;
 
 public final class RedisSentinelBuilder {
 
@@ -26,7 +29,7 @@ public final class RedisSentinelBuilder {
 
     private File executable;
 
-    private ExecutableProvider executableProvider = newJarResourceProvider();
+    private ValkeyDistributionProvider distributionProvider = DEFAULT_PROVIDERS.get(detectOperatingSystem());
     private String bind = "127.0.0.1";
     private Integer port = 26379;
     private int masterPort = DEFAULT_REDIS_PORT;
@@ -42,8 +45,8 @@ public final class RedisSentinelBuilder {
 
     private StringBuilder redisConfigBuilder;
 
-    public RedisSentinelBuilder executableProvider(final ExecutableProvider executableProvider) {
-        this.executableProvider = executableProvider;
+    public RedisSentinelBuilder distributionProvider(final ValkeyDistributionProvider distributionProvider) {
+        this.distributionProvider = distributionProvider;
         return this;
     }
 
@@ -134,7 +137,8 @@ public final class RedisSentinelBuilder {
             if (sentinelConf == null) {
                 resolveSentinelConf();
             }
-            executable = executableProvider.get();
+            final ValkeyDistribution distribution = distributionProvider.provideDistribution();
+            executable = distribution.getBinaryPath().toFile();
         } catch (final Exception e) {
             throw new IllegalArgumentException("Could not build sentinel instance", e);
         }
