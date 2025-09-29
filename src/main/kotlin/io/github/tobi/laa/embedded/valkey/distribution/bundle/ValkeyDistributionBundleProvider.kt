@@ -7,7 +7,7 @@ import io.github.tobi.laa.embedded.valkey.distribution.resolveDefaultTempInstall
 import java.io.IOException
 import java.nio.file.Path
 
-/*
+/**
  * Provides Valkey distribution bundles, i.e., archives containing the Valkey server binary and potentially other
  * files.
  */

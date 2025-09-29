@@ -2,7 +2,7 @@ package io.github.tobi.laa.embedded.valkey.distribution
 
 import java.io.IOException
 
-/*
+/**
  * Provides Valkey distributions, i.e., directories containing Valkey installations with the Valkey server binary and
  * potentially other files along with metadata about the installation, such as version, operating system,
  * and architecture.
