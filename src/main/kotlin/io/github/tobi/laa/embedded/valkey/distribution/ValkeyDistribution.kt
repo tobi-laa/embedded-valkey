@@ -6,9 +6,9 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 /**
- * Represents a Valkey distribution for a specific [version], [operatingSystem], and [architecture]. The
- * [installationPath] points to the directory where the distribution is installed, and the [binaryPath] points to the
- * Valkey server binary within that installation.
+ * Represents a Valkey distribution for a specific [version] and [operatingSystem]. The [installationPath] points to the
+ * directory where the distribution is installed, and the [binaryPath] points to the Valkey server binary within that
+ * installation.
  *
  * @param version The version of the Valkey distribution, i.e. `"8.1.3"`.
  * @param operatingSystem The operating system for which the Valkey distribution is built.

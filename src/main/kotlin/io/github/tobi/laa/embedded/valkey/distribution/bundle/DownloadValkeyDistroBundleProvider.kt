@@ -21,7 +21,6 @@ import kotlin.io.path.notExists
  *
  * @param valkeyVersion The version of the Valkey distribution, e.g. `"8.1.3"`.
  * @param operatingSystem The operating system for which the Valkey distribution is built.
- * @param architecture The architecture for which the Valkey distribution is built.
  * @param distributionType The type of the Valkey distribution (default is [DistributionType.VALKEY]).
  * @param binaryPathWithinBundle The relative path to the Valkey server binary within the downloaded distribution bundle.
  * @param archiveType The type of the archive (e.g., `TAR_GZ`).

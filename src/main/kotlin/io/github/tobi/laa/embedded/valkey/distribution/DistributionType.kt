@@ -15,5 +15,7 @@ enum class DistributionType(val displayName: String) {
     VALKEY("Valkey"),
     REDIS("Redis"),
     MEMURAI("Memurai"),
+
+    @Suppress("unused")
     MEMURAI_FOR_VALKEY("Memurai for Valkey")
 }
