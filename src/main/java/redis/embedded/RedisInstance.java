@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -61,6 +62,7 @@ public abstract class RedisInstance implements Redis {
             throw new AccessDeniedException("Redis binary " + args.get(0) + " is not executable");
 
         try {
+            Files.createDirectories(getRedisDir());
             process = new ProcessBuilder(args)
                     .directory(getRedisDir().toFile())
                     .start();
@@ -79,7 +81,7 @@ public abstract class RedisInstance implements Redis {
     }
 
     private Path getRedisDir() {
-        return Paths.get(args.get(0)).getParent();
+        return Paths.get(args.get(0)).getParent().resolve("data_dir_" + port);
     }
 
     // You might get an error when you try to start the default binary without having openssl installed. The default
