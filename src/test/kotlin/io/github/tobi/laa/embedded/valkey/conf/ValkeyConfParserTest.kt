@@ -1,4 +1,4 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.conf
+package io.github.tobi.laa.embedded.valkey.conf
 
 import org.assertj.core.api.AbstractThrowableAssert
 import org.assertj.core.api.Assertions.*
@@ -13,28 +13,47 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.Arguments.arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.support.ParameterDeclarations
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.stream.Stream
 import kotlin.io.path.listDirectoryEntries
 
-@DisplayName("Tests for RedisConfParser")
-internal class RedisConfParserTest {
+@DisplayName("Tests for ValkeyConfParser")
+internal class ValkeyConfParserTest {
 
     private var givenFile: Path? = null
     private var parse: ThrowingCallable? = null
-    private var result: RedisConf? = null
+    private var result: ValkeyConf? = null
+
+    @DisplayName("Official self documented examples for Valkey should be parsed without error")
+    @ParameterizedTest(name = "{0} should be parsed without error")
+    @ArgumentsSource(OfficialRedisExamples::class)
+    fun officialSelfDocumentedValkeyExample_whenParsing_shouldSucceed(file: Path) {
+        givenFile(file)
+        whenParsing()
+        thenValidValkeyConfShouldBeReturned()
+    }
 
     @DisplayName("Official self documented examples for Redis should be parsed without error")
     @ParameterizedTest(name = "{0} should be parsed without error")
-    @ArgumentsSource(OfficialExamples::class)
-    fun officialSelfDocumentedExample_whenParsing_shouldSucceed(file: Path) {
+    @ArgumentsSource(OfficialRedisExamples::class)
+    fun officialSelfDocumentedRedisExample_whenParsing_shouldSucceed(file: Path) {
         givenFile(file)
         whenParsing()
-        thenValidRedisConfShouldBeReturned()
+        thenValidValkeyConfShouldBeReturned()
     }
 
-    @DisplayName("Invalid redis.conf should yield error when being parsed")
+    // see also https://docs.memurai.com/en/config-file#default-configuration
+    @DisplayName("Official default configuration for Memurai should be parsed without error")
+    @Test
+    fun officialDefaultMemuraiConf_whenParsing_shouldSucceed() {
+        givenDefaultMemuraiConf()
+        whenParsing()
+        thenValidValkeyConfShouldBeReturned()
+    }
+
+    @DisplayName("Invalid valkey.conf should yield error when being parsed")
     @ParameterizedTest(name = "{0} should yield error message -> {1}")
     @ArgumentsSource(InvalidExamples::class)
     fun invalidExample_whenParsing_shouldYieldError(file: Path, expectedMsg: String) {
@@ -43,13 +62,17 @@ internal class RedisConfParserTest {
         thenErrorShouldBeThrown().message().contains(expectedMsg)
     }
 
-    @DisplayName("Valid redis.conf should be parsed correctly with expected directives")
-    @ParameterizedTest(name = "{0} should be parsed without error and yield expected RedisConf")
+    @DisplayName("Valid valkey.conf should be parsed correctly with expected directives")
+    @ParameterizedTest(name = "{0} should be parsed without error and yield expected ValkeyConf")
     @ArgumentsSource(ValidExamples::class)
-    fun validExample_whenParsing_shouldYieldExpectedConf(file: Path, expected: RedisConf) {
+    fun validExample_whenParsing_shouldYieldExpectedConf(file: Path, expected: ValkeyConf) {
         givenFile(file)
         whenParsing()
         thenParsedConfShouldBeAs(expected)
+    }
+
+    private fun givenDefaultMemuraiConf() {
+        givenFile = Paths.get("src/test/resources/valkey-conf/official-memurai-examples/default_memurai.conf")
     }
 
     private fun givenFile(file: Path) {
@@ -57,16 +80,16 @@ internal class RedisConfParserTest {
     }
 
     private fun whenParsing() {
-        parse = ThrowingCallable { result = RedisConfParser.parse(givenFile!!) }
+        parse = ThrowingCallable { result = ValkeyConfParser.parse(givenFile!!) }
     }
 
-    private fun thenValidRedisConfShouldBeReturned() {
+    private fun thenValidValkeyConfShouldBeReturned() {
         assertThatCode(parse).doesNotThrowAnyException()
         assertThat(result).isNotNull
         assertThat(result!!.directives).isNotEmpty
     }
 
-    private fun thenParsedConfShouldBeAs(expected: RedisConf) {
+    private fun thenParsedConfShouldBeAs(expected: ValkeyConf) {
         assertThatCode(parse!!).doesNotThrowAnyException()
         assertThat(result).usingRecursiveComparison().isEqualTo(expected)
     }
@@ -75,17 +98,42 @@ internal class RedisConfParserTest {
         return assertThatThrownBy { parse!!.call() }.isExactlyInstanceOf(IllegalArgumentException::class.java)
     }
 
-    internal class OfficialExamples : ArgumentsProvider {
+    internal class OfficialValkeyExamples : ArgumentsProvider {
 
-        private val dir = Paths.get("src/test/resources/redis-conf/official-examples")
+        private val dir = Paths.get("src/test/resources/valkey-conf/official-valkey-examples")
 
-        override fun provideArguments(extensionContext: ExtensionContext?): Stream<Arguments> {
+        override fun provideArguments(
+            parameters: ParameterDeclarations,
+            extensionContext: ExtensionContext?
+        ): Stream<Arguments> {
             val versions = dir.listDirectoryEntries().map { it.fileName }
             return versions
                 .map {
                     arguments(
                         named(
-                            "Example for version ${it}",
+                            "Example for version $it",
+                            dir.resolve(it).resolve("valkey.conf")
+                        )
+                    )
+                }
+                .stream()
+        }
+    }
+
+    internal class OfficialRedisExamples : ArgumentsProvider {
+
+        private val dir = Paths.get("src/test/resources/valkey-conf/official-redis-examples")
+
+        override fun provideArguments(
+            parameters: ParameterDeclarations,
+            extensionContext: ExtensionContext?
+        ): Stream<Arguments> {
+            val versions = dir.listDirectoryEntries().map { it.fileName }
+            return versions
+                .map {
+                    arguments(
+                        named(
+                            "Example for version $it",
                             dir.resolve(it).resolve("redis.conf")
                         )
                     )
@@ -96,9 +144,12 @@ internal class RedisConfParserTest {
 
     internal class InvalidExamples : ArgumentsProvider {
 
-        private val dir = Paths.get("src/test/resources/redis-conf/invalid-examples")
+        private val dir = Paths.get("src/test/resources/valkey-conf/invalid-examples")
 
-        override fun provideArguments(extensionContext: ExtensionContext?): Stream<Arguments> {
+        override fun provideArguments(
+            parameters: ParameterDeclarations,
+            extensionContext: ExtensionContext?
+        ): Stream<Arguments> {
             return Stream.of(
                 arguments(
                     named(
@@ -148,27 +199,30 @@ internal class RedisConfParserTest {
 
     internal class ValidExamples : ArgumentsProvider {
 
-        private val dir = Paths.get("src/test/resources/redis-conf/valid-examples")
+        private val dir = Paths.get("src/test/resources/valkey-conf/valid-examples")
 
-        override fun provideArguments(extensionContext: ExtensionContext?): Stream<Arguments> {
+        override fun provideArguments(
+            parameters: ParameterDeclarations,
+            extensionContext: ExtensionContext?
+        ): Stream<Arguments> {
             return Stream.of(
                 arguments(
                     named(
                         "Empty config file",
                         dir.resolve("empty.conf")
                     ),
-                    RedisConf(emptyList())
+                    ValkeyConf(emptyList())
                 ),
                 arguments(
                     named(
                         "Conf with duplicate keywords",
                         dir.resolve("with-duplicate-keywords.conf")
                     ),
-                    RedisConf(
+                    ValkeyConf(
                         listOf(
-                            RedisConf.Directive("bind", "localhost"),
-                            RedisConf.Directive("bind", "127.0.0.1", "::1"),
-                            RedisConf.Directive("port", "6379")
+                            Directive("bind", "localhost"),
+                            Directive("bind", "127.0.0.1", "::1"),
+                            Directive("port", "6379")
                         )
                     )
                 ),
@@ -177,14 +231,14 @@ internal class RedisConfParserTest {
                         "Conf with escaped arguments",
                         dir.resolve("with-escaped-arguments.conf")
                     ),
-                    RedisConf(
+                    ValkeyConf(
                         listOf(
-                            RedisConf.Directive("tls-protocols", "TLSv1.2 TLSv1.3"),
-                            RedisConf.Directive("logfile", ""),
-                            RedisConf.Directive("proc-title-template", "{title} {listen-addr} {server-mode}"),
-                            RedisConf.Directive("sentinel", "monitor", "Blue-lored Antbird", "::1", "6379", "1"),
-                            RedisConf.Directive("double-quote", "\""),
-                            RedisConf.Directive("single-quote", "'"),
+                            Directive("tls-protocols", "TLSv1.2 TLSv1.3"),
+                            Directive("logfile", ""),
+                            Directive("proc-title-template", "{title} {listen-addr} {server-mode}"),
+                            Directive("sentinel", "monitor", "Blue-lored Antbird", "::1", "6379", "1"),
+                            Directive("double-quote", "\""),
+                            Directive("single-quote", "'"),
                         )
                     )
                 ),
@@ -193,10 +247,10 @@ internal class RedisConfParserTest {
                         "Conf without duplicate keywords",
                         dir.resolve("without-duplicate-keywords.conf")
                     ),
-                    RedisConf(
+                    ValkeyConf(
                         listOf(
-                            RedisConf.Directive("bind", "i.like.trains.org"),
-                            RedisConf.Directive("port", "6379")
+                            Directive("bind", "i.like.trains.org"),
+                            Directive("port", "6379")
                         )
                     )
                 )
@@ -205,16 +259,16 @@ internal class RedisConfParserTest {
     }
 
     @Nested
-    @DisplayName("RedisConfParser.ArgsParseState tests")
+    @DisplayName("ValkeyConfParser.ArgsParseState tests")
     internal inner class ArgsParseStateTest {
 
         @Test
         @DisplayName("Static field entries returns all enum values")
         fun getEntries_returnsAllValues() {
-            assertThat(RedisConfParser.ArgsParseState.entries).containsExactlyInAnyOrder(
-                RedisConfParser.ArgsParseState.UNESCAPED,
-                RedisConfParser.ArgsParseState.ESCAPED_SINGLE,
-                RedisConfParser.ArgsParseState.ESCAPED_DOUBLE
+            assertThat(ValkeyConfParser.ArgsParseState.entries).containsExactlyInAnyOrder(
+                ValkeyConfParser.ArgsParseState.UNESCAPED,
+                ValkeyConfParser.ArgsParseState.ESCAPED_SINGLE,
+                ValkeyConfParser.ArgsParseState.ESCAPED_DOUBLE
             )
         }
     }

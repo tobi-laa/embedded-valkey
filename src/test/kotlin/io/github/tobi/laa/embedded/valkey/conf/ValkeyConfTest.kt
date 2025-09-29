@@ -1,24 +1,24 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.conf
+package io.github.tobi.laa.embedded.valkey.conf
 
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-@DisplayName("Tests for RedisConf")
-internal class RedisConfTest {
+@DisplayName("Tests for ValkeyConf")
+internal class ValkeyConfTest {
 
     @Test
-    @DisplayName("RedisConf should throw exception for blank keyword")
+    @DisplayName("ValkeyConf should throw exception for blank keyword")
     fun blankKeyword_shouldThrowException() {
-        assertThatThrownBy { RedisConf(listOf(RedisConf.Directive(""))) }
+        assertThatThrownBy { ValkeyConf(listOf(Directive(""))) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Keyword must not be blank")
     }
 
     @Test
-    @DisplayName("RedisConf should throw exception for missing argument")
+    @DisplayName("ValkeyConf should throw exception for missing argument")
     fun missingArgument_shouldThrowException() {
-        assertThatThrownBy { RedisConf(listOf(RedisConf.Directive("dummy"))) }
+        assertThatThrownBy { ValkeyConf(listOf(Directive("dummy"))) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("At least one argument is required")
     }

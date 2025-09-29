@@ -1,11 +1,12 @@
 package redis.embedded;
 
 
+import io.github.tobi.laa.embedded.valkey.conf.Directive;
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfLocator;
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.embedded.model.RedisConfig;
 import redis.embedded.util.IO;
-import redis.embedded.util.RedisConfigParser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -151,26 +151,25 @@ public abstract class RedisInstance implements Redis {
     }
 
     private void findAndDeleteClusterConfigFiles() {
-        findRedisConfigFile().ifPresent(this::findAndDeleteClusterConfigFiles);
+        findAndDeleteClusterConfigFiles(findRedisConfigFile());
     }
 
-    private Optional<Path> findRedisConfigFile() {
-        return args.stream().filter(arg -> arg.endsWith(".conf")).findFirst().map(Paths::get);
+    private Path findRedisConfigFile() {
+        return ValkeyConfLocator.INSTANCE.locate(this);
     }
 
     private void findAndDeleteClusterConfigFiles(final Path redisConfig) {
         try {
-            final RedisConfig config = new RedisConfigParser().parse(redisConfig);
+            final var config = ValkeyConfParser.INSTANCE.parse(redisConfig);
             config.directives("cluster-config-file")
                     .stream()
-                    .map(RedisConfig.Directive::arguments)
+                    .map(Directive::getArguments)
                     .flatMap(List::stream)
                     .map(clusterConfFile -> getRedisDir().resolve(clusterConfFile))
                     .forEach(IO::deleteSafely);
         } catch (IOException e) {
             LOGGER.error("Unable to parse redis config file", e);
         }
-
     }
 
     public boolean isActive() {

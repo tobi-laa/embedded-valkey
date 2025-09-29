@@ -1,65 +1,67 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.conf
+package io.github.tobi.laa.embedded.valkey.conf
 
-import io.github.tobi.laa.spring.boot.embedded.redis.conf.RedisConfParser.ArgsParseState.*
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.readLines
 
 /**
- * Parses a `redis.conf` file.
+ * Parses a `valkey.conf` file.
  */
-internal object RedisConfParser {
+object ValkeyConfParser {
 
     /**
-     * Parses the given `redis.conf` file.
-     * @param file the `redis.conf` file to parse
-     * @return the parsed [RedisConf] file
-     * @throws IllegalArgumentException if the file is not a valid `redis.conf` file
+     * Parses the given `valkey.conf` file.
+     * @param file the `valkey.conf` file to parse
+     * @return the parsed [ValkeyConf] file
+     * @throws IllegalArgumentException if the file is not a valid `valkey.conf` file
+     * @throws IOException if the file could not be read
      */
-    internal fun parse(file: Path): RedisConf {
+    @Throws(IOException::class)
+    fun parse(file: Path): ValkeyConf {
         val directives = file
             .readLines()
             .map { it.trim() }
             .filterNot { it.isBlank() }
             .filterNot { isComment(it) }
             .map { parseDirective(it) }
-        return RedisConf(directives)
+        return ValkeyConf(directives)
     }
 
     private fun isComment(line: String): Boolean {
         return line.startsWith("#")
     }
 
-    private fun parseDirective(line: String): RedisConf.Directive {
+    private fun parseDirective(line: String): Directive {
         line.split(Regex("\\s+"), 2).let {
             val keyword = it[0]
             val arguments = it.getOrNull(1) ?: throw IllegalArgumentException("No arguments found in line: '$line'")
-            return RedisConf.Directive(keyword, parseArguments(arguments))
+            return Directive(keyword, parseArguments(arguments))
         }
     }
 
     private fun parseArguments(rawArguments: String): List<String> {
         val arguments = mutableListOf<String>()
-        var state = UNESCAPED
+        var state = ArgsParseState.UNESCAPED
         var currentArg = ""
         for (char in rawArguments) {
             when {
-                char == '"' && state == UNESCAPED -> {
-                    state = ESCAPED_DOUBLE
+                char == '"' && state == ArgsParseState.UNESCAPED -> {
+                    state = ArgsParseState.ESCAPED_DOUBLE
                 }
 
-                char == '\'' && state == UNESCAPED -> {
-                    state = ESCAPED_SINGLE
+                char == '\'' && state == ArgsParseState.UNESCAPED -> {
+                    state = ArgsParseState.ESCAPED_SINGLE
                 }
 
-                char == '"' && state == ESCAPED_DOUBLE -> {
-                    state = UNESCAPED
+                char == '"' && state == ArgsParseState.ESCAPED_DOUBLE -> {
+                    state = ArgsParseState.UNESCAPED
                 }
 
-                char == '\'' && state == ESCAPED_SINGLE -> {
-                    state = UNESCAPED
+                char == '\'' && state == ArgsParseState.ESCAPED_SINGLE -> {
+                    state = ArgsParseState.UNESCAPED
                 }
 
-                char == ' ' && state == UNESCAPED -> {
+                char == ' ' && state == ArgsParseState.UNESCAPED -> {
                     arguments.add(currentArg)
                     currentArg = ""
                 }
@@ -70,7 +72,7 @@ internal object RedisConfParser {
             }
         }
         when {
-            state != UNESCAPED -> {
+            state != ArgsParseState.UNESCAPED -> {
                 throw IllegalArgumentException("Unbalanced quotes in arguments: '$rawArguments'")
             }
 
