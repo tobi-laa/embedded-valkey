@@ -4,32 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.createTempDirectory;
 
 public enum IO {
     ;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IO.class);
-
-    public static File newTempDirForBinary() throws IOException {
-        final File tempDirectory = createDirectories(createTempDirectory("redis-")).toFile();
-        tempDirectory.deleteOnExit();
-        return tempDirectory;
-    }
 
     public static Runnable checkedToRuntime(final CheckedRunnable runnable) {
         return () -> {
@@ -86,26 +72,6 @@ public enum IO {
         } catch (final IOException ignored) {
         }
         return ret.toString();
-    }
-
-    public static Stream<String> processToLines(final String command) throws IOException {
-        final Process proc = Runtime.getRuntime().exec(command);
-        return new BufferedReader(new InputStreamReader(proc.getInputStream())).lines();
-    }
-
-    public static Path findBinaryInPath(final String name) throws FileNotFoundException {
-        return findBinaryInPath(name, System.getenv("PATH"));
-    }
-
-    private static Path findBinaryInPath(final String name, final String pathVar) throws FileNotFoundException {
-        final Optional<Path> location = Stream.of(pathVar
-                        .split(Pattern.quote(File.pathSeparator)))
-                .map(Paths::get)
-                .map(path -> path.resolve(name))
-                .filter(Files::isRegularFile)
-                .findAny();
-        if (!location.isPresent()) throw new FileNotFoundException("Could not find binary '" + name + "' in PATH");
-        return location.get();
     }
 
     public static void deleteSafely(final Path path) {
