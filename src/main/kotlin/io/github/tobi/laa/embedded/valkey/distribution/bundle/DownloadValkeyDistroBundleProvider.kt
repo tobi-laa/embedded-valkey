@@ -12,6 +12,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.security.MessageDigest
 import kotlin.io.path.createDirectories
 import kotlin.io.path.notExists
 
@@ -38,6 +39,8 @@ class DownloadValkeyDistroBundleProvider(
     internal val downloadUri: URI,
     internal val cacheDownload: Boolean = true,
     internal val cacheFileLocation: Path = resolveDefaultTempFilePath(valkeyVersion, operatingSystem, archiveType),
+    internal val sha256FileChecksum: String? = null,
+    internal val verifyFileChecksum: Boolean = sha256FileChecksum != null,
     internal val downloadLocation: Path = cacheFileLocation
 ) :
     ValkeyDistributionBundleProvider {
@@ -46,12 +49,16 @@ class DownloadValkeyDistroBundleProvider(
 
     init {
         require(valkeyVersion.isNotBlank()) { "Version must not be blank." }
+        require(!verifyFileChecksum || !sha256FileChecksum.isNullOrBlank()) { "SHA-256 checksum must be provided if checksum verification is enabled." }
     }
 
     @Throws(IOException::class)
     override fun provideDistributionBundle(): ValkeyDistributionBundle {
         if (downloadNecessary()) {
             downloadValkeyDistributionBundle()
+        }
+        if (verifyFileChecksum) {
+            verifyValkeyDistributionBundleChecksum()
         }
         copyToDownloadLocation()
         return ValkeyDistributionBundle(
@@ -74,6 +81,35 @@ class DownloadValkeyDistroBundleProvider(
             targetPath.parent.createDirectories()
             newOutputStream(targetPath, TRUNCATE_EXISTING, CREATE).use { httpDownloadStream.copyTo(it) }
             logger.info("Downloaded ${distributionType.displayName} v$valkeyVersion for ${operatingSystem.displayName} to $targetPath")
+        }
+    }
+
+    private fun verifyValkeyDistributionBundleChecksum() {
+        val actualSha256Hash = computeSha256Hashsum(if (cacheDownload) cacheFileLocation else downloadLocation)
+        if (!actualSha256Hash.equals(sha256FileChecksum, ignoreCase = true)) {
+            throw FileChecksumMismatchException(
+                "SHA-256 hash mismatch for ${distributionType.displayName} v$valkeyVersion for ${operatingSystem.displayName} from $downloadUri. Expected: $sha256FileChecksum, Actual: $actualSha256Hash"
+            )
+        }
+        logger.trace(
+            "SHA-256 hash successfully verified for {} v{} for {} from {}.",
+            distributionType.displayName,
+            valkeyVersion,
+            operatingSystem.displayName,
+            downloadUri
+        )
+    }
+
+    private fun computeSha256Hashsum(file: Path): String {
+        return MessageDigest.getInstance("SHA-256").let { digest ->
+            file.toFile().inputStream().use { inputStream ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it) }
         }
     }
 

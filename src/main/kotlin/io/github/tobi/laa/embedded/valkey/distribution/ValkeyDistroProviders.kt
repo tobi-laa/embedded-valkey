@@ -4,11 +4,27 @@ import io.github.tobi.laa.embedded.valkey.distribution.bundle.ArchiveType
 import io.github.tobi.laa.embedded.valkey.distribution.bundle.DownloadValkeyDistroBundleProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
+import org.slf4j.LoggerFactory.getLogger
 import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 
+private val log = getLogger("io.github.tobi.laa.embedded.valkey.distribution")
+
 const val DEFAULT_VALKEY_LINUX_VERSION = "8.1.3"
+
+// SHA-256 file checksums can be retrieved from https://valkey.io/download/ per release
+private val VALKEY_IO_FILE_CHECKSUMS =
+    mapOf(
+        Pair(
+            DEFAULT_VALKEY_LINUX_VERSION,
+            LINUX_X86_64,
+        ) to "afbbf9e71f171472679280f9e06a8039cf3f1ac7ab6dff76ef3094852c7a342f",
+        Pair(
+            DEFAULT_VALKEY_LINUX_VERSION,
+            LINUX_ARM64,
+        ) to "a5f9fc1ed32f8ec56c15665b7edd6fbd4702e0947b1a7eb9f604062ac0c720d0"
+    )
 
 /**
  * Returns a [ValkeyDistributionProvider] which downloads the Valkey distribution for Linux from [valkey.io](https://valkey.io).
@@ -22,6 +38,7 @@ const val DEFAULT_VALKEY_LINUX_VERSION = "8.1.3"
 fun downloadLinuxDistroFromValkeyIo(
     valkeyVersion: String = DEFAULT_VALKEY_LINUX_VERSION,
     operatingSystem: OperatingSystem = LINUX_X86_64,
+    sha256FileChecksum: String? = VALKEY_IO_FILE_CHECKSUMS[Pair(valkeyVersion, operatingSystem)],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
     require(operatingSystem == LINUX_X86_64 || operatingSystem == LINUX_ARM64) {
@@ -32,20 +49,45 @@ fun downloadLinuxDistroFromValkeyIo(
     } else {
         "arm64"
     }
+    if (sha256FileChecksum == null) {
+        logWarnNoChecksum(valkeyVersion, operatingSystem)
+    }
     return DownloadValkeyDistroBundleProvider(
         valkeyVersion = valkeyVersion,
         operatingSystem = operatingSystem,
         binaryPathWithinBundle = Paths.get("valkey-$valkeyVersion-jammy-$arch", "bin", "valkey-server"),
         archiveType = ArchiveType.TAR_GZ,
-        downloadUri = URI("https://download.valkey.io/releases/valkey-$valkeyVersion-jammy-$arch.tar.gz")
+        downloadUri = URI("https://download.valkey.io/releases/valkey-$valkeyVersion-jammy-$arch.tar.gz"),
+        sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
 
 const val DEFAULT_VALKEY_MAC_OS_VERSION = "8.1.3"
-internal val DEFAULT_MAC_OS_BUILD_FILE_PATHS =
+
+// see https://packages.macports.com/valkey/ for possible build file paths
+private val DEFAULT_MACPORTS_BUILD_FILE_PATHS =
     mapOf(
-        MAC_OS_X86_64 to "valkey-${DEFAULT_VALKEY_MAC_OS_VERSION}_0.darwin_24.x86_64.tbz2",
-        MAC_OS_ARM64 to "valkey-${DEFAULT_VALKEY_MAC_OS_VERSION}_0.darwin_25.arm64.tbz2"
+        Pair(
+            DEFAULT_VALKEY_MAC_OS_VERSION,
+            MAC_OS_X86_64
+        ) to "valkey-${DEFAULT_VALKEY_MAC_OS_VERSION}_0.darwin_24.x86_64.tbz2",
+        Pair(
+            DEFAULT_VALKEY_MAC_OS_VERSION,
+            MAC_OS_ARM64
+        ) to "valkey-${DEFAULT_VALKEY_MAC_OS_VERSION}_0.darwin_25.arm64.tbz2"
+    )
+
+// MacPorts does not publish SHA-256 checksums, so these have been computed manually
+private val DEFAULT_MACPORTS_CHECKSUMS =
+    mapOf(
+        DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(
+            DEFAULT_VALKEY_MAC_OS_VERSION,
+            MAC_OS_X86_64
+        )]!! to "0ed1125217309f41220aa47a7e1b6ad421c51bba890c80c0086f3a3c634e4231",
+        DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(
+            DEFAULT_VALKEY_MAC_OS_VERSION,
+            MAC_OS_ARM64
+        )]!! to "b17b01d144df854c5cdbaea7b56c24718e99a18d8b00828b7ea2568a0df44a14"
     )
 
 /**
@@ -53,29 +95,42 @@ internal val DEFAULT_MAC_OS_BUILD_FILE_PATHS =
  * [MacPorts](https://www.macports.org/).
  *
  * @param valkeyVersion The Valkey version to download. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
- * @param architecture The architecture of the Valkey distribution to download. Defaults to [X86_64].
+ * @param operatingSystem The operating system of the Valkey distribution to download. Must be either [MAC_OS_X86_64] or [MAC_OS_ARM64].
+ * @param buildFilePath The build file path within the MacPorts package repository. This *must* be specified if a (non-default) Valkey version should be downloaded.
+ * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-8.1.3_0.darwin_24.x86_64.tbz2`.
  * @param installationPath The path where the Valkey distribution should be installed. If `null`, a temporary directory will be used.
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Valkey distro for macOS.
  */
 fun downloadMacOsDistroFromMacports(
     valkeyVersion: String = DEFAULT_VALKEY_MAC_OS_VERSION,
     operatingSystem: OperatingSystem = MAC_OS_X86_64,
+    buildFilePath: String = DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(valkeyVersion, operatingSystem)]
+        ?: throw IllegalArgumentException("No MacPorts build file path found for Valkey version $valkeyVersion and operating system ${operatingSystem.displayName}."),
+    sha256FileChecksum: String? = DEFAULT_MACPORTS_CHECKSUMS[buildFilePath],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
     require(operatingSystem == MAC_OS_X86_64 || operatingSystem == MAC_OS_ARM64) {
         "Operating system must be either $MAC_OS_X86_64 or $MAC_OS_ARM64."
     }
-    val buildFilePath = DEFAULT_MAC_OS_BUILD_FILE_PATHS[operatingSystem]!!
+    if (sha256FileChecksum == null) {
+        logWarnNoChecksum(valkeyVersion, operatingSystem)
+    }
     return DownloadValkeyDistroBundleProvider(
         valkeyVersion = valkeyVersion,
         operatingSystem = operatingSystem,
         binaryPathWithinBundle = Paths.get("opt", "local", "bin", "valkey-server"),
         archiveType = ArchiveType.TAR_BZ2,
-        downloadUri = URI("https://packages.macports.com/valkey/$buildFilePath")
+        downloadUri = URI("https://packages.macports.com/valkey/$buildFilePath"),
+        sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
 
 const val DEFAULT_MEMURAI_VERSION = "4.1.6"
+
+// SHA-256 file checksums are not published on NuGet, so these have been computed manually
+private val NUGET_FILE_CHECKSUMS = mapOf(
+    DEFAULT_MEMURAI_VERSION to "768cfe17324111a7ad18b4190879dded8d7531fb85b22a006e8e2b3aca4f0a4c"
+)
 
 /**
  * Returns a [ValkeyDistributionProvider] which downloads the Memurai Developer Edition for Windows x64 from
@@ -87,15 +142,20 @@ const val DEFAULT_MEMURAI_VERSION = "4.1.6"
  */
 fun downloadMemuraiDeveloperForX64FromNuget(
     memuraiVersion: String = DEFAULT_MEMURAI_VERSION,
+    sha256FileChecksum: String? = NUGET_FILE_CHECKSUMS[memuraiVersion],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
+    if (sha256FileChecksum == null) {
+        log.warn("No SHA-256 checksum present for Memurai Developer version $memuraiVersion. File integrity will not be verified!")
+    }
     return DownloadValkeyDistroBundleProvider(
         valkeyVersion = memuraiVersion,
         operatingSystem = WINDOWS_X86_64,
         distributionType = DistributionType.MEMURAI,
         binaryPathWithinBundle = Paths.get("tools", "memurai.exe"),
         archiveType = ArchiveType.ZIP,
-        downloadUri = URI("https://www.nuget.org/api/v2/package/MemuraiDeveloper/$memuraiVersion")
+        downloadUri = URI("https://www.nuget.org/api/v2/package/MemuraiDeveloper/$memuraiVersion"),
+        sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
 
@@ -107,3 +167,7 @@ val DEFAULT_PROVIDERS: Map<OperatingSystem, ValkeyDistributionProvider> = mapOf(
     MAC_OS_X86_64 to downloadMacOsDistroFromMacports(operatingSystem = MAC_OS_X86_64),
     MAC_OS_ARM64 to downloadMacOsDistroFromMacports(operatingSystem = MAC_OS_ARM64),
 )
+
+private fun logWarnNoChecksum(valkeyVersion: String, operatingSystem: OperatingSystem) {
+    log.warn("No SHA-256 checksum present for Valkey version $valkeyVersion and operating system ${operatingSystem.displayName}. File integrity will not be verified!")
+}
