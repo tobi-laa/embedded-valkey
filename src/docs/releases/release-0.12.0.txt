@@ -1,3 +1,0 @@
-0.12.0
-
-Added force stop option in builder
