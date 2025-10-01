@@ -1,33 +1,35 @@
 package io.github.tobi.laa.embedded.valkey.standalone
 
+import io.github.tobi.laa.embedded.valkey.ValkeyNode
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.process.ValkeyProcess
-import redis.embedded.Redis
 import java.io.IOException
+import java.nio.file.Path
 
-class ValkeyStandalone(private val distroProvider: ValkeyDistributionProvider, private val conf: ValkeyConf) : Redis {
+class ValkeyStandalone(private val distroProvider: ValkeyDistributionProvider, override val config: ValkeyConf) :
+    ValkeyNode {
+
+    override val active: Boolean get() = process?.active ?: false
+    override val port: Int get() = config.port() ?: throw IllegalStateException("Port not configured")
+    override val binds: List<String> get() = config.binds()
+    override val workingDirectory: Path
+        get() = process?.workingDirectory ?: throw IllegalStateException("Process not started")
 
     private var process: ValkeyProcess? = null
 
-    override fun active() = process?.active ?: false
-
     @Throws(IOException::class)
-    override fun start() {
+    override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
         val distro = distroProvider.provideDistribution()
         if (process == null) {
-            process = ValkeyProcess(valkeyDistribution = distro, config = conf)
+            process = ValkeyProcess(valkeyDistribution = distro, config = config)
         }
-        process!!.start()
+        process!!.start(awaitReadiness, maxWaitTimeSeconds)
     }
 
     @Throws(IOException::class)
-    override fun stop() {
-        process?.stop()
-    }
-
-    override fun ports(): MutableList<Int?> {
-        return mutableListOf(conf.port())
+    override fun stop(forcibly: Boolean, maxWaitTimeSeconds: Long, removeWorkingDir: Boolean) {
+        process?.stop(forcibly, maxWaitTimeSeconds, removeWorkingDir)
     }
 
     companion object {

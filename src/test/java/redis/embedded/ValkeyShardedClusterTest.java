@@ -23,7 +23,7 @@ class ValkeyShardedClusterTest {
 
     @AfterEach
     void stopCluster() throws IOException {
-        if (cluster != null && cluster.active()) {
+        if (cluster != null) {
             cluster.stop();
         }
     }
@@ -40,7 +40,7 @@ class ValkeyShardedClusterTest {
 
     @Test
     void testSimpleOperationsAfterClusterStart() {
-        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getPort()))) {
+        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getNodes().get(0).getPort()))) {
             jc.set("somekey", "somevalue");
             assertEquals("the value should be equal", "somevalue", jc.get("somekey"));
         }
@@ -55,7 +55,7 @@ class ValkeyShardedClusterTest {
                 .shard("master3", 1)
                 .build();
         cluster.start();
-        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getPort()))) {
+        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getNodes().get(0).getPort()))) {
             jc.set("somekey", "somevalue");
             assertEquals("the value should be equal", "somevalue", jc.get("somekey"));
         }
@@ -65,7 +65,7 @@ class ValkeyShardedClusterTest {
     void shouldAllowSubsequentRuns() throws IOException {
         cluster.stop();
         cluster.start();
-        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getPort()))) {
+        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getNodes().get(0).getPort()))) {
             jc.set("somekey", "somevalue");
             assertEquals("the value should be equal", "somevalue", jc.get("somekey"));
         }

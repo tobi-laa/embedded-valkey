@@ -7,16 +7,10 @@ import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
-import static io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel.SENTINEL_READY_PATTERN;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static redis.embedded.util.Collections.newHashSet;
 
@@ -29,11 +23,11 @@ class ValkeySentinelTest {
     @AfterEach
     void stopSentinel() throws IOException {
         try {
-            if (sentinel != null && sentinel.active()) {
+            if (sentinel != null && sentinel.getActive()) {
                 sentinel.stop();
             }
         } finally {
-            if (server != null && server.active()) {
+            if (server != null && server.getActive()) {
                 server.stop();
             }
         }
@@ -89,25 +83,6 @@ class ValkeySentinelTest {
             }
             sentinel.stop();
             server.stop();
-        }
-    }
-
-    @Test
-    void testAwaitRedisSentinelReady() throws Exception {
-        assertReadyPattern("/redis-2.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
-        assertReadyPattern("/redis-3.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
-        assertReadyPattern("/redis-4.x-sentinel-startup-output.txt", SENTINEL_READY_PATTERN);
-    }
-
-    private static void assertReadyPattern(final String resourcePath, final Pattern readyPattern) throws IOException {
-        final InputStream in = ValkeyStandaloneTest.class.getResourceAsStream(resourcePath);
-        assertNotNull(in);
-        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-            String line;
-            do {
-                line = reader.readLine();
-                assertNotNull(line);
-            } while (!readyPattern.matcher(line).matches());
         }
     }
 

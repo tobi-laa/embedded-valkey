@@ -7,7 +7,8 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
-import redis.embedded.Redis
+import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_SENTINEL_PORT
+import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -26,7 +27,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
 
     init {
         valkeyConfBuilder.binds("::1", "127.0.0.1")
-        valkeyConfBuilder.port(Redis.DEFAULT_SENTINEL_PORT)
+        valkeyConfBuilder.port(DEFAULT_SENTINEL_PORT)
     }
 
     fun distributionProvider(distributionProvider: ValkeyDistributionProvider): ValkeySentinelBuilder {
@@ -87,7 +88,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
 
     fun build(): ValkeySentinel {
         if (replicationGroups.isEmpty()) {
-            monitor("mymain", Redis.DEFAULT_REDIS_PORT)
+            monitor("mymain", DEFAULT_VALKEY_PORT)
         } else {
             replicationGroups.forEach {
                 monitor(it.mainNodeName, it.mainNodePort)
@@ -95,7 +96,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
         }
         return ValkeySentinel(
             distroProvider = distributionProvider,
-            conf = valkeyConfBuilder.build(),
+            config = valkeyConfBuilder.build(),
         )
     }
 

@@ -1,5 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.cluster.sharded
 
+import io.github.tobi.laa.embedded.valkey.cluster.ValkeyCluster
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -7,7 +8,6 @@ import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisCluster
 import redis.clients.jedis.args.ClusterResetType
-import redis.embedded.Redis
 import java.io.IOException
 import java.time.Duration
 import java.util.*
@@ -20,39 +20,29 @@ private val SLEEP_DURATION: Duration = Duration.ofMillis(300)
 private val SLEEP_DURATION_IN_MILLIS: Long = SLEEP_DURATION.toMillis()
 
 class ValkeyShardedCluster(
-    val servers: List<ValkeyStandalone>,
+    override val nodes: List<ValkeyStandalone>,
     private val replicasPortsByMainNodePort: Map<Int, MutableSet<Int>>,
     private val initializationTimeout: Duration
-) : Redis {
+) : ValkeyCluster {
 
     private val log: Logger = LoggerFactory.getLogger(ValkeyShardedCluster::class.java)
 
     private val mainNodeIdsByPort: MutableMap<Int, String> = LinkedHashMap<Int, String>()
 
-    override fun active(): Boolean {
-        for (redis in servers) {
-            if (!redis.active()) {
-                return false
-            }
-        }
-        return true
-    }
-
     @Throws(IOException::class)
-    override fun start() {
-        for (redis in servers) {
-            redis.start()
+    override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
+        for (node in nodes) {
+            node.start(awaitReadiness, maxWaitTimeSeconds)
         }
-
         linkReplicasAndShards()
     }
 
     @Throws(IOException::class)
-    override fun stop() {
+    override fun stop(forcibly: Boolean, maxWaitTimeSeconds: Long, removeWorkingDir: Boolean) {
         val exceptions: MutableList<Exception> = ArrayList<Exception>()
         exceptions.addAll(safelyPerformFlushAllAndSoftClusterResetOnMainNodes())
-        for (redis in servers) {
-            stopSafely(redis)?.let(exceptions::add)
+        for (node in nodes) {
+            stopSafely(node, forcibly, maxWaitTimeSeconds, removeWorkingDir)?.let(exceptions::add)
         }
         if (!exceptions.isEmpty()) {
             throw IOException("Failed to stop Redis cluster", exceptions.get(0))
@@ -75,9 +65,14 @@ class ValkeyShardedCluster(
         return errors
     }
 
-    private fun stopSafely(redis: Redis): Exception? {
+    private fun stopSafely(
+        node: ValkeyStandalone,
+        forcibly: Boolean,
+        maxWaitTimeSeconds: Long,
+        removeWorkingDir: Boolean
+    ): Exception? {
         try {
-            redis.stop()
+            node.stop(forcibly, maxWaitTimeSeconds, removeWorkingDir)
             return null
         } catch (e: IOException) {
             log.error("Failed to stop Redis instance", e)
@@ -88,20 +83,9 @@ class ValkeyShardedCluster(
         }
     }
 
-    override fun ports(): List<Int> {
-        return ArrayList<Int>(serverPorts())
+    fun serverPorts(): List<Int> {
+        return nodes.map { it.port }.toList()
     }
-
-    fun serverPorts(): MutableList<Int?> {
-        val ports: MutableList<Int?> = ArrayList<Int?>()
-        for (redis in servers) {
-            ports.addAll(redis.ports())
-        }
-        return ports
-    }
-
-    val port: Int
-        get() = this.ports().get(0)
 
     private fun linkReplicasAndShards() {
         try {
@@ -186,7 +170,7 @@ class ValkeyShardedCluster(
     private fun waitForClusterToBeInteractReady() {
         val clusterIsReady = waitForPredicateToPass(Supplier {
             try {
-                JedisCluster(HostAndPort(CLUSTER_IP, this.port)).use { jc ->
+                JedisCluster(HostAndPort(CLUSTER_IP, nodes.first().port)).use { jc ->
                     jc.get("someKey")
                     return@Supplier true
                 }

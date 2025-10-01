@@ -1,6 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.conf
 
-import redis.embedded.Redis
+import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
 
 /**
  * Representation of a `valkey.conf` file, i.e. the configuration of a Valkey server.
@@ -45,6 +45,6 @@ data class ValkeyConf(val directives: List<ValkeyDirective>) {
          * `6379`.
          */
         @JvmStatic
-        val DEFAULT_CONF = ValkeyConfBuilder().bind("::1").port(Redis.DEFAULT_REDIS_PORT).build()
+        val DEFAULT_CONF = ValkeyConfBuilder().bind("::1").port(DEFAULT_VALKEY_PORT).build()
     }
 }

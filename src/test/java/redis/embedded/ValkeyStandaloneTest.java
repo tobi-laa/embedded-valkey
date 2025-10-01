@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 
-import static io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.SERVER_READY_PATTERN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,7 +24,7 @@ class ValkeyStandaloneTest {
 
     @AfterEach
     void stopRedis() throws IOException {
-        if (valkeyStandalone != null && valkeyStandalone.active()) {
+        if (valkeyStandalone != null && valkeyStandalone.getActive()) {
             valkeyStandalone.stop();
         }
     }
@@ -74,14 +73,14 @@ class ValkeyStandaloneTest {
     @Test
     void shouldIndicateInactiveBeforeStart() throws IOException {
         valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
-        assertFalse(valkeyStandalone.active());
+        assertFalse(valkeyStandalone.getActive());
     }
 
     @Test
     void shouldIndicateActiveAfterStart() throws IOException {
         valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
         valkeyStandalone.start();
-        assertTrue(valkeyStandalone.active());
+        assertTrue(valkeyStandalone.getActive());
     }
 
     @Test
@@ -89,7 +88,7 @@ class ValkeyStandaloneTest {
         valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
         valkeyStandalone.start();
         valkeyStandalone.stop();
-        assertFalse(valkeyStandalone.active());
+        assertFalse(valkeyStandalone.getActive());
     }
 
 //    @Disabled
@@ -120,13 +119,6 @@ class ValkeyStandaloneTest {
 //                .executableProvider(newJarResourceProvider(buggyMap))
 //                .build()).isExactlyInstanceOf(FileNotFoundException.class);
 //    }
-
-    @Test
-    void testAwaitRedisServerReady() throws IOException {
-        testReadyPattern("/redis-2.x-standalone-startup-output.txt", SERVER_READY_PATTERN);
-        testReadyPattern("/redis-3.x-standalone-startup-output.txt", SERVER_READY_PATTERN);
-        testReadyPattern("/redis-4.x-standalone-startup-output.txt", SERVER_READY_PATTERN);
-    }
 
     private static void testReadyPattern(final String resourcePath, final Pattern readyPattern) throws IOException {
         final InputStream in = ValkeyStandaloneTest.class.getResourceAsStream(resourcePath);

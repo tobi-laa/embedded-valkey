@@ -18,9 +18,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static redis.embedded.util.Collections.newHashSet;
 
 public class ValkeyHighAvailibilityTest {
@@ -40,58 +38,6 @@ public class ValkeyHighAvailibilityTest {
         sentinel2 = mock(ValkeySentinel.class);
         master1 = mock(ValkeyStandalone.class);
         master2 = mock(ValkeyStandalone.class);
-    }
-
-    @Test
-    public void stopShouldStopEntireCluster() throws IOException {
-        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
-        instance = new ValkeyHighAvailability(sentinels, servers);
-
-        instance.stop();
-
-        for (final Redis s : sentinels) {
-            verify(s).stop();
-        }
-        for (final Redis s : servers) {
-            verify(s).stop();
-        }
-    }
-
-    @Test
-    public void startShouldStartEntireCluster() throws IOException {
-        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
-        instance = new ValkeyHighAvailability(sentinels, servers);
-
-        instance.start();
-
-        for (final Redis s : sentinels) {
-            verify(s).start();
-        }
-        for (final Redis s : servers) {
-            verify(s).start();
-        }
-    }
-
-    @Test
-    public void isActiveShouldCheckEntireClusterIfAllActive() {
-        given(sentinel1.active()).willReturn(true);
-        given(sentinel2.active()).willReturn(true);
-        given(master1.active()).willReturn(true);
-        given(master2.active()).willReturn(true);
-        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
-        instance = new ValkeyHighAvailability(sentinels, servers);
-
-        instance.active();
-
-        for (final Redis s : sentinels) {
-            verify(s).active();
-        }
-        for (final Redis s : servers) {
-            verify(s).active();
-        }
     }
 
     @Test

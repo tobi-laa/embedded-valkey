@@ -5,7 +5,7 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
-import redis.embedded.Redis
+import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,7 +16,7 @@ class ValkeyStandaloneBuilder {
 
     init {
         valkeyConfBuilder.binds("::1", "127.0.0.1")
-        port(Redis.DEFAULT_REDIS_PORT)
+        port(DEFAULT_VALKEY_PORT)
     }
 
     fun distributionProvider(distributionProvider: ValkeyDistributionProvider): ValkeyStandaloneBuilder {
