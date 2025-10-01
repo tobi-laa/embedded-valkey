@@ -30,6 +30,11 @@ class ValkeyConfBuilder(private val directives: MutableList<ValkeyDirective> = m
         return directive(ValkeyDirective.KEYWORD_BIND, address)
     }
 
+    fun binds(vararg addresses: String): ValkeyConfBuilder {
+        directives.removeIf { it.keyword == ValkeyDirective.KEYWORD_BIND }
+        return directive(ValkeyDirective.KEYWORD_BIND, *addresses)
+    }
+
     fun port(port: Int): ValkeyConfBuilder {
         check(port in 1..65535) { "Port must be between 1 and 65535" }
         directives.removeIf { it.keyword == ValkeyDirective.KEYWORD_PORT }

@@ -1,10 +1,10 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinelBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
-import redis.embedded.core.RedisSentinelBuilder;
 import redis.embedded.util.JedisUtil;
 
 import java.io.IOException;
@@ -13,17 +13,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel.builder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static redis.embedded.RedisCluster.newRedisCluster;
-import static redis.embedded.RedisSentinel.newRedisSentinel;
 import static redis.embedded.util.Collections.newHashSet;
 
 public class RedisClusterTest {
-    private final RedisSentinelBuilder sentinelBuilder = newRedisSentinel();
+    private final ValkeySentinelBuilder sentinelBuilder = builder();
     private String bindAddress;
 
     private Redis sentinel1;

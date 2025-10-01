@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 public interface Redis {
     int DEFAULT_REDIS_PORT = 6379;
+    int DEFAULT_SENTINEL_PORT = 26379;
     Pattern SERVER_READY_PATTERN = Pattern.compile(".*[Rr]eady to accept connections.*");
     Pattern SENTINEL_READY_PATTERN = Pattern.compile(".*Sentinel (runid|ID) is.*");
 

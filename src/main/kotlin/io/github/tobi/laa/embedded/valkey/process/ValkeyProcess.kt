@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.absolutePathString
 
-private val SERVER_READY_PATTERN = Regex(".*[Rr]eady to accept connections.*")
-
 class ValkeyProcess
 @JvmOverloads
 constructor(
@@ -25,7 +23,7 @@ constructor(
     ),
     val config: ValkeyConf = ValkeyConf.DEFAULT_CONF,
     val charset: Charset = Charsets.UTF_8,
-    val args: List<String> = emptyList(),
+    val sentinel: Boolean = false,
     internal val stdoutLogLevel: Level = Level.DEBUG,
     internal val stderrLogLevel: Level = Level.ERROR
 ) {
@@ -35,6 +33,11 @@ constructor(
     private val lock = ReentrantLock()
 
     private val configFile: Path = workingDirectory.resolve("valkey.conf")
+
+    private val readyPattern =
+        if (sentinel) Regex(".*Sentinel (runid|ID) is.*") else Regex(".*[Rr]eady to accept connections.*")
+
+    private lateinit var args: List<String>
 
     private lateinit var process: Process
 
@@ -72,8 +75,8 @@ constructor(
                 log.warn("Process has already been started: {}", this)
                 return
             }
-            log.info("🚀 Starting Valkey process: {}", this)
             createValkeyConfFile()
+            buildArgs()
             buildAndStartProcess()
             startStdoutStderrConsumingThreads()
             addShutdownHook()
@@ -91,9 +94,17 @@ constructor(
         log.debug("✍️ Wrote Valkey config to file: {}", configFile)
     }
 
+    private fun buildArgs() {
+        val args = mutableListOf(configFile.absolutePathString())
+        if (sentinel) {
+            args.add("--sentinel")
+        }
+        this.args = args.toList()
+    }
+
     private fun buildAndStartProcess() {
         val processBuilder = ProcessBuilder()
-            .command(listOf(valkeyDistribution.binaryPath.toString()) + configFile.absolutePathString() + args)
+            .command(listOf(valkeyDistribution.binaryPath.toString()) + args)
             .directory(workingDirectory.toFile())
         process = processBuilder.start()
     }
@@ -104,7 +115,7 @@ constructor(
                 try {
                     process.inputReader().useLines { lines ->
                         lines.forEach { line ->
-                            if (SERVER_READY_PATTERN.matches(line)) {
+                            if (readyPattern.matches(line)) {
                                 ready = true
                             }
                             log.atLevel(stdoutLogLevel)

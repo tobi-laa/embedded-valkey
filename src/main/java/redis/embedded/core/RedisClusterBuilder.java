@@ -1,5 +1,6 @@
 package redis.embedded.core;
 
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinelBuilder;
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandaloneBuilder;
 import redis.embedded.Redis;
@@ -18,7 +19,7 @@ import static redis.embedded.core.PortProvider.newSequencePortProvider;
 
 public final class RedisClusterBuilder {
 
-    private RedisSentinelBuilder sentinelBuilder = new RedisSentinelBuilder();
+    private ValkeySentinelBuilder sentinelBuilder = new ValkeySentinelBuilder();
     private ValkeyStandaloneBuilder serverBuilder = new ValkeyStandaloneBuilder();
     private int sentinelCount = 1;
     private int quorumSize = 1;
@@ -26,7 +27,7 @@ public final class RedisClusterBuilder {
     private PortProvider replicationGroupPortProvider = newSequencePortProvider(6379);
     private final List<ReplicationGroup> groups = new LinkedList<>();
 
-    public RedisClusterBuilder withSentinelBuilder(final RedisSentinelBuilder sentinelBuilder) {
+    public RedisClusterBuilder withSentinelBuilder(final ValkeySentinelBuilder sentinelBuilder) {
         this.sentinelBuilder = sentinelBuilder;
         return this;
     }
@@ -122,15 +123,12 @@ public final class RedisClusterBuilder {
     }
 
     private Redis buildSentinel() {
-        sentinelBuilder.reset();
-        sentinelBuilder.port(nextSentinelPort());
+        var sentinelBuilder2 = this.sentinelBuilder.clone();
+        sentinelBuilder2.port(nextSentinelPort());
         for (final ReplicationGroup group : groups) {
-            sentinelBuilder.masterName(group.masterName);
-            sentinelBuilder.masterPort(group.masterPort);
-            sentinelBuilder.quorumSize(quorumSize);
-            sentinelBuilder.addDefaultReplicationGroup();
+            sentinelBuilder2.monitor(group);
         }
-        return sentinelBuilder.build();
+        return sentinelBuilder2.build();
     }
 
     private int nextSentinelPort() {

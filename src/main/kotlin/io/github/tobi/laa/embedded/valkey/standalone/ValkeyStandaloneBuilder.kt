@@ -15,9 +15,7 @@ class ValkeyStandaloneBuilder {
     private val valkeyConfBuilder = ValkeyConfBuilder()
 
     init {
-        bind("::1")
-        bind("127.0.0.1")
-        bind("localhost")
+        valkeyConfBuilder.binds("::1", "127.0.0.1")
         port(Redis.DEFAULT_REDIS_PORT)
     }
 

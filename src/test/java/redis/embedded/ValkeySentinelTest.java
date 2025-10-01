@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel;
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -13,16 +14,16 @@ import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel.SENTINEL_READY_PATTERN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static redis.embedded.RedisSentinel.SENTINEL_READY_PATTERN;
 import static redis.embedded.util.Collections.newHashSet;
 
-class RedisSentinelTest {
+class ValkeySentinelTest {
     private final String bindAddress = "localhost";
 
-    private RedisSentinel sentinel;
+    private ValkeySentinel sentinel;
     private ValkeyStandalone server;
 
     @AfterEach
@@ -41,7 +42,7 @@ class RedisSentinelTest {
     @Test
     void testSimpleRun() throws InterruptedException, IOException {
         server = ValkeyStandalone.builder().build();
-        sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
+        sentinel = ValkeySentinel.builder().bind(bindAddress).build();
         sentinel.start();
         server.start();
         TimeUnit.SECONDS.sleep(1);
@@ -51,7 +52,7 @@ class RedisSentinelTest {
 
     @Test
     void shouldAllowSubsequentRuns() throws IOException {
-        sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
+        sentinel = ValkeySentinel.builder().bind(bindAddress).build();
         sentinel.start();
         sentinel.stop();
 
@@ -65,14 +66,14 @@ class RedisSentinelTest {
     @Test
     void testSimpleOperationsAfterRun() throws IOException {
         server = ValkeyStandalone.builder().build();
-        sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
+        sentinel = ValkeySentinel.builder().bind(bindAddress).build();
         server.start();
         sentinel.start();
 
         JedisSentinelPool pool = null;
         Jedis jedis = null;
         try {
-            pool = new JedisSentinelPool("mymaster", newHashSet("localhost:26379"));
+            pool = new JedisSentinelPool("mymain", newHashSet("localhost:26379"));
             jedis = pool.getResource();
             jedis.mset("abc", "1", "def", "2");
 

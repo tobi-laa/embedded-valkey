@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@FunctionalInterface
 public interface PortProvider {
     // Redis uses a cluster bus port as the first node port + 10000, so we need to make sure we use ports lower than
     // 55535 to ensure we always get a valid cluster bus port. We chose 50000 in order to have a safe margin.
@@ -31,7 +32,9 @@ public interface PortProvider {
         final PortProvider ephemeralPortProvider = newEphemeralPortProvider();
         return () -> {
             int port = ephemeralPortProvider.get();
-            while (port > REDIS_CLUSTER_MAX_PORT_EXCLUSIVE) { port = ephemeralPortProvider.get();}
+            while (port > REDIS_CLUSTER_MAX_PORT_EXCLUSIVE) {
+                port = ephemeralPortProvider.get();
+            }
             return port;
         };
     }
