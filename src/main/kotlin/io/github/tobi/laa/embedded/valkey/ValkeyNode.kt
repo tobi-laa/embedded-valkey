@@ -9,6 +9,11 @@ import java.nio.file.Path
 interface ValkeyNode : Valkey {
 
     /**
+     * Indicates whether the Valkey node is currently active (running).
+     */
+    val active: Boolean
+
+    /**
      * The port on which the Valkey node is listening.
      */
     val port: Int

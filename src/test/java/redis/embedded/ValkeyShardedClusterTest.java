@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.cluster.sharded.ValkeyShardedCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,15 +11,15 @@ import redis.clients.jedis.JedisCluster;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static io.github.tobi.laa.embedded.valkey.cluster.sharded.ValkeyShardedCluster.builder;
 import static org.junit.Assert.assertEquals;
-import static redis.embedded.RedisShardedCluster.newRedisCluster;
 
-class RedisShardedClusterTest {
+class ValkeyShardedClusterTest {
 
     @TempDir
     static Path temporaryFolder;
 
-    private RedisShardedCluster cluster;
+    private ValkeyShardedCluster cluster;
 
     @AfterEach
     void stopCluster() throws IOException {
@@ -29,7 +30,7 @@ class RedisShardedClusterTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        cluster = newRedisCluster()
+        cluster = builder()
                 .shard("master1", 1)
                 .shard("master2", 1)
                 .shard("master3", 1)
@@ -48,7 +49,7 @@ class RedisShardedClusterTest {
     @Test
     void testSimpleOperationsAfterClusterWithEphemeralPortsStart() throws IOException {
         cluster.stop();
-        cluster = newRedisCluster().ephemeral()
+        cluster = builder().ephemeral()
                 .shard("master1", 1)
                 .shard("master2", 1)
                 .shard("master3", 1)

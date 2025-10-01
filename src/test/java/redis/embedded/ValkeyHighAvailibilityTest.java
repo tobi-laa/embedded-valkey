@@ -1,6 +1,9 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ValkeyHighAvailability;
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel;
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinelBuilder;
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
@@ -13,39 +16,37 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel.builder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static redis.embedded.RedisCluster.newRedisCluster;
 import static redis.embedded.util.Collections.newHashSet;
 
-public class RedisClusterTest {
-    private final ValkeySentinelBuilder sentinelBuilder = builder();
+public class ValkeyHighAvailibilityTest {
+    private final ValkeySentinelBuilder sentinelBuilder = ValkeySentinel.builder();
     private String bindAddress;
 
-    private Redis sentinel1;
-    private Redis sentinel2;
-    private Redis master1;
-    private Redis master2;
+    private ValkeySentinel sentinel1;
+    private ValkeySentinel sentinel2;
+    private ValkeyStandalone master1;
+    private ValkeyStandalone master2;
 
-    private RedisCluster instance;
+    private ValkeyHighAvailability instance;
 
     @Before
     public void setUp() throws UnknownHostException {
-        sentinel1 = mock(Redis.class);
-        sentinel2 = mock(Redis.class);
-        master1 = mock(Redis.class);
-        master2 = mock(Redis.class);
+        sentinel1 = mock(ValkeySentinel.class);
+        sentinel2 = mock(ValkeySentinel.class);
+        master1 = mock(ValkeyStandalone.class);
+        master2 = mock(ValkeyStandalone.class);
     }
 
     @Test
     public void stopShouldStopEntireCluster() throws IOException {
-        final List<Redis> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<Redis> servers = Arrays.asList(master1, master2);
-        instance = new RedisCluster(sentinels, servers);
+        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
+        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
+        instance = new ValkeyHighAvailability(sentinels, servers);
 
         instance.stop();
 
@@ -59,9 +60,9 @@ public class RedisClusterTest {
 
     @Test
     public void startShouldStartEntireCluster() throws IOException {
-        final List<Redis> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<Redis> servers = Arrays.asList(master1, master2);
-        instance = new RedisCluster(sentinels, servers);
+        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
+        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
+        instance = new ValkeyHighAvailability(sentinels, servers);
 
         instance.start();
 
@@ -79,9 +80,9 @@ public class RedisClusterTest {
         given(sentinel2.active()).willReturn(true);
         given(master1.active()).willReturn(true);
         given(master2.active()).willReturn(true);
-        final List<Redis> sentinels = Arrays.asList(sentinel1, sentinel2);
-        final List<Redis> servers = Arrays.asList(master1, master2);
-        instance = new RedisCluster(sentinels, servers);
+        final List<ValkeySentinel> sentinels = Arrays.asList(sentinel1, sentinel2);
+        final List<ValkeyStandalone> servers = Arrays.asList(master1, master2);
+        instance = new ValkeyHighAvailability(sentinels, servers);
 
         instance.active();
 
@@ -95,7 +96,7 @@ public class RedisClusterTest {
 
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterNoSlavesCluster() throws IOException {
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelCount(1)
                 .replicationGroup("ourmaster", 0)
@@ -120,7 +121,7 @@ public class RedisClusterTest {
 
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterAndOneSlave() throws IOException {
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelCount(1)
                 .replicationGroup("ourmaster", 1)
@@ -145,7 +146,7 @@ public class RedisClusterTest {
 
     @Test
     public void testSimpleOperationsAfterRunWithSingleMasterMultipleSlaves() throws IOException {
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelCount(1)
                 .replicationGroup("ourmaster", 2)
@@ -170,7 +171,7 @@ public class RedisClusterTest {
 
     @Test
     public void testSimpleOperationsAfterRunWithTwoSentinelsSingleMasterMultipleSlaves() throws IOException {
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelCount(2)
                 .replicationGroup("ourmaster", 2)
@@ -196,7 +197,7 @@ public class RedisClusterTest {
     @Test
     public void testSimpleOperationsAfterRunWithTwoPredefinedSentinelsSingleMasterMultipleSlaves() throws IOException {
         final List<Integer> sentinelPorts = Arrays.asList(26381, 26382);
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelPorts(sentinelPorts)
                 .replicationGroup("ourmaster", 2)
@@ -225,7 +226,7 @@ public class RedisClusterTest {
         final String master1 = "master1";
         final String master2 = "master2";
         final String master3 = "master3";
-        final RedisCluster cluster = newRedisCluster()
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
                 .sentinelCount(3)
                 .quorumSize(2)
@@ -276,7 +277,7 @@ public class RedisClusterTest {
         final String master1 = "master1";
         final String master2 = "master2";
         final String master3 = "master3";
-        final RedisCluster cluster = newRedisCluster().withSentinelBuilder(sentinelBuilder)
+        final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder().withSentinelBuilder(sentinelBuilder)
                 .ephemeral().sentinelCount(3).quorumSize(2)
                 .replicationGroup(master1, 1)
                 .replicationGroup(master2, 1)

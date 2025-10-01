@@ -1,19 +1,20 @@
 package redis.embedded.util;
 
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ValkeyHighAvailability;
 import redis.embedded.Redis;
-import redis.embedded.RedisCluster;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public enum JedisUtil {;
+public enum JedisUtil {
+    ;
 
     public static Set<String> jedisHosts(final Redis redis) {
         return portsToJedisHosts(redis.ports());
     }
 
-    public static Set<String> sentinelHosts(final RedisCluster cluster) {
+    public static Set<String> sentinelHosts(final ValkeyHighAvailability cluster) {
         return portsToJedisHosts(cluster.sentinelPorts());
     }
 

@@ -1,5 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.sentinel
 
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
@@ -7,7 +8,6 @@ import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import redis.embedded.Redis
-import redis.embedded.model.ReplicationGroup
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -90,7 +90,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
             monitor("mymain", Redis.DEFAULT_REDIS_PORT)
         } else {
             replicationGroups.forEach {
-                monitor(it.masterName, it.masterPort)
+                monitor(it.mainNodeName, it.mainNodePort)
             }
         }
         return ValkeySentinel(

@@ -8,11 +8,6 @@ import java.io.IOException
 interface Valkey {
 
     /**
-     * Indicates whether the Valkey node or cluster is currently active (running).
-     */
-    val active: Boolean
-
-    /**
      * Starts the Valkey node or cluster.
      *
      * @param awaitServerReady If true, the method will block until the node is (or all nodes are) ready to accept connections.

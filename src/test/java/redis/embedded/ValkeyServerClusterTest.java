@@ -13,7 +13,7 @@ import static io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.bui
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class RedisServerClusterTest {
+public class ValkeyServerClusterTest {
 
     private ValkeyStandalone valkeyStandalone1;
     private ValkeyStandalone valkeyStandalone2;
