@@ -75,6 +75,7 @@ constructor(
                 log.warn("Process has already been started: {}", this)
                 return
             }
+            log.info("🫴 Starting Valkey process: {}", this)
             createValkeyConfFile()
             buildArgs()
             buildAndStartProcess()
@@ -237,6 +238,6 @@ constructor(
     }
 
     override fun toString(): String {
-        return "${valkeyDistribution.distributionType.displayName} v${valkeyDistribution.version} for ${valkeyDistribution.operatingSystem.displayName} (working directory: $workingDirectory, args: $args, pid: ${if (this::process.isInitialized) process.pid() else "not started"})"
+        return "${valkeyDistribution.distributionType.displayName} v${valkeyDistribution.version} for ${valkeyDistribution.operatingSystem.displayName} (working directory: $workingDirectory, args: ${if (this::args.isInitialized) args else "not yet built"}, pid: ${if (this::process.isInitialized) process.pid() else "not started"})"
     }
 }
