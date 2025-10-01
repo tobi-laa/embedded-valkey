@@ -5,18 +5,19 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
-import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
 class ValkeyStandaloneBuilder {
+    
     private var distributionProvider: ValkeyDistributionProvider = DEFAULT_PROVIDERS[detectOperatingSystem()]!!
+    private var portProvider: PortProvider = PortProvider()
     private val valkeyConfBuilder = ValkeyConfBuilder()
 
     init {
         valkeyConfBuilder.binds("::1", "127.0.0.1")
-        port(DEFAULT_VALKEY_PORT)
     }
 
     fun distributionProvider(distributionProvider: ValkeyDistributionProvider): ValkeyStandaloneBuilder {
@@ -62,6 +63,9 @@ class ValkeyStandaloneBuilder {
 
     @Throws(IOException::class)
     fun build(): ValkeyStandalone {
+        if ((valkeyConfBuilder.port() ?: 0) == 0) {
+            valkeyConfBuilder.port(portProvider.next())
+        }
         return ValkeyStandalone(distributionProvider, valkeyConfBuilder.build())
     }
 

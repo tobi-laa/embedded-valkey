@@ -7,8 +7,8 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
 import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
-import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_SENTINEL_PORT
 import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -19,6 +19,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
     constructor() : this(ValkeyConfBuilder())
 
     private var distributionProvider: ValkeyDistributionProvider = DEFAULT_PROVIDERS[detectOperatingSystem()]!!
+    private var portProvider: PortProvider = PortProvider()
     private var downAfterMilliseconds = 60000L
     private var failOverTimeout = 180000L
     private var parallelSyncs = 1
@@ -27,7 +28,6 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
 
     init {
         valkeyConfBuilder.binds("::1", "127.0.0.1")
-        valkeyConfBuilder.port(DEFAULT_SENTINEL_PORT)
     }
 
     fun distributionProvider(distributionProvider: ValkeyDistributionProvider): ValkeySentinelBuilder {
@@ -93,6 +93,9 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
             replicationGroups.forEach {
                 monitor(it.mainNodeName, it.mainNodePort)
             }
+        }
+        if ((valkeyConfBuilder.port() ?: 0) == 0) {
+            valkeyConfBuilder.port(portProvider.next(sentinel = true))
         }
         return ValkeySentinel(
             distroProvider = distributionProvider,

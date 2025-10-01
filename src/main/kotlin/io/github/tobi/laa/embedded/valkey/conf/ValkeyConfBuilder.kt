@@ -41,6 +41,10 @@ class ValkeyConfBuilder(private val directives: MutableList<ValkeyDirective> = m
         return directive(ValkeyDirective.KEYWORD_PORT, port.toString())
     }
 
+    fun port(): Int? {
+        return directives.firstOrNull { it.keyword == ValkeyDirective.KEYWORD_PORT }?.arguments?.firstOrNull()?.toInt()
+    }
+
     fun replicaOf(host: String, port: Int): ValkeyConfBuilder {
         check(port in 1..65535) { "Port must be between 1 and 65535" }
         directives.removeIf { it.keyword == ValkeyDirective.KEYWORD_REPLICAOF }
