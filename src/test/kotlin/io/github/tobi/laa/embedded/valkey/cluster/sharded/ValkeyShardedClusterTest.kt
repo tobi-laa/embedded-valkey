@@ -29,7 +29,7 @@ internal class ValkeyShardedClusterTest {
     fun testSimpleOperationsAfterClusterStart() {
         JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jc ->
             jc.set("somekey", "somevalue")
-            Assertions.assertEquals("the value should be equal", "somevalue", jc.get("somekey"))
+            Assertions.assertEquals("somevalue", jc.get("somekey"))
         }
     }
 
@@ -45,7 +45,7 @@ internal class ValkeyShardedClusterTest {
         cluster!!.start()
         JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jc ->
             jc.set("somekey", "somevalue")
-            Assertions.assertEquals("the value should be equal", "somevalue", jc.get("somekey"))
+            Assertions.assertEquals("somevalue", jc.get("somekey"))
         }
     }
 
@@ -56,7 +56,7 @@ internal class ValkeyShardedClusterTest {
         cluster!!.start()
         JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jc ->
             jc.set("somekey", "somevalue")
-            Assertions.assertEquals("the value should be equal", "somevalue", jc.get("somekey"))
+            Assertions.assertEquals("somevalue", jc.get("somekey"))
         }
     } //    @Test
     //    public void shouldAllowSubsequentRunsInSameDirectory() throws IOException {
