@@ -5,6 +5,7 @@ import io.github.tobi.laa.embedded.valkey.distribution.bundle.DownloadValkeyDist
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
 import org.slf4j.LoggerFactory.getLogger
+import java.net.Proxy
 import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -31,6 +32,10 @@ private val VALKEY_IO_FILE_CHECKSUMS =
  *
  * @param valkeyVersion The Valkey version to download. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].
  * @param operatingSystem The operating system of the Valkey distribution to download. Defaults to [LINUX_X86_64].
+ * @param proxy The proxy to use for downloading the bundle (defaults to not using a proxy).
+ * @param sha256FileChecksum The expected SHA-256 checksum of the downloaded bundle for integrity verification. If `null`, no integrity verification will be performed.
+ * If a checksum is available for the specified version and operating system, it will be used by default.
+ * You can look up checksums for other versions and operating systems on the [Valkey download page](https://valkey.io/download/).
  * @param installationPath The path where the Valkey distribution should be installed. If `null`, a temporary directory will be used.
  *
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Valkey distro for Linux.
@@ -38,6 +43,7 @@ private val VALKEY_IO_FILE_CHECKSUMS =
 fun downloadLinuxDistroFromValkeyIo(
     valkeyVersion: String = DEFAULT_VALKEY_LINUX_VERSION,
     operatingSystem: OperatingSystem = LINUX_X86_64,
+    proxy: Proxy = Proxy.NO_PROXY,
     sha256FileChecksum: String? = VALKEY_IO_FILE_CHECKSUMS[Pair(valkeyVersion, operatingSystem)],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
@@ -58,6 +64,7 @@ fun downloadLinuxDistroFromValkeyIo(
         binaryPathWithinBundle = Paths.get("valkey-$valkeyVersion-jammy-$arch", "bin", "valkey-server"),
         archiveType = ArchiveType.TAR_GZ,
         downloadUri = URI("https://download.valkey.io/releases/valkey-$valkeyVersion-jammy-$arch.tar.gz"),
+        proxy = proxy,
         sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
@@ -98,6 +105,10 @@ private val DEFAULT_MACPORTS_CHECKSUMS =
  * @param operatingSystem The operating system of the Valkey distribution to download. Must be either [MAC_OS_X86_64] or [MAC_OS_ARM64].
  * @param buildFilePath The build file path within the MacPorts package repository. This *must* be specified if a (non-default) Valkey version should be downloaded.
  * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-8.1.3_0.darwin_24.x86_64.tbz2`.
+ * @param proxy The proxy to use for downloading the bundle (defaults to not using a proxy).
+ * @param sha256FileChecksum The expected SHA-256 checksum of the downloaded bundle for integrity verification. If `null`, no integrity verification will be performed.
+ * If a checksum is available for the specified version and operating system, it will be used by default.
+ * As MacPorts does not publish SHA-256 checksums, you will have to compute them manually for other versions and operating systems.
  * @param installationPath The path where the Valkey distribution should be installed. If `null`, a temporary directory will be used.
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Valkey distro for macOS.
  */
@@ -106,6 +117,7 @@ fun downloadMacOsDistroFromMacports(
     operatingSystem: OperatingSystem = MAC_OS_X86_64,
     buildFilePath: String = DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(valkeyVersion, operatingSystem)]
         ?: throw IllegalArgumentException("No MacPorts build file path found for Valkey version $valkeyVersion and operating system ${operatingSystem.displayName}."),
+    proxy: Proxy = Proxy.NO_PROXY,
     sha256FileChecksum: String? = DEFAULT_MACPORTS_CHECKSUMS[buildFilePath],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
@@ -121,6 +133,7 @@ fun downloadMacOsDistroFromMacports(
         binaryPathWithinBundle = Paths.get("opt", "local", "bin", "valkey-server"),
         archiveType = ArchiveType.TAR_BZ2,
         downloadUri = URI("https://packages.macports.com/valkey/$buildFilePath"),
+        proxy = proxy,
         sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
@@ -137,11 +150,16 @@ private val NUGET_FILE_CHECKSUMS = mapOf(
  * [NuGet](https://www.nuget.org/).
  *
  * @param memuraiVersion The Memurai version to download. Defaults to [DEFAULT_MEMURAI_VERSION].
+ * @param proxy The proxy to use for downloading the bundle (defaults to not using a proxy).
+ * @param sha256FileChecksum The expected SHA-256 checksum of the downloaded bundle for integrity verification. If `null`, no integrity verification will be performed.
+ * If a checksum is available for the specified version, it will be used by default.
+ * As NuGet does not publish SHA-256 checksums, you will have to compute them manually for other versions.
  * @param installationPath The path where the Memurai distribution should be installed. If `null`, a temporary directory will be used.
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Memurai Developer Edition for Windows x64.
  */
 fun downloadMemuraiDeveloperForX64FromNuget(
     memuraiVersion: String = DEFAULT_MEMURAI_VERSION,
+    proxy: Proxy = Proxy.NO_PROXY,
     sha256FileChecksum: String? = NUGET_FILE_CHECKSUMS[memuraiVersion],
     installationPath: Path? = null
 ): ValkeyDistributionProvider {
@@ -155,6 +173,7 @@ fun downloadMemuraiDeveloperForX64FromNuget(
         binaryPathWithinBundle = Paths.get("tools", "memurai.exe"),
         archiveType = ArchiveType.ZIP,
         downloadUri = URI("https://www.nuget.org/api/v2/package/MemuraiDeveloper/$memuraiVersion"),
+        proxy = proxy,
         sha256FileChecksum = sha256FileChecksum
     ).thenExtract(installationPath)
 }
