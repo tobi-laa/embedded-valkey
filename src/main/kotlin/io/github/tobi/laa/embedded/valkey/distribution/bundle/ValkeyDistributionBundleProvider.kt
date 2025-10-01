@@ -47,6 +47,7 @@ interface ValkeyDistributionBundleProvider {
                 return ExtractValkeyDistributionProvider(
                     valkeyDistributionBundle = bundle,
                     installationPath = (installationPath ?: resolveDefaultTempInstallationPath(
+                        bundle.distributionType,
                         bundle.version,
                         bundle.operatingSystem
                     )),

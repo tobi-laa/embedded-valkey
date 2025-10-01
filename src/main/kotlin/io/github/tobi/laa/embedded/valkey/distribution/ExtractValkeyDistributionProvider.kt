@@ -29,6 +29,7 @@ import kotlin.io.path.inputStream
 class ExtractValkeyDistributionProvider(
     internal val valkeyDistributionBundle: ValkeyDistributionBundle,
     internal val installationPath: Path = resolveDefaultTempInstallationPath(
+        valkeyDistributionBundle.distributionType,
         valkeyDistributionBundle.version,
         valkeyDistributionBundle.operatingSystem
     ),
@@ -131,10 +132,11 @@ class ExtractValkeyDistributionProvider(
 }
 
 internal fun resolveDefaultTempInstallationPath(
+    distributionType: DistributionType,
     valkeyVersion: String,
     operatingSystem: OperatingSystem
 ): Path = Paths.get(
     systemTempDirectory(),
-    "valkey-$valkeyVersion-${operatingSystem.name.lowercase()}",
-    "valkey-$valkeyVersion-${operatingSystem.name.lowercase()}"
+    "${distributionType.name.lowercase()}-$valkeyVersion-${operatingSystem.name.lowercase()}",
+    "${distributionType.name.lowercase()}-$valkeyVersion-${operatingSystem.name.lowercase()}"
 )
