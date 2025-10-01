@@ -104,7 +104,7 @@ internal class ValkeyConfParserTest {
 
         override fun provideArguments(
             parameters: ParameterDeclarations,
-            extensionContext: ExtensionContext?
+            extensionContext: ExtensionContext
         ): Stream<Arguments> {
             val versions = dir.listDirectoryEntries().map { it.fileName }
             return versions
@@ -126,8 +126,8 @@ internal class ValkeyConfParserTest {
 
         override fun provideArguments(
             parameters: ParameterDeclarations,
-            extensionContext: ExtensionContext?
-        ): Stream<Arguments> {
+            context: ExtensionContext
+        ): Stream<out Arguments> {
             val versions = dir.listDirectoryEntries().map { it.fileName }
             return versions
                 .map {
@@ -148,7 +148,7 @@ internal class ValkeyConfParserTest {
 
         override fun provideArguments(
             parameters: ParameterDeclarations,
-            extensionContext: ExtensionContext?
+            extensionContext: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
                 arguments(
@@ -203,7 +203,7 @@ internal class ValkeyConfParserTest {
 
         override fun provideArguments(
             parameters: ParameterDeclarations,
-            extensionContext: ExtensionContext?
+            extensionContext: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
                 arguments(
