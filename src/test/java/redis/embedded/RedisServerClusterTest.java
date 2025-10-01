@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,24 +9,24 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
 
+import static io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.builder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static redis.embedded.RedisServer.newRedisServer;
 
 public class RedisServerClusterTest {
 
-    private RedisServer redisServer1;
-    private RedisServer redisServer2;
+    private ValkeyStandalone valkeyStandalone1;
+    private ValkeyStandalone valkeyStandalone2;
 
     @Before
     public void setUp() throws IOException {
-        redisServer1 = newRedisServer().port(6300).build();
-        redisServer2 = newRedisServer().port(6301)
-                .slaveOf("localhost", 6300)
+        valkeyStandalone1 = builder().port(6300).build();
+        valkeyStandalone2 = builder().port(6301)
+                .replicaOf("localhost", 6300)
                 .build();
 
-        redisServer1.start();
-        redisServer2.start();
+        valkeyStandalone1.start();
+        valkeyStandalone2.start();
     }
 
     @Test
@@ -53,8 +54,8 @@ public class RedisServerClusterTest {
 
     @After
     public void tearDown() throws IOException {
-        redisServer1.stop();
-        redisServer2.stop();
+        valkeyStandalone1.stop();
+        valkeyStandalone2.stop();
     }
 
 }

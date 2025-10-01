@@ -18,14 +18,14 @@ public final class RedisCluster implements Redis {
     }
 
     @Override
-    public boolean isActive() {
+    public boolean active() {
         for (final Redis redis : sentinels) {
-            if (!redis.isActive()) {
+            if (!redis.active()) {
                 return false;
             }
         }
         for (final Redis redis : servers) {
-            if (!redis.isActive()) {
+            if (!redis.active()) {
                 return false;
             }
         }

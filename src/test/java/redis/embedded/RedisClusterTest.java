@@ -75,21 +75,21 @@ public class RedisClusterTest {
 
     @Test
     public void isActiveShouldCheckEntireClusterIfAllActive() {
-        given(sentinel1.isActive()).willReturn(true);
-        given(sentinel2.isActive()).willReturn(true);
-        given(master1.isActive()).willReturn(true);
-        given(master2.isActive()).willReturn(true);
+        given(sentinel1.active()).willReturn(true);
+        given(sentinel2.active()).willReturn(true);
+        given(master1.active()).willReturn(true);
+        given(master2.active()).willReturn(true);
         final List<Redis> sentinels = Arrays.asList(sentinel1, sentinel2);
         final List<Redis> servers = Arrays.asList(master1, master2);
         instance = new RedisCluster(sentinels, servers);
 
-        instance.isActive();
+        instance.active();
 
         for (final Redis s : sentinels) {
-            verify(s).isActive();
+            verify(s).active();
         }
         for (final Redis s : servers) {
-            verify(s).isActive();
+            verify(s).active();
         }
     }
 

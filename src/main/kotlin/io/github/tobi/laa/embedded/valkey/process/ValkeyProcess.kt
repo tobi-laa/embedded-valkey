@@ -1,22 +1,30 @@
 package io.github.tobi.laa.embedded.valkey.process
 
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfWriter
 import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistribution
 import org.slf4j.LoggerFactory.getLogger
 import org.slf4j.event.Level
 import java.io.IOException
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.io.path.absolutePathString
 
 private val SERVER_READY_PATTERN = Regex(".*[Rr]eady to accept connections.*")
 
-class ValkeyProcess(
+class ValkeyProcess
+@JvmOverloads
+constructor(
     val valkeyDistribution: ValkeyDistribution,
     val workingDirectory: Path = Files.createTempDirectory(
         valkeyDistribution.installationPath,
         "${valkeyDistribution.distributionType.name.lowercase()}-${valkeyDistribution.version}-${valkeyDistribution.operatingSystem.name.lowercase()}"
     ),
+    val config: ValkeyConf = ValkeyConf.DEFAULT_CONF,
+    val charset: Charset = Charsets.UTF_8,
     val args: List<String> = emptyList(),
     internal val stdoutLogLevel: Level = Level.DEBUG,
     internal val stderrLogLevel: Level = Level.ERROR
@@ -25,6 +33,8 @@ class ValkeyProcess(
     private val log = getLogger(ValkeyProcess::class.java)
 
     private val lock = ReentrantLock()
+
+    private val configFile: Path = workingDirectory.resolve("valkey.conf")
 
     private lateinit var process: Process
 
@@ -35,7 +45,8 @@ class ValkeyProcess(
     var active: Boolean = false
         private set
 
-    private var ready: Boolean = false
+    var ready: Boolean = false
+        private set
 
     init {
         require(Files.exists(valkeyDistribution.binaryPath)) {
@@ -53,6 +64,7 @@ class ValkeyProcess(
     }
 
     @Throws(IOException::class)
+    @JvmOverloads
     fun start(awaitServerReady: Boolean = true, maxWaitTimeSeconds: Long = 10) {
         lock.lock()
         try {
@@ -60,6 +72,8 @@ class ValkeyProcess(
                 log.warn("Process has already been started: {}", this)
                 return
             }
+            log.info("🚀 Starting Valkey process: {}", this)
+            createValkeyConfFile()
             buildAndStartProcess()
             startStdoutStderrConsumingThreads()
             addShutdownHook()
@@ -72,9 +86,14 @@ class ValkeyProcess(
         }
     }
 
+    private fun createValkeyConfFile() {
+        ValkeyConfWriter.write(config, configFile, charset)
+        log.debug("✍️ Wrote Valkey config to file: {}", configFile)
+    }
+
     private fun buildAndStartProcess() {
         val processBuilder = ProcessBuilder()
-            .command(listOf(valkeyDistribution.binaryPath.toString()) + args)
+            .command(listOf(valkeyDistribution.binaryPath.toString()) + configFile.absolutePathString() + args)
             .directory(workingDirectory.toFile())
         process = processBuilder.start()
     }
@@ -99,10 +118,7 @@ class ValkeyProcess(
                         }
                     }
                 } catch (e: Exception) {
-                    log.error(
-                        "Error while consuming stdout for $this",
-                        e
-                    )
+                    log.trace("Error while consuming stdout for {}, probably the process has been stopped.", this, e)
                 }
             },
             "${valkeyDistribution.distributionType.name.lowercase()}-${process.pid()}-stdout-consuming-thread"
@@ -124,10 +140,7 @@ class ValkeyProcess(
                         }
                     }
                 } catch (e: Exception) {
-                    log.error(
-                        "Error while consuming stderr for $this",
-                        e
-                    )
+                    log.trace("Error while consuming stderr for {}, probably the process has been stopped.", this, e)
                 }
             },
             "${valkeyDistribution.distributionType.name.lowercase()}-${process.pid()}-stderr-consuming-thread"
@@ -161,6 +174,7 @@ class ValkeyProcess(
     }
 
     @Throws(IOException::class)
+    @JvmOverloads
     fun stop(forcibly: Boolean = false, maxWaitTimeSeconds: Long = 10, removeWorkingDirectory: Boolean = false) {
         lock.lock()
         try {
@@ -168,6 +182,7 @@ class ValkeyProcess(
                 log.warn("Process has already been stopped: {}", this)
                 return
             }
+            log.info("🫷 Stopping Valkey process: {}", this)
             stopProcess(forcibly, maxWaitTimeSeconds)
             stopStdoutStderrConsumingThreads()
             if (removeWorkingDirectory) {

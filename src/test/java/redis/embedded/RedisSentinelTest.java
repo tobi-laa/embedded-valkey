@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
@@ -22,16 +23,16 @@ class RedisSentinelTest {
     private final String bindAddress = "localhost";
 
     private RedisSentinel sentinel;
-    private RedisServer server;
+    private ValkeyStandalone server;
 
     @AfterEach
     void stopSentinel() throws IOException {
         try {
-            if (sentinel != null && sentinel.isActive()) {
+            if (sentinel != null && sentinel.active()) {
                 sentinel.stop();
             }
         } finally {
-            if (server != null && server.isActive()) {
+            if (server != null && server.active()) {
                 server.stop();
             }
         }
@@ -39,7 +40,7 @@ class RedisSentinelTest {
 
     @Test
     void testSimpleRun() throws InterruptedException, IOException {
-        server = new RedisServer();
+        server = ValkeyStandalone.builder().build();
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         sentinel.start();
         server.start();
@@ -63,7 +64,7 @@ class RedisSentinelTest {
 
     @Test
     void testSimpleOperationsAfterRun() throws IOException {
-        server = new RedisServer();
+        server = ValkeyStandalone.builder().build();
         sentinel = RedisSentinel.newRedisSentinel().bind(bindAddress).build();
         server.start();
         sentinel.start();
@@ -98,7 +99,7 @@ class RedisSentinelTest {
     }
 
     private static void assertReadyPattern(final String resourcePath, final Pattern readyPattern) throws IOException {
-        final InputStream in = RedisServerTest.class.getResourceAsStream(resourcePath);
+        final InputStream in = ValkeyStandaloneTest.class.getResourceAsStream(resourcePath);
         assertNotNull(in);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             String line;

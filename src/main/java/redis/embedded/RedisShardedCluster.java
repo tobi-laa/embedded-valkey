@@ -49,9 +49,9 @@ public final class RedisShardedCluster implements Redis {
     }
 
     @Override
-    public boolean isActive() {
+    public boolean active() {
         for (final Redis redis : servers) {
-            if (!redis.isActive()) {
+            if (!redis.active()) {
                 return false;
             }
         }

@@ -1,6 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.conf
 
-data class Directive(val keyword: String, val arguments: List<String>) {
+data class ValkeyDirective(val keyword: String, val arguments: List<String>) {
 
     constructor(keyword: String, vararg arguments: String) : this(keyword, arguments.asList())
 
@@ -10,5 +10,20 @@ data class Directive(val keyword: String, val arguments: List<String>) {
             "Keyword '${keyword}' contains illegal characters. Only alphanumeric characters, hyphens and underscores are allowed"
         }
         require(arguments.isNotEmpty()) { "At least one argument is required" }
+    }
+
+    companion object {
+
+        @JvmStatic
+        val KEYWORD_PORT = "port"
+
+        @JvmField
+        val KEYWORD_BIND = "bind"
+
+        @JvmField
+        val KEYWORD_DIR = "dir"
+
+        @JvmField
+        val KEYWORD_REPLICAOF = "replicaof"
     }
 }

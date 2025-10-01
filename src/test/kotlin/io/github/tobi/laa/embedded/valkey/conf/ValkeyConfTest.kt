@@ -10,7 +10,7 @@ internal class ValkeyConfTest {
     @Test
     @DisplayName("ValkeyConf should throw exception for blank keyword")
     fun blankKeyword_shouldThrowException() {
-        assertThatThrownBy { ValkeyConf(listOf(Directive(""))) }
+        assertThatThrownBy { ValkeyConf(listOf(ValkeyDirective(""))) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Keyword must not be blank")
     }
@@ -18,7 +18,7 @@ internal class ValkeyConfTest {
     @Test
     @DisplayName("ValkeyConf should throw exception for missing argument")
     fun missingArgument_shouldThrowException() {
-        assertThatThrownBy { ValkeyConf(listOf(Directive("dummy"))) }
+        assertThatThrownBy { ValkeyConf(listOf(ValkeyDirective("dummy"))) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("At least one argument is required")
     }

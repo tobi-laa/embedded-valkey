@@ -220,9 +220,9 @@ internal class ValkeyConfParserTest {
                     ),
                     ValkeyConf(
                         listOf(
-                            Directive("bind", "localhost"),
-                            Directive("bind", "127.0.0.1", "::1"),
-                            Directive("port", "6379")
+                            ValkeyDirective("bind", "localhost"),
+                            ValkeyDirective("bind", "127.0.0.1", "::1"),
+                            ValkeyDirective("port", "6379")
                         )
                     )
                 ),
@@ -233,12 +233,12 @@ internal class ValkeyConfParserTest {
                     ),
                     ValkeyConf(
                         listOf(
-                            Directive("tls-protocols", "TLSv1.2 TLSv1.3"),
-                            Directive("logfile", ""),
-                            Directive("proc-title-template", "{title} {listen-addr} {server-mode}"),
-                            Directive("sentinel", "monitor", "Blue-lored Antbird", "::1", "6379", "1"),
-                            Directive("double-quote", "\""),
-                            Directive("single-quote", "'"),
+                            ValkeyDirective("tls-protocols", "TLSv1.2 TLSv1.3"),
+                            ValkeyDirective("logfile", ""),
+                            ValkeyDirective("proc-title-template", "{title} {listen-addr} {server-mode}"),
+                            ValkeyDirective("sentinel", "monitor", "Blue-lored Antbird", "::1", "6379", "1"),
+                            ValkeyDirective("double-quote", "\""),
+                            ValkeyDirective("single-quote", "'"),
                         )
                     )
                 ),
@@ -249,8 +249,8 @@ internal class ValkeyConfParserTest {
                     ),
                     ValkeyConf(
                         listOf(
-                            Directive("bind", "i.like.trains.org"),
-                            Directive("port", "6379")
+                            ValkeyDirective("bind", "i.like.trains.org"),
+                            ValkeyDirective("port", "6379")
                         )
                     )
                 )

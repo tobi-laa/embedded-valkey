@@ -35,7 +35,9 @@ import kotlin.io.path.notExists
  * @param verifyFileChecksum Whether to verify the SHA-256 checksum of the downloaded bundle (is enabled by default if [sha256FileChecksum] is provided).
  * @param downloadLocation The path where the downloaded bundle will be stored (defaults to `cacheFileLocation`).
  */
-class DownloadValkeyDistroBundleProvider(
+class DownloadValkeyDistroBundleProvider
+@JvmOverloads
+constructor(
     internal val valkeyVersion: String,
     internal val operatingSystem: OperatingSystem,
     internal val distributionType: DistributionType = DistributionType.VALKEY,

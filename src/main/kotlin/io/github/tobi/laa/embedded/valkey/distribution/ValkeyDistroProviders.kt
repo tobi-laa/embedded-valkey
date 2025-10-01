@@ -40,6 +40,7 @@ private val VALKEY_IO_FILE_CHECKSUMS =
  *
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Valkey distro for Linux.
  */
+@JvmOverloads
 fun downloadLinuxDistroFromValkeyIo(
     valkeyVersion: String = DEFAULT_VALKEY_LINUX_VERSION,
     operatingSystem: OperatingSystem = LINUX_X86_64,
@@ -112,6 +113,7 @@ private val DEFAULT_MACPORTS_CHECKSUMS =
  * @param installationPath The path where the Valkey distribution should be installed. If `null`, a temporary directory will be used.
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Valkey distro for macOS.
  */
+@JvmOverloads
 fun downloadMacOsDistroFromMacports(
     valkeyVersion: String = DEFAULT_VALKEY_MAC_OS_VERSION,
     operatingSystem: OperatingSystem = MAC_OS_X86_64,
@@ -157,6 +159,7 @@ private val NUGET_FILE_CHECKSUMS = mapOf(
  * @param installationPath The path where the Memurai distribution should be installed. If `null`, a temporary directory will be used.
  * @return A [ValkeyDistributionProvider] that downloads and installs the specified Memurai Developer Edition for Windows x64.
  */
+@JvmOverloads
 fun downloadMemuraiDeveloperForX64FromNuget(
     memuraiVersion: String = DEFAULT_MEMURAI_VERSION,
     proxy: Proxy = Proxy.NO_PROXY,

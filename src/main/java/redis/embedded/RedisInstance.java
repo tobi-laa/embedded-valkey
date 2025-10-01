@@ -1,9 +1,9 @@
 package redis.embedded;
 
 
-import io.github.tobi.laa.embedded.valkey.conf.Directive;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfLocator;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfParser;
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.embedded.util.IO;
@@ -163,7 +163,7 @@ public abstract class RedisInstance implements Redis {
             final var config = ValkeyConfParser.INSTANCE.parse(redisConfig);
             config.directives("cluster-config-file")
                     .stream()
-                    .map(Directive::getArguments)
+                    .map(ValkeyDirective::getArguments)
                     .flatMap(List::stream)
                     .map(clusterConfFile -> getRedisDir().resolve(clusterConfFile))
                     .forEach(IO::deleteSafely);
@@ -172,7 +172,7 @@ public abstract class RedisInstance implements Redis {
         }
     }
 
-    public boolean isActive() {
+    public boolean active() {
         return active;
     }
 

@@ -9,7 +9,7 @@ public interface Redis {
     Pattern SERVER_READY_PATTERN = Pattern.compile(".*[Rr]eady to accept connections.*");
     Pattern SENTINEL_READY_PATTERN = Pattern.compile(".*Sentinel (runid|ID) is.*");
 
-    boolean isActive();
+    boolean active();
 
     void start() throws IOException;
 

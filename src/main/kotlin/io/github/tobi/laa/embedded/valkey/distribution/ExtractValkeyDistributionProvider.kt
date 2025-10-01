@@ -26,7 +26,9 @@ import kotlin.io.path.inputStream
  * @param installationPath The path where the Valkey distribution should be installed. Defaults to a temporary directory.
  * @param ensureBinaryIsExecutable Whether to ensure that the Valkey binary is executable after extraction. Default is `true`.
  */
-class ExtractValkeyDistributionProvider(
+class ExtractValkeyDistributionProvider
+@JvmOverloads
+constructor(
     internal val valkeyDistributionBundle: ValkeyDistributionBundle,
     internal val installationPath: Path = resolveDefaultTempInstallationPath(
         valkeyDistributionBundle.distributionType,

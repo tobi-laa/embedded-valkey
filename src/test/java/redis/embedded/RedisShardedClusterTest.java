@@ -22,7 +22,7 @@ class RedisShardedClusterTest {
 
     @AfterEach
     void stopCluster() throws IOException {
-        if (cluster != null && cluster.isActive()) {
+        if (cluster != null && cluster.active()) {
             cluster.stop();
         }
     }

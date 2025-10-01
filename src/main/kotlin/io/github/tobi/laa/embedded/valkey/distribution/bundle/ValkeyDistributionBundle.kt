@@ -16,7 +16,9 @@ import kotlin.io.path.exists
  * @param binaryPathWithinBundle The relative path to the Valkey server binary *within the bundle's archive*.
  * @param archiveType The type of the archive (e.g., `TAR_GZ`).
  */
-data class ValkeyDistributionBundle(
+data class ValkeyDistributionBundle
+@JvmOverloads
+constructor(
     val version: String,
     val operatingSystem: OperatingSystem,
     val distributionType: DistributionType = DistributionType.VALKEY,

@@ -43,6 +43,6 @@ internal class ValkeyConfLocatorTest {
         override fun start() {}
         override fun stop() {}
         override fun ports(): MutableList<Int> = mutableListOf()
-        override fun isActive(): Boolean = false
+        override fun active(): Boolean = false
     }
 }

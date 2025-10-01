@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
@@ -11,54 +12,54 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 
+import static io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.SERVER_READY_PATTERN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static redis.embedded.RedisServer.SERVER_READY_PATTERN;
 
-class RedisServerTest {
+class ValkeyStandaloneTest {
 
-    private RedisServer redisServer;
+    private ValkeyStandalone valkeyStandalone;
 
     @AfterEach
     void stopRedis() throws IOException {
-        if (redisServer != null && redisServer.isActive()) {
-            redisServer.stop();
+        if (valkeyStandalone != null && valkeyStandalone.active()) {
+            valkeyStandalone.stop();
         }
     }
 
     @Test
     void testSimpleRun() throws Exception {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
     }
 
     @Test
     void shouldAllowMultipleRunsWithoutStop() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
-        redisServer.start();
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
+        valkeyStandalone.start();
     }
 
     @Test
     void shouldAllowSubsequentRuns() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
-        redisServer.stop();
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
+        valkeyStandalone.stop();
 
-        redisServer.start();
-        redisServer.stop();
+        valkeyStandalone.start();
+        valkeyStandalone.stop();
 
-        redisServer.start();
-        redisServer.stop();
+        valkeyStandalone.start();
+        valkeyStandalone.stop();
     }
 
     @Test
     void testSimpleOperationsAfterRun() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
 
         try (final JedisPool pool = new JedisPool("localhost", 6381);
              final Jedis jedis = pool.getResource()) {
@@ -72,23 +73,23 @@ class RedisServerTest {
 
     @Test
     void shouldIndicateInactiveBeforeStart() throws IOException {
-        redisServer = new RedisServer(6381);
-        assertFalse(redisServer.isActive());
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        assertFalse(valkeyStandalone.active());
     }
 
     @Test
     void shouldIndicateActiveAfterStart() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
-        assertTrue(redisServer.isActive());
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
+        assertTrue(valkeyStandalone.active());
     }
 
     @Test
     void shouldIndicateInactiveAfterStop() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
-        redisServer.stop();
-        assertFalse(redisServer.isActive());
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
+        valkeyStandalone.stop();
+        assertFalse(valkeyStandalone.active());
     }
 
 //    @Disabled
@@ -128,7 +129,7 @@ class RedisServerTest {
     }
 
     private static void testReadyPattern(final String resourcePath, final Pattern readyPattern) throws IOException {
-        final InputStream in = RedisServerTest.class.getResourceAsStream(resourcePath);
+        final InputStream in = ValkeyStandaloneTest.class.getResourceAsStream(resourcePath);
         assertNotNull(in);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             String line;

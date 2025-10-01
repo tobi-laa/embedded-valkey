@@ -1,6 +1,7 @@
 package io.github.tobi.laa.embedded.valkey.conf
 
 import java.io.IOException
+import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.readLines
 
@@ -12,12 +13,14 @@ object ValkeyConfParser {
     /**
      * Parses the given `valkey.conf` file.
      * @param file the `valkey.conf` file to parse
+     * @param charset the charset to use (default is UTF-8)
      * @return the parsed [ValkeyConf] file
      * @throws IllegalArgumentException if the file is not a valid `valkey.conf` file
      * @throws IOException if the file could not be read
      */
     @Throws(IOException::class)
-    fun parse(file: Path): ValkeyConf {
+    @JvmOverloads
+    fun parse(file: Path, charset: Charset = Charsets.UTF_8): ValkeyConf {
         val directives = file
             .readLines()
             .map { it.trim() }
@@ -31,11 +34,11 @@ object ValkeyConfParser {
         return line.startsWith("#")
     }
 
-    private fun parseDirective(line: String): Directive {
+    private fun parseDirective(line: String): ValkeyDirective {
         line.split(Regex("\\s+"), 2).let {
             val keyword = it[0]
             val arguments = it.getOrNull(1) ?: throw IllegalArgumentException("No arguments found in line: '$line'")
-            return Directive(keyword, parseArguments(arguments))
+            return ValkeyDirective(keyword, parseArguments(arguments))
         }
     }
 

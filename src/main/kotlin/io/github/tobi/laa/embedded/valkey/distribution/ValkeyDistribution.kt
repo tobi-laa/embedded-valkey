@@ -16,7 +16,9 @@ import kotlin.io.path.isDirectory
  * @param installationPath The path to the directory where the Valkey distribution is installed.
  * @param binaryPath The path to the Valkey server binary within the installation directory.
  */
-data class ValkeyDistribution(
+data class ValkeyDistribution
+@JvmOverloads
+constructor(
     val version: String,
     val operatingSystem: OperatingSystem,
     val distributionType: DistributionType = DistributionType.VALKEY,

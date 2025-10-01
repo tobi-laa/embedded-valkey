@@ -1,8 +1,9 @@
 package redis.embedded.core;
 
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandaloneBuilder;
 import redis.embedded.Redis;
 import redis.embedded.RedisCluster;
-import redis.embedded.RedisServer;
 import redis.embedded.model.ReplicationGroup;
 
 import java.io.IOException;
@@ -11,12 +12,14 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static redis.embedded.core.PortProvider.*;
+import static redis.embedded.core.PortProvider.newEphemeralPortProvider;
+import static redis.embedded.core.PortProvider.newPredefinedPortProvider;
+import static redis.embedded.core.PortProvider.newSequencePortProvider;
 
 public final class RedisClusterBuilder {
 
     private RedisSentinelBuilder sentinelBuilder = new RedisSentinelBuilder();
-    private RedisServerBuilder serverBuilder = new RedisServerBuilder();
+    private ValkeyStandaloneBuilder serverBuilder = new ValkeyStandaloneBuilder();
     private int sentinelCount = 1;
     private int quorumSize = 1;
     private PortProvider sentinelPortProvider = newSequencePortProvider(26379);
@@ -28,7 +31,7 @@ public final class RedisClusterBuilder {
         return this;
     }
 
-    public RedisClusterBuilder withServerBuilder(final RedisServerBuilder serverBuilder) {
+    public RedisClusterBuilder withServerBuilder(final ValkeyStandaloneBuilder serverBuilder) {
         this.serverBuilder = serverBuilder;
         return this;
     }
@@ -97,17 +100,16 @@ public final class RedisClusterBuilder {
 
     private void buildSlaves(final List<Redis> servers, ReplicationGroup g) throws IOException {
         for (final Integer slavePort : g.slavePorts) {
-            serverBuilder.reset();
-            serverBuilder.port(slavePort);
-            serverBuilder.slaveOf("localhost", g.masterPort);
-            final RedisServer slave = serverBuilder.build();
+            var replicaBuilder = serverBuilder.clone();
+            replicaBuilder.port(slavePort);
+            replicaBuilder.replicaOf("localhost", g.masterPort);
+            final ValkeyStandalone slave = replicaBuilder.build();
             servers.add(slave);
         }
     }
 
     private Redis buildMaster(final ReplicationGroup g) throws IOException {
-        serverBuilder.reset();
-        return serverBuilder.port(g.masterPort).build();
+        return serverBuilder.clone().port(g.masterPort).build();
     }
 
     private List<Redis> buildSentinels() {

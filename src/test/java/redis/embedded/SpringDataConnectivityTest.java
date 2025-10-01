@@ -1,5 +1,6 @@
 package redis.embedded;
 
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,14 +14,14 @@ import static org.junit.Assert.assertEquals;
 
 public class SpringDataConnectivityTest {
 
-    private RedisServer redisServer;
+    private ValkeyStandalone valkeyStandalone;
     private RedisTemplate<String, String> template;
     private JedisConnectionFactory connectionFactory;
 
     @Before
     public void setUp() throws IOException {
-        redisServer = new RedisServer(6381);
-        redisServer.start();
+        valkeyStandalone = ValkeyStandalone.builder().port(6381).build();
+        valkeyStandalone.start();
 
         connectionFactory = new JedisConnectionFactory();
         connectionFactory.getStandaloneConfiguration().setHostName("localhost");
@@ -43,7 +44,7 @@ public class SpringDataConnectivityTest {
 
     @After
     public void tearDown() throws IOException {
-        redisServer.stop();
+        valkeyStandalone.stop();
     }
 
 }
