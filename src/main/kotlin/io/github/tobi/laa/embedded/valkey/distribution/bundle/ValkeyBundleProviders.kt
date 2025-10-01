@@ -52,22 +52,55 @@ fun downloadLinuxDistroFromValkeyIo(
     require(operatingSystem == LINUX_X86_64 || operatingSystem == LINUX_ARM64) {
         "Operating system must be either $LINUX_X86_64 or $LINUX_ARM64."
     }
-    val arch = if (operatingSystem == LINUX_X86_64) {
-        "x86_64"
-    } else {
-        "arm64"
-    }
     if (sha256FileChecksum == null) {
         logWarnNoChecksum(valkeyVersion, operatingSystem)
     }
     return DownloadValkeyDistroBundleProvider(
         valkeyVersion = valkeyVersion,
         operatingSystem = operatingSystem,
-        binaryPathWithinBundle = Paths.get("valkey-$valkeyVersion-jammy-$arch", "bin", "valkey-server"),
+        binaryPathWithinBundle = Paths.get(
+            "valkey-$valkeyVersion-jammy-${arch(operatingSystem)}",
+            "bin",
+            "valkey-server"
+        ),
         archiveType = ArchiveType.TAR_GZ,
-        downloadUri = URI("https://download.valkey.io/releases/valkey-$valkeyVersion-jammy-$arch.tar.gz"),
+        downloadUri = URI("https://download.valkey.io/releases/valkey-$valkeyVersion-jammy-${arch(operatingSystem)}.tar.gz"),
         proxy = proxy,
         sha256FileChecksum = sha256FileChecksum
+    )
+}
+
+/**
+ * Returns a [ValkeyDistributionBundleProvider] which loads the Valkey distribution for Linux from the classpath.
+ *
+ * This can be useful if you want to bundle the Valkey distribution with your application and avoid downloading it at runtime.
+ *
+ * ⚠️ Make sure that the classpath resource you provide is the one found on the [Valkey download page](https://valkey.io/download/) for the specified version and operating system.
+ *
+ * @param classpathResource The classpath resource path to the Valkey distribution bundle, e.g. `"/valkey/valkey-8.1.3-linux-x86_64.tar.gz"`.
+ * @param operatingSystem The operating system of the Valkey distribution to load. Defaults to [LINUX_X86_64].
+ * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].
+ * @return A [ValkeyDistributionBundleProvider] that loads the specified Valkey distro for Linux from the classpath.
+ */
+@JvmOverloads
+fun loadLinuxDistroFromClasspath(
+    classpathResource: String,
+    valkeyVersion: String = DEFAULT_VALKEY_LINUX_VERSION,
+    operatingSystem: OperatingSystem = LINUX_X86_64
+): ValkeyDistributionBundleProvider {
+    require(operatingSystem == LINUX_X86_64 || operatingSystem == LINUX_ARM64) {
+        "Operating system must be either $LINUX_X86_64 or $LINUX_ARM64."
+    }
+    return ClasspathValkeyDistroBundleProvider(
+        classpathResource = classpathResource,
+        valkeyVersion = valkeyVersion,
+        operatingSystem = operatingSystem,
+        binaryPathWithinBundle = Paths.get(
+            "valkey-$valkeyVersion-jammy-${arch(operatingSystem)}",
+            "bin",
+            "valkey-server"
+        ),
+        archiveType = ArchiveType.TAR_GZ
     )
 }
 
@@ -182,4 +215,9 @@ fun downloadMemuraiDeveloperForX64FromNuget(
 
 private fun logWarnNoChecksum(valkeyVersion: String, operatingSystem: OperatingSystem) {
     log.warn("No SHA-256 checksum present for Valkey version $valkeyVersion and operating system ${operatingSystem.displayName}. File integrity will not be verified!")
+}
+
+private fun arch(operatingSystem: OperatingSystem) = when (operatingSystem) {
+    LINUX_X86_64, MAC_OS_X86_64, WINDOWS_X86_64 -> "x86_64"
+    LINUX_ARM64, MAC_OS_ARM64 -> "arm64"
 }
