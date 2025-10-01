@@ -1,4 +1,4 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.ports
+package io.github.tobi.laa.embedded.valkey.ports
 
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import redis.embedded.Redis.DEFAULT_REDIS_PORT
 import java.util.stream.IntStream.range
 
 @ExtendWith(MockKExtension::class)
@@ -92,7 +91,7 @@ internal class PortProviderTest {
         givenFreePorts()
         givenFirstBusPortTaken()
         whenNextPortIsRequested()
-        thenValidPortIsReturned().isNotEqualTo(DEFAULT_REDIS_PORT)
+        thenValidPortIsReturned().isNotEqualTo(DEFAULT_VALKEY_PORT)
     }
 
     @Test
@@ -101,7 +100,7 @@ internal class PortProviderTest {
         givenFreePorts()
         givenSentinelPortPreviouslyRequested()
         whenNextPortsAreRequested(10000)
-        thenValidPortsAreReturned(10000).doesNotContain(DEFAULT_REDIS_PORT + BUS_PORT_OFFSET)
+        thenValidPortsAreReturned(10000).doesNotContain(DEFAULT_VALKEY_PORT + BUS_PORT_OFFSET)
     }
 
     private fun givenSentinel() {
@@ -120,7 +119,7 @@ internal class PortProviderTest {
     }
 
     private fun givenFirstBusPortTaken() {
-        val firstBusPort = DEFAULT_REDIS_PORT + BUS_PORT_OFFSET
+        val firstBusPort = DEFAULT_VALKEY_PORT + BUS_PORT_OFFSET
         every { PortChecker.available(eq(firstBusPort)) } returns false
         every { PortChecker.available(neq(firstBusPort)) } returns true
     }

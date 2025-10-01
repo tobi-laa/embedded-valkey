@@ -1,13 +1,7 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.ports
+package io.github.tobi.laa.embedded.valkey.ports
 
-import redis.embedded.Redis.DEFAULT_REDIS_PORT
 import redis.embedded.core.PortProvider.REDIS_CLUSTER_MAX_PORT_EXCLUSIVE
 import java.util.concurrent.ConcurrentSkipListSet
-
-/**
- * The default port used by Redis Sentinel.
- */
-internal const val DEFAULT_SENTINEL_PORT: Int = 26379
 
 /**
  * This offset is used to calculate the port for the Redis cluster bus.
@@ -26,7 +20,7 @@ internal class PortProvider {
      * @param sentinel If `true`, the next free port for a Redis Sentinel instance is provided.
      */
     fun next(sentinel: Boolean = false): Int {
-        val minPort = if (sentinel) DEFAULT_SENTINEL_PORT else DEFAULT_REDIS_PORT
+        val minPort = if (sentinel) DEFAULT_SENTINEL_PORT else DEFAULT_VALKEY_PORT
         for (candidate in minPort until REDIS_CLUSTER_MAX_PORT_EXCLUSIVE + 1) {
             val candidateBusPort = candidate + BUS_PORT_OFFSET
             if (portCanBeHandedOut(candidate) && portCanBeHandedOut(candidateBusPort)) {

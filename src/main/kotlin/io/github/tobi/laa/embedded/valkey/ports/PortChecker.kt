@@ -1,4 +1,4 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.ports
+package io.github.tobi.laa.embedded.valkey.ports
 
 import java.net.InetAddress
 import javax.net.ServerSocketFactory

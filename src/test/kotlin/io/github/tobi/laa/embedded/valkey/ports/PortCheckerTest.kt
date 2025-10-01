@@ -1,4 +1,4 @@
-package io.github.tobi.laa.spring.boot.embedded.redis.ports
+package io.github.tobi.laa.embedded.valkey.ports
 
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
