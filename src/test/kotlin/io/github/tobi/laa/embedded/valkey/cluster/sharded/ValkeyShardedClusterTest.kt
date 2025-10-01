@@ -12,7 +12,11 @@ import java.nio.file.Path
 
 @IntegrationTest
 internal class ValkeyShardedClusterTest {
+
     private var cluster: ValkeyShardedCluster? = null
+
+    @TempDir
+    private var temporaryFolder: Path? = null
 
     @BeforeEach
     @Throws(IOException::class)
@@ -37,7 +41,7 @@ internal class ValkeyShardedClusterTest {
     @Throws(IOException::class)
     fun testSimpleOperationsAfterClusterWithEphemeralPortsStart() {
         cluster!!.stop()
-        cluster = ValkeyShardedCluster.Companion.builder()
+        cluster = ValkeyShardedCluster.builder()
             .shard("master1", 1)
             .shard("master2", 1)
             .shard("master3", 1)
@@ -58,30 +62,23 @@ internal class ValkeyShardedClusterTest {
             jc.set("somekey", "somevalue")
             Assertions.assertEquals("somevalue", jc.get("somekey"))
         }
-    } //    @Test
-    //    public void shouldAllowSubsequentRunsInSameDirectory() throws IOException {
-    //        cluster.stop();
-    //        //
-    //        File folder = temporaryFolder.newFolder();
-    //        cluster = newRedisCluster()
-    //                .withServerBuilder(RedisServer
-    //                        .newRedisServer()
-    //                        .executableProvider(newJarResourceProvider(folder)))
-    //                .shard("master1", 1)
-    //                .shard("master2", 1)
-    //                .shard("master3", 1)
-    //                .build();
-    //        cluster.start();
-    //        cluster.stop();
-    //        cluster.start();
-    //        try (final JedisCluster jc = new JedisCluster(new HostAndPort("127.0.0.1", cluster.getPort()))) {
-    //            jc.set("somekey", "somevalue");
-    //            assertEquals("the value should be equal", "somevalue", jc.get("somekey"));
-    //        }
-    //    }
-
-    companion object {
-        @TempDir
-        var temporaryFolder: Path? = null
     }
+
+    @Test
+    fun shouldAllowSubsequentRunsInSameDirectory() {
+        cluster!!.stop()
+        cluster = ValkeyShardedCluster.builder()
+            .shard("master1", 1)
+            .shard("master2", 1)
+            .shard("master3", 1)
+            .build()
+        cluster!!.start()
+        cluster!!.stop()
+        cluster!!.start()
+        JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jc ->
+            jc.set("somekey", "somevalue")
+            Assertions.assertEquals("somevalue", jc.get("somekey"))
+        }
+    }
+
 }
