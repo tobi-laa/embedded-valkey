@@ -1,20 +1,19 @@
 package io.github.tobi.laa.embedded.valkey.cluster
 
+import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
-import java.io.IOException
 
+@IntegrationTest
 class ValkeyServerClusterTest {
     private var valkeyStandalone1: ValkeyStandalone? = null
     private var valkeyStandalone2: ValkeyStandalone? = null
 
-    @Before
-    @Throws(IOException::class)
+    @BeforeEach
     fun setUp() {
         valkeyStandalone1 = ValkeyStandalone.Companion.builder().port(6300).build()
         valkeyStandalone2 = ValkeyStandalone.Companion.builder().port(6301)
@@ -34,9 +33,9 @@ class ValkeyServerClusterTest {
             jedis = pool.getResource()
             jedis.mset("abc", "1", "def", "2")
 
-            Assert.assertEquals("1", jedis.mget("abc").get(0))
-            Assert.assertEquals("2", jedis.mget("def").get(0))
-            Assert.assertNull(jedis.mget("xyz").get(0))
+            Assertions.assertEquals("1", jedis.mget("abc").get(0))
+            Assertions.assertEquals("2", jedis.mget("def").get(0))
+            Assertions.assertNull(jedis.mget("xyz").get(0))
         } finally {
             if (jedis != null) {
                 jedis.close()
@@ -45,13 +44,5 @@ class ValkeyServerClusterTest {
                 pool.destroy()
             }
         }
-    }
-
-
-    @After
-    @Throws(IOException::class)
-    fun tearDown() {
-        valkeyStandalone1!!.stop()
-        valkeyStandalone2!!.stop()
     }
 }

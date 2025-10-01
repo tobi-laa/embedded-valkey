@@ -2,22 +2,20 @@ package io.github.tobi.laa.embedded.valkey
 
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.builder
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
-import java.io.IOException
 
+@IntegrationTest
 class SpringDataConnectivityTest {
     private var valkeyStandalone: ValkeyStandalone? = null
     private var template: RedisTemplate<String?, String?>? = null
     private var connectionFactory: JedisConnectionFactory? = null
 
-    @Before
-    @Throws(IOException::class)
+    @BeforeEach
     fun setUp() {
         valkeyStandalone = builder().port(6381).build()
         valkeyStandalone!!.start()
@@ -38,12 +36,6 @@ class SpringDataConnectivityTest {
 
         val result = template!!.opsForValue().get("foo")
 
-        Assert.assertEquals("bar", result)
-    }
-
-    @After
-    @Throws(IOException::class)
-    fun tearDown() {
-        valkeyStandalone!!.stop()
+        Assertions.assertEquals("bar", result)
     }
 }

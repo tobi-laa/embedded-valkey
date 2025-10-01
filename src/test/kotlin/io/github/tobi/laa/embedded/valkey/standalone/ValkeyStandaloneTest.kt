@@ -1,7 +1,7 @@
 package io.github.tobi.laa.embedded.valkey.standalone
 
+import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.builder
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import redis.clients.jedis.JedisPool
@@ -10,16 +10,9 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.regex.Pattern
 
+@IntegrationTest
 internal class ValkeyStandaloneTest {
     private var valkeyStandalone: ValkeyStandalone? = null
-
-    @AfterEach
-    @Throws(IOException::class)
-    fun stopRedis() {
-        if (valkeyStandalone != null && valkeyStandalone!!.active) {
-            valkeyStandalone!!.stop()
-        }
-    }
 
     @Test
     @Throws(Exception::class)

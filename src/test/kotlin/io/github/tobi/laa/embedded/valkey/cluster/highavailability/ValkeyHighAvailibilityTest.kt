@@ -1,10 +1,11 @@
 package io.github.tobi.laa.embedded.valkey.cluster.highavailability
 
+import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisSentinelPool
@@ -12,6 +13,7 @@ import java.io.IOException
 import java.net.UnknownHostException
 import java.util.Set
 
+@IntegrationTest
 class ValkeyHighAvailibilityTest {
     private val sentinelBuilder = ValkeySentinel.builder()
     private val bindAddress: String? = null
@@ -23,7 +25,7 @@ class ValkeyHighAvailibilityTest {
 
     private val instance: ValkeyHighAvailability? = null
 
-    @Before
+    @BeforeEach
     @Throws(UnknownHostException::class)
     fun setUp() {
         sentinel1 = Mockito.mock<ValkeySentinel?>(ValkeySentinel::class.java)
@@ -287,9 +289,9 @@ class ValkeyHighAvailibilityTest {
         jedis = pool.getResource()
         jedis.mset("abc", "1", "def", "2")
 
-        Assert.assertEquals("1", jedis.mget("abc").get(0))
-        Assert.assertEquals("2", jedis.mget("def").get(0))
-        Assert.assertNull(jedis.mget("xyz").get(0))
+        Assertions.assertEquals("1", jedis.mget("abc").get(0))
+        Assertions.assertEquals("2", jedis.mget("def").get(0))
+        Assertions.assertNull(jedis.mget("xyz").get(0))
         return jedis
     }
 }
