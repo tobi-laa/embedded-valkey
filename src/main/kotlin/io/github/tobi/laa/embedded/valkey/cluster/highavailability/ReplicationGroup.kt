@@ -1,6 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.cluster.highavailability
 
-import redis.embedded.core.PortProvider
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import java.util.stream.IntStream.range
 import kotlin.streams.toList
 
@@ -12,7 +12,7 @@ data class ReplicationGroup(
 
     constructor(mainNodeName: String, provider: PortProvider, replicaCount: Int) : this(
         mainNodeName,
-        provider.get(),
-        range(0, replicaCount).map { provider.get() }.toList()
+        provider.next(),
+        range(0, replicaCount).map { provider.next() }.toList()
     )
 }

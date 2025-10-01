@@ -1,10 +1,10 @@
 package io.github.tobi.laa.embedded.valkey.cluster.highavailability
 
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinelBuilder
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandaloneBuilder
-import redis.embedded.core.PortProvider
 import java.io.IOException
 import java.util.*
 
@@ -13,8 +13,7 @@ class ValkeyHighAvailabilityBuilder {
     private var sentinelBuilder = ValkeySentinelBuilder()
     private var serverBuilder = ValkeyStandaloneBuilder()
     private var sentinelCount = 1
-    private var sentinelPortProvider: PortProvider = PortProvider.newSequencePortProvider(26379)
-    private var replicationGroupPortProvider: PortProvider = PortProvider.newSequencePortProvider(6379)
+    private var portProvider: PortProvider = PortProvider()
     private val groups: MutableList<ReplicationGroup> = LinkedList<ReplicationGroup>()
 
     fun withSentinelBuilder(sentinelBuilder: ValkeySentinelBuilder): ValkeyHighAvailabilityBuilder {
@@ -27,40 +26,8 @@ class ValkeyHighAvailabilityBuilder {
         return this
     }
 
-    fun sentinelPorts(ports: Collection<Int>): ValkeyHighAvailabilityBuilder {
-        this.sentinelPortProvider = PortProvider.newPredefinedPortProvider(ports)
-        this.sentinelCount = ports.size
-        return this
-    }
-
-    fun serverPorts(ports: Collection<Int>): ValkeyHighAvailabilityBuilder {
-        this.replicationGroupPortProvider = PortProvider.newPredefinedPortProvider(ports)
-        return this
-    }
-
-    fun ephemeralSentinels(): ValkeyHighAvailabilityBuilder {
-        this.sentinelPortProvider = PortProvider.newEphemeralPortProvider()
-        return this
-    }
-
-    fun ephemeralServers(): ValkeyHighAvailabilityBuilder {
-        this.replicationGroupPortProvider = PortProvider.newEphemeralPortProvider()
-        return this
-    }
-
-    fun ephemeral(): ValkeyHighAvailabilityBuilder {
-        ephemeralSentinels()
-        ephemeralServers()
-        return this
-    }
-
     fun sentinelCount(sentinelCount: Int): ValkeyHighAvailabilityBuilder {
         this.sentinelCount = sentinelCount
-        return this
-    }
-
-    fun sentinelStartingPort(startingPort: Int): ValkeyHighAvailabilityBuilder {
-        this.sentinelPortProvider = PortProvider.newSequencePortProvider(startingPort)
         return this
     }
 
@@ -70,7 +37,7 @@ class ValkeyHighAvailabilityBuilder {
     }
 
     fun replicationGroup(masterName: String, slaveCount: Int): ValkeyHighAvailabilityBuilder {
-        this.groups.add(ReplicationGroup(masterName, replicationGroupPortProvider, slaveCount))
+        this.groups.add(ReplicationGroup(masterName, portProvider, slaveCount))
         return this
     }
 
@@ -126,6 +93,6 @@ class ValkeyHighAvailabilityBuilder {
     }
 
     private fun nextSentinelPort(): Int {
-        return sentinelPortProvider.get()
+        return portProvider.next(sentinel = true)
     }
 }

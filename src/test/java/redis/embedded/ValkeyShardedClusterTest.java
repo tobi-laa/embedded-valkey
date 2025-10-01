@@ -49,7 +49,7 @@ class ValkeyShardedClusterTest {
     @Test
     void testSimpleOperationsAfterClusterWithEphemeralPortsStart() throws IOException {
         cluster.stop();
-        cluster = builder().ephemeral()
+        cluster = builder()
                 .shard("master1", 1)
                 .shard("master2", 1)
                 .shard("master3", 1)

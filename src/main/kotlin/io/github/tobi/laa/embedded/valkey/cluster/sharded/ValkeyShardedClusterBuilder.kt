@@ -1,8 +1,8 @@
 package io.github.tobi.laa.embedded.valkey.cluster.sharded
 
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandaloneBuilder
-import redis.embedded.core.PortProvider
 import java.io.IOException
 import java.time.Duration
 import java.util.*
@@ -10,7 +10,7 @@ import java.util.*
 class ValkeyShardedClusterBuilder {
 
     private var serverBuilder = ValkeyStandaloneBuilder()
-    private var shardPortProvider: PortProvider = PortProvider.newSequencePortProvider(6379)
+    private var portProvider: PortProvider = PortProvider()
     private var initializationTimeout: Duration = DEFAULT_INITIALIZATION_TIMEOUT
     private val shards: MutableList<Shard> = LinkedList<Shard>()
     private val replicasPortsByMainNodePort: MutableMap<Int, MutableSet<Int>> =
@@ -21,28 +21,13 @@ class ValkeyShardedClusterBuilder {
         return this
     }
 
-    fun serverPorts(ports: Collection<Int>): ValkeyShardedClusterBuilder {
-        this.shardPortProvider = PortProvider.newPredefinedPortProvider(ports)
-        return this
-    }
-
     fun initializationTimeout(initializationTimeout: Duration): ValkeyShardedClusterBuilder {
         this.initializationTimeout = initializationTimeout
         return this
     }
 
-    fun ephemeralServers(): ValkeyShardedClusterBuilder {
-        this.shardPortProvider = PortProvider.newEphemeralPortProviderInRedisClusterRange()
-        return this
-    }
-
-    fun ephemeral(): ValkeyShardedClusterBuilder {
-        ephemeralServers()
-        return this
-    }
-
     fun shard(name: String, replicaCount: Int): ValkeyShardedClusterBuilder {
-        this.shards.add(Shard(name, this.shardPortProvider, replicaCount))
+        this.shards.add(Shard(name, portProvider, replicaCount))
         return this
     }
 

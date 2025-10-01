@@ -12,8 +12,6 @@ import redis.embedded.util.JedisUtil;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -142,14 +140,12 @@ public class ValkeyHighAvailibilityTest {
 
     @Test
     public void testSimpleOperationsAfterRunWithTwoPredefinedSentinelsSingleMasterMultipleSlaves() throws IOException {
-        final List<Integer> sentinelPorts = Arrays.asList(26381, 26382);
         final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder()
                 .withSentinelBuilder(sentinelBuilder)
-                .sentinelPorts(sentinelPorts)
                 .replicationGroup("ourmaster", 2)
                 .build();
         cluster.start();
-        final Set<String> sentinelHosts = JedisUtil.portsToJedisHosts(sentinelPorts);
+        final Set<String> sentinelHosts = JedisUtil.portsToJedisHosts(cluster.sentinelPorts());
 
         JedisSentinelPool pool = null;
         Jedis jedis = null;
@@ -224,7 +220,7 @@ public class ValkeyHighAvailibilityTest {
         final String master2 = "master2";
         final String master3 = "master3";
         final ValkeyHighAvailability cluster = ValkeyHighAvailability.builder().withSentinelBuilder(sentinelBuilder)
-                .ephemeral().sentinelCount(3).quorumSize(2)
+                .sentinelCount(3).quorumSize(2)
                 .replicationGroup(master1, 1)
                 .replicationGroup(master2, 1)
                 .replicationGroup(master3, 1)
