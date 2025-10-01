@@ -24,6 +24,8 @@ import kotlin.io.path.inputStream
  *
  * @param valkeyDistributionBundle The Valkey distribution bundle to be extracted.
  * @param installationPath The path where the Valkey distribution should be installed. Defaults to a temporary directory.
+ * @param alwaysExtract Whether to always extract the Valkey distribution, even if it has already been extracted to the
+ * specified installation path. Default is `false`.
  * @param ensureBinaryIsExecutable Whether to ensure that the Valkey binary is executable after extraction. Default is `true`.
  */
 class ExtractValkeyDistributionProvider
@@ -35,6 +37,7 @@ constructor(
         valkeyDistributionBundle.version,
         valkeyDistributionBundle.operatingSystem
     ),
+    internal val alwaysExtract: Boolean = false,
     internal val ensureBinaryIsExecutable: Boolean = true
 ) :
     ValkeyDistributionProvider {
@@ -43,7 +46,9 @@ constructor(
 
     @Throws(IOException::class)
     override fun provideDistribution(): ValkeyDistribution {
-        extractValkeyDistributionBundle()
+        if (extractionNeeded()) {
+            extractValkeyDistributionBundle()
+        }
         if (ensureBinaryIsExecutable) {
             makeBinaryExecutable()
         }
@@ -56,6 +61,7 @@ constructor(
         )
     }
 
+    private fun extractionNeeded() = alwaysExtract || !Files.exists(locateBinary())
 
     private fun extractValkeyDistributionBundle() {
         logger.trace(

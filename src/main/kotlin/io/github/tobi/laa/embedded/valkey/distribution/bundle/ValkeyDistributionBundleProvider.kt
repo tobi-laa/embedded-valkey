@@ -32,6 +32,8 @@ interface ValkeyDistributionBundleProvider {
      *
      * @param installationPath The path where the Valkey distribution should be installed. If `null`, a default
      * temporary path is used.
+     * @param alwaysExtract Whether to always extract the Valkey distribution, even if it has already been extracted
+     * to the specified installation path. Default is `false`.
      * @param ensureBinaryIsExecutable Whether to ensure that the Valkey binary is executable after extraction. Default
      * is `true`.
      *
@@ -39,6 +41,7 @@ interface ValkeyDistributionBundleProvider {
      */
     fun thenExtract(
         installationPath: Path? = null,
+        alwaysExtract: Boolean = false,
         ensureBinaryIsExecutable: Boolean = true
     ): ValkeyDistributionProvider {
         return object : ValkeyDistributionProvider {
