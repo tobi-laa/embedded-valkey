@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - src/main/asciidoc/README.adoc
+      - src/test/java/**
     branches: [ '**' ]
 jobs:
   build:
