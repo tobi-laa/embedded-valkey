@@ -18,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import kotlin.io.path.absolute
 import kotlin.io.path.inputStream
 
 /**
@@ -118,8 +119,10 @@ constructor(
     internal fun <E : ArchiveEntry> extractArchive(archiveStream: ArchiveInputStream<E>, targetDirectory: Path) {
         var entry: ArchiveEntry? = archiveStream.nextEntry
         while (entry != null) {
-            val extractTo: Path = targetDirectory.resolve(entry.name)
-            if (entry.isDirectory) {
+            val extractTo: Path = targetDirectory.resolve(entry.name).absolute()
+            if (!extractTo.startsWith(targetDirectory)) {
+                throw IOException("Zip (or archive) slip detected. Extracting ${entry.name} would lead to it being placed outside of $targetDirectory")
+            } else if (entry.isDirectory) {
                 Files.createDirectories(extractTo)
             } else {
                 Files.createDirectories(extractTo.parent) // seems to be necessary for zip files

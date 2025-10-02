@@ -10,7 +10,6 @@ import redis.clients.jedis.JedisCluster
 import redis.clients.jedis.args.ClusterResetType
 import java.io.IOException
 import java.time.Duration
-import java.util.*
 import java.util.function.Supplier
 import java.util.stream.IntStream
 
@@ -50,7 +49,7 @@ class ValkeyShardedCluster(
     }
 
     private fun safelyPerformFlushAllAndSoftClusterResetOnMainNodes(): List<Exception> {
-        val errors: MutableList<Exception> = ArrayList<Exception>()
+        val errors: MutableList<Exception> = ArrayList()
         for (mainNodePort in replicasPortsByMainNodePort.keys) {
             try {
                 Jedis(CLUSTER_IP, mainNodePort, 10000).use { jedis ->
@@ -107,7 +106,7 @@ class ValkeyShardedCluster(
 
     private fun meetMainNodes(clusterMeetTarget: Int) {
         // for every shard meet the main node (except the 1st shard) and add their slots manually
-        val shardsMainNodePorts: MutableList<Int> = LinkedList<Int>(replicasPortsByMainNodePort.keys)
+        val shardsMainNodePorts: List<Int> = replicasPortsByMainNodePort.keys.toList()
         val slotsPerShard: Int = MAX_NUMBER_OF_SLOTS_PER_CLUSTER / shardsMainNodePorts.size
         for (i in shardsMainNodePorts.indices) {
             val port = shardsMainNodePorts.get(i)
@@ -133,8 +132,10 @@ class ValkeyShardedCluster(
 
     private fun setupReplicas(clusterMeetTarget: Int) {
         for (entry in replicasPortsByMainNodePort.entries) {
-            val mainNodeId: String = mainNodeIdsByPort.get(entry.key)!!
-            val replicaPorts: MutableSet<Int> = entry.value
+            val mainNodeId: String = mainNodeIdsByPort[entry.key] ?: throw ValkeyShardedClusterSetupException(
+                "No main node ID found for port: ${entry.key}"
+            )
+            val replicaPorts: Set<Int> = entry.value
             for (replicaPort in replicaPorts) {
                 try {
                     Jedis(CLUSTER_IP, replicaPort).use { jedis ->

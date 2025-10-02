@@ -50,7 +50,10 @@ class ValkeyShardedClusterBuilder {
     @Throws(IOException::class)
     private fun buildReplicas(shard: Shard): List<ValkeyStandalone> {
         val replicas: MutableList<ValkeyStandalone> = ArrayList<ValkeyStandalone>()
-        val replicaPorts: MutableSet<Int> = replicasPortsByMainNodePort.get(shard.mainNodePort)!!
+        val replicaPorts: MutableSet<Int> =
+            replicasPortsByMainNodePort[shard.mainNodePort] ?: throw IllegalStateException(
+                "No entry for main node port " + shard.mainNodePort + " found. This is a bug."
+            )
         for (replicaPort in shard.replicaPorts) {
             replicaPorts.add(replicaPort)
             val replicaBuilder = serverBuilder.clone()
