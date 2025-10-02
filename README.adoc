@@ -9,6 +9,8 @@ image:https://sonarcloud.io/api/project_badges/measure?project=tobi-laa_embedded
 
 This library provides an easy way to run an embedded Valkey server in your JVM projects, mainly for integration testing purposes.
 
+:toc:
+
 == Project history & acknowledgements
 
 This project is a refactored Kotlin port forked from the `embedded-redis` project by https://github.com/codemonstur/embedded-redis[codemonstur], which was forked from https://github.com/ozimov/embedded-redis[ozimov], which was originally forked from https://github.com/kstyrc/embedded-redis[kstyrc]
