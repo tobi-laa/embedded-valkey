@@ -30,7 +30,7 @@ You could then, for example, use `ValkeyStandalone` to start and stop an embedde
 
 [source,java]
 ----
-include::https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=27..30]
 ----
 
 This will, by default, start a Valkey server on a (more or less) random, free port.
@@ -40,7 +40,7 @@ You can also provide a Valkey distributions yourself, for example:
 
 [source,java]
 ----
-include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=27..31]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=34..38]
 ----
 
 All builders support a fluent API to configure the servers or clusters.
@@ -48,7 +48,7 @@ For example:
 
 [source,java]
 ----
-include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=37..42]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=42..47]
 ----
 
 All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
@@ -57,7 +57,7 @@ For example:
 
 [source,java]
 ----
-include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=47..57]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=51..62]
 ----
 
 === Setting up a cluster
@@ -68,13 +68,13 @@ The library supports setting up the following types of Valkey clusters:
 +
 [source,java]
 ----
-include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=64..74]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=66..77]
 ----
 * Sharded clusters with node replication
 +
 [source,java]
 ----
-include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=79..86]
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=81..88]
 ----
 
 === Retrieving ports
