@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("io.github.tobi.laa.embedded.valkey")
 
+@Suppress("unused")
 internal fun stopSafely(
     valkey: Valkey,
     forcibly: Boolean = false,

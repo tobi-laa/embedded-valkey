@@ -7,6 +7,7 @@ import java.io.IOException
  * potentially other files along with metadata about the installation, such as version, operating system,
  * and architecture.
  */
+@FunctionalInterface
 interface ValkeyInstallationSupplier {
 
     /**

@@ -43,8 +43,8 @@ class ValkeyShardedCluster(
         for (node in nodes) {
             stopSafely(node, forcibly, maxWaitTimeSeconds, removeWorkingDir)?.let(exceptions::add)
         }
-        if (!exceptions.isEmpty()) {
-            throw IOException("Failed to stop Redis cluster", exceptions.get(0))
+        if (exceptions.isNotEmpty()) {
+            throw IOException("Failed to stop Redis cluster", exceptions[0])
         }
     }
 
@@ -109,7 +109,7 @@ class ValkeyShardedCluster(
         val shardsMainNodePorts: List<Int> = replicasPortsByMainNodePort.keys.toList()
         val slotsPerShard: Int = MAX_NUMBER_OF_SLOTS_PER_CLUSTER / shardsMainNodePorts.size
         for (i in shardsMainNodePorts.indices) {
-            val port = shardsMainNodePorts.get(i)
+            val port = shardsMainNodePorts[i]
             val startSlot = i * slotsPerShard
             val endSlot = if (i == shardsMainNodePorts.size - 1)
                 MAX_NUMBER_OF_SLOTS_PER_CLUSTER - 1

@@ -5,14 +5,11 @@ import java.util.*
 @Throws(UnsupportedOperatingSytemException::class)
 fun detectOperatingSystem(): OperatingSystem {
     val operatingSystemName = operatingSystemName()
-    if (isWindows(operatingSystemName)) {
-        return detectWindowsOperatingSystem()
-    } else if (isLinux(operatingSystemName)) {
-        return detectLinuxOperatingSystem()
-    } else if (isMacOs(operatingSystemName)) {
-        return detectMacOsOperatingSystem()
-    } else {
-        throw UnsupportedOperatingSytemException("Unsupported operating system: $operatingSystemName")
+    return when {
+        isWindows(operatingSystemName) -> detectWindowsOperatingSystem()
+        isLinux(operatingSystemName) -> detectLinuxOperatingSystem()
+        isMacOs(operatingSystemName) -> detectMacOsOperatingSystem()
+        else -> throw UnsupportedOperatingSytemException("Unsupported operating system: $operatingSystemName")
     }
 }
 
@@ -66,6 +63,7 @@ private fun detectMacOsOperatingSystem(): OperatingSystem {
     }
 }
 
+@Suppress("kotlin:S117") // the variable name "uname -m" seems more readable here
 private fun machineHardwareName(): String {
     try {
         val `uname -m` = ProcessBuilder("uname", "-m").start()

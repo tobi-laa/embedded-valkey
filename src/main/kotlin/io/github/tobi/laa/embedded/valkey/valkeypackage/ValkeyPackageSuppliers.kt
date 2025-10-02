@@ -42,6 +42,7 @@ internal val VALKEY_IO_FILE_CHECKSUMS =
  * @return A [ValkeyPackageSupplier] that downloads the specified Valkey package for Linux.
  */
 @JvmOverloads
+@Suppress("kotlin:S1192") // specifically chose to not extract the file name as constant
 fun downloadLinuxPackageFromValkeyIo(
     proxy: Proxy? = null,
     operatingSystem: OperatingSystem = LINUX_X86_64,
@@ -82,6 +83,7 @@ fun downloadLinuxPackageFromValkeyIo(
  * @return A [ValkeyPackageSupplier] that loads the specified Valkey package for Linux from the classpath.
  */
 @JvmOverloads
+@Suppress("kotlin:S1192") // specifically chose to not extract the file name as constant
 fun loadValkeyIoLinuxPackageFromClasspath(
     classpathResource: String,
     operatingSystem: OperatingSystem = LINUX_X86_64,
@@ -145,6 +147,7 @@ internal val DEFAULT_MACPORTS_CHECKSUMS =
  * @return A [ValkeyPackageSupplier] that downloads the specified Valkey package for macOS.
  */
 @JvmOverloads
+@Suppress("kotlin:S1192") // specifically chose to not extract the file name as constant
 fun downloadMacOsPackageFromMacPorts(
     proxy: Proxy? = null,
     operatingSystem: OperatingSystem = MAC_OS_X86_64,
@@ -179,6 +182,7 @@ fun downloadMacOsPackageFromMacPorts(
  * @return A [ValkeyPackageSupplier] that downloads the specified Valkey package for macOS.
  */
 @JvmOverloads
+@Suppress("kotlin:S1192") // specifically chose to not extract the file name as constant
 fun loadMacPortsPackageFromClasspath(
     classpathResource: String,
     operatingSystem: OperatingSystem = MAC_OS_X86_64,
