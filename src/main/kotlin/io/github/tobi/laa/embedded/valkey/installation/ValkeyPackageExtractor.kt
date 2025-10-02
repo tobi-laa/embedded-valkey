@@ -116,6 +116,7 @@ constructor(
         }
     }
 
+    @Suppress("kotlinsecurity:S6096") // issue is resolved by throwing IOException below in case of zip slip
     internal fun <E : ArchiveEntry> extractArchive(archiveStream: ArchiveInputStream<E>, targetDirectory: Path) {
         var entry: ArchiveEntry? = archiveStream.nextEntry
         while (entry != null) {

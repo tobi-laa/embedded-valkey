@@ -7,8 +7,7 @@ import java.io.IOException
  * potentially other files along with metadata about the installation, such as version, operating system,
  * and architecture.
  */
-@FunctionalInterface
-interface ValkeyInstallationSupplier {
+fun interface ValkeyInstallationSupplier {
 
     /**
      * Provides a Valkey distribution. The exact steps to obtain the distribution are implementation-specific. This may

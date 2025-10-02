@@ -5,7 +5,7 @@ import java.io.IOException
 /**
  * Represents "some kind of" Valkey. Could be a single node or a cluster.
  */
-interface Valkey : AutoCloseable {
+interface Valkey {
 
     /**
      * Starts the Valkey node or cluster.
@@ -43,9 +43,4 @@ interface Valkey : AutoCloseable {
      */
     @Throws(IOException::class)
     fun stop() = stop(forcibly = false, maxWaitTimeSeconds = 10, removeWorkingDir = false)
-
-    @Throws(IOException::class)
-    override fun close() {
-        stop(forcibly = false, removeWorkingDir = false)
-    }
 }

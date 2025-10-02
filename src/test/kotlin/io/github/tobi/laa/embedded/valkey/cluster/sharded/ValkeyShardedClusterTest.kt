@@ -21,7 +21,7 @@ internal class ValkeyShardedClusterTest {
     @BeforeEach
     @Throws(IOException::class)
     fun setUp() {
-        cluster = ValkeyShardedCluster.Companion.builder()
+        cluster = ValkeyShardedCluster.builder()
             .shard("master1", 1)
             .shard("master2", 1)
             .shard("master3", 1)

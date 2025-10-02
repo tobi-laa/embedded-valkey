@@ -4,8 +4,9 @@ import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGr
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
-import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_PROVIDERS
+import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_SUPPLIERS
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
+import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
 import io.github.tobi.laa.embedded.valkey.ports.PortProvider
@@ -18,7 +19,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
 
     constructor() : this(ValkeyConfBuilder())
 
-    private var distributionProvider: ValkeyInstallationSupplier = DEFAULT_PROVIDERS[detectOperatingSystem()]!!
+    private var customInstallationSuppliers: MutableMap<OperatingSystem, ValkeyInstallationSupplier> = HashMap()
     private var portProvider: PortProvider = PortProvider()
     private var downAfterMilliseconds = 60000L
     private var failOverTimeout = 180000L
@@ -26,12 +27,11 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
     private var quorumSize = 1
     private var replicationGroups: MutableList<ReplicationGroup> = mutableListOf()
 
-    init {
-        valkeyConfBuilder.binds("::1", "127.0.0.1")
-    }
-
-    fun distributionProvider(distributionProvider: ValkeyInstallationSupplier): ValkeySentinelBuilder {
-        this.distributionProvider = distributionProvider
+    fun installationSupplier(
+        operatingSystem: OperatingSystem,
+        installationSupplier: ValkeyInstallationSupplier
+    ): ValkeySentinelBuilder {
+        customInstallationSuppliers[operatingSystem] = installationSupplier
         return this
     }
 
@@ -97,8 +97,14 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
         if ((valkeyConfBuilder.port() ?: 0) == 0) {
             valkeyConfBuilder.port(portProvider.next(sentinel = true))
         }
+        if (valkeyConfBuilder.binds().isEmpty()) {
+            valkeyConfBuilder.binds("::1", "127.0.0.1")
+        }
+        val operatingSystem = detectOperatingSystem()
+        val installationSupplier = customInstallationSuppliers[operatingSystem] ?: DEFAULT_SUPPLIERS[operatingSystem]
+        ?: throw IllegalStateException("No installation supplier available for ${operatingSystem.displayName}")
         return ValkeySentinel(
-            distroProvider = distributionProvider,
+            installationSupplier = installationSupplier,
             config = valkeyConfBuilder.build(),
         )
     }
@@ -124,11 +130,14 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
     }
 
     fun clone(): ValkeySentinelBuilder {
-        return ValkeySentinelBuilder(valkeyConfBuilder = ValkeyConfBuilder().importConf(valkeyConfBuilder.build()))
-            .distributionProvider(distributionProvider)
-            .downAfterMilliseconds(downAfterMilliseconds)
-            .failOverTimeout(failOverTimeout)
-            .parallelSyncs(parallelSyncs)
-            .quorumSize(quorumSize)
+        val clonedBuilder =
+            ValkeySentinelBuilder(valkeyConfBuilder = ValkeyConfBuilder().importConf(valkeyConfBuilder.build()))
+                .downAfterMilliseconds(downAfterMilliseconds)
+                .failOverTimeout(failOverTimeout)
+                .parallelSyncs(parallelSyncs)
+                .quorumSize(quorumSize)
+        clonedBuilder.customInstallationSuppliers = HashMap(customInstallationSuppliers)
+        clonedBuilder.replicationGroups = ArrayList(replicationGroups)
+        return clonedBuilder
     }
 }

@@ -27,7 +27,7 @@ class ValkeyInstallationSuppliersTest {
         @ParameterizedTest(name = "Latest available stable version for OS/Architecture {0} is provided")
         @EnumSource(OperatingSystem::class)
         fun `latest available version is provided`(operatingSystem: OperatingSystem) {
-            val providedVersion = DEFAULT_PROVIDERS[operatingSystem]!!.installValkey().version
+            val providedVersion = DEFAULT_SUPPLIERS[operatingSystem]!!.installValkey().version
             val newestAvailableVersion = when (operatingSystem) {
                 WINDOWS_X86_64 -> identifyLatestAvailableMemuraiVersionOnNuget()
                 MAC_OS_X86_64, MAC_OS_ARM64 -> identifyLatestAvailableMacportsValkeyVersion()

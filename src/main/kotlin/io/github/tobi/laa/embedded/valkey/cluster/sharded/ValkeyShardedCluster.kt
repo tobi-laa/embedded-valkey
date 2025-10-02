@@ -26,7 +26,10 @@ class ValkeyShardedCluster(
 
     private val log: Logger = LoggerFactory.getLogger(ValkeyShardedCluster::class.java)
 
-    private val mainNodeIdsByPort: MutableMap<Int, String> = LinkedHashMap<Int, String>()
+    private val mainNodeIdsByPort: MutableMap<Int, String> = LinkedHashMap()
+
+    val mainNodes get() = nodes.filter { replicasPortsByMainNodePort.containsKey(it.port) }
+    val replicas get() = nodes.filter { node -> replicasPortsByMainNodePort.values.any { it.contains(node.port) } }
 
     @Throws(IOException::class)
     override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
@@ -172,7 +175,7 @@ class ValkeyShardedCluster(
         val clusterIsReady = waitForPredicateToPass(Supplier {
             try {
                 JedisCluster(HostAndPort(CLUSTER_IP, nodes.first().port)).use { jc ->
-                    jc.get("someKey")
+                    jc["someKey"]
                     return@Supplier true
                 }
             } catch (e: Exception) {

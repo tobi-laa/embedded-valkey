@@ -176,6 +176,10 @@ fun downloadMacOsPackageFromMacPorts(
 /**
  * Returns a [ValkeyPackageSupplier] which loads a Valkey package (as can be found on [MacPorts](https://www.macports.org/)) for *macOS* from the classpath.
  *
+ * This can be useful if you want to bundle the Valkey package with your application and avoid downloading it at runtime.
+ *
+ * ⚠️ Make sure that the classpath resource you provide is the one found on the [MacPorts package repository](https://packages.macports.org/valkey/) for the specified version and operating system.
+ *
  * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-8.1.3_0.darwin_24.x86_64.tbz2"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [MAC_OS_X86_64]. *Must* be a macOS operating system.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
@@ -241,6 +245,10 @@ fun downloadWinX64MemuraiPackageFromNuget(
 
 /**
  * Returns a [ValkeyPackageSupplier] which loads a Memurai Developer package (as can be found on [NuGet](https://www.nuget.org/)) for *Windows x64* from the classpath.
+ *
+ * This can be useful if you want to bundle the package with your application and avoid downloading it at runtime.
+ *
+ * ⚠️ Make sure that the classpath resource you provide is the one found on the [Memurai NuGet page](https://www.nuget.org/packages/MemuraiDeveloper/) for the specified version.
  *
  * @param classpathResource The classpath resource path to the Memurai package, e.g. `"/valkey/MemuraiDeveloper.4.1.6.nupkg"`.
  * @param memuraiVersion The Memurai version to load. Defaults to [DEFAULT_MEMURAI_VERSION].

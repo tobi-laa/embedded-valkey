@@ -8,7 +8,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 class ValkeyStandalone internal constructor(
-    private val distroProvider: ValkeyInstallationSupplier,
+    private val installationSupplier: ValkeyInstallationSupplier,
     override val config: ValkeyConf
 ) :
     ValkeyNode {
@@ -23,7 +23,7 @@ class ValkeyStandalone internal constructor(
 
     @Throws(IOException::class)
     override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-        val distro = distroProvider.installValkey()
+        val distro = installationSupplier.installValkey()
         if (process == null) {
             process = ValkeyProcess(valkeyInstallation = distro, config = config)
         }

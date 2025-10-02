@@ -27,10 +27,7 @@ You could then, for example, use `ValkeyStandalone` to start and stop an embedde
 
 [source,java]
 ----
-ValkeyStandalone valkey = ValkeyStandalone.builder().build();
-valkey.start();
-// do some work
-valkey.stop();
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
 ----
 
 This will, by default, start a Valkey server on a (more or less) random, free port.
@@ -40,11 +37,7 @@ You can also provide a Valkey distributions yourself, for example:
 
 [source,java]
 ----
-ValkeyStandalone valkey = ValkeyStandalone.builder()
-  .distributionProvider(OperatingSystem.MAC_OS_ARM64, downloadAndInstallMacOsDistroFromMacports(new Proxy(Type.HTTP, new InetSocketAddress("my.proxy.com", 8080)), OperatingSystem.MAC_OS_ARM64))
-  .distributionProvider(OperatingSystem.LINUX_X86_64, installValkeyIoDistroFromClasspath("/bundles/valkey-8.1.3-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
-  .distributionProvider(OperatingSystem.WINDOWS_X86_64, installNugetMemuraiDeveloperDistroFromClasspath("/bundles/memuraideveloper.4.1.6.nupkg"))
-  .build();
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=27..31]
 ----
 
 All builders support a fluent API to configure the servers or clusters.
@@ -52,11 +45,7 @@ For example:
 
 [source,java]
 ----
-ValkeyStandalone valkey = ValkeyStandalone.builder()
-  .distributionProvider(OperatingSystem.MAC_OS_ARM64, customDistributionProvider)
-  .port(6379)
-  .replicaOf("locahost", 6378)
-  .build();
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=37..42]
 ----
 
 All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
@@ -65,17 +54,7 @@ For example:
 
 [source,java]
 ----
-ValkeyStandalone valkey = ValkeyStandalone.builder()
-  .distributionProvider(OperatingSystem.MAC_OS_ARM64, customDistributionProvider)
-  .importConf(Paths.get("/path/to/your/base/valkey.conf"))
-  // everything that follows will override settings in the imported configuration
-  .bind("127.0.0.1") // good for local development on Windows to prevent security popups
-  .port(6379)
-  .replicaOf("locahost", 6378)
-  .directive("daemonize", "no")
-  .directive("appendonly", "no")
-  .directive("maxmemory", "128M")
-  .build();
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=47..57]
 ----
 
 === Setting up a cluster
@@ -83,45 +62,27 @@ ValkeyStandalone valkey = ValkeyStandalone.builder()
 The library supports setting up the following types of Valkey clusters:
 
 * High-availability clusters with Sentinels, main nodes and replicas
-* Sharded clusters with node replication
-
++
 [source,java]
 ----
-class SomeIntegrationTestThatRequiresValkey {
-  private ValkeyHighAvailability cluster;
-
-  @BeforeEach
-  void setup() throws Exception {
-    var bindAddress = Inet4Address.getLocalHost().getHostAddress();
-    //creates a cluster with 3 sentinels, quorum size of 2 and 3 replication groups, each with one master and one slave
-    cluster = ValkeyHighAvailability.builder()
-      .withSentinelBuilder(ValkeySentinel.builder().bind(bindAddress)).sentinelCount(3)
-      .quorumSize(2)
-      .replicationGroup("main1", 1)
-      .replicationGroup("main2", 1)
-      .replicationGroup("main3", 1)
-      .build();
-    cluster.start();
-  }
-
-  @Test
-  void test() throws Exception {
-    // testing code that requires redis running
-    JedisSentinelPool pool = new JedisSentinelPool("main1", Set.copyOf(cluster.sentinelPorts()));
-  }
-
-  @AfterEach
-  void tearDown() throws Exception {
-    cluster.stop();
-  }
-}
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=64..74]
 ----
-
-For an example of setting up a sharded redis cluster check out the code in `RedisShardedServerClusterTest`.
+* Sharded clusters with node replication
++
+[source,java]
+----
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=79..86]
+----
 
 === Retrieving ports
 
-TBD
+After starting a Valkey server or cluster, you can retrieve the ports the servers are bound to.
+The way in which you do this depends on whether you started a single node or a cluster:
+
+[source,java]
+----
+include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=92..107]
+----
 
 == Valkey packages
 

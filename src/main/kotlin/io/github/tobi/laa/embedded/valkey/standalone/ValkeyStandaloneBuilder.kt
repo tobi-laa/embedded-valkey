@@ -2,7 +2,7 @@ package io.github.tobi.laa.embedded.valkey.standalone
 
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
-import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_PROVIDERS
+import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_SUPPLIERS
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
@@ -12,15 +12,15 @@ import java.nio.file.Path
 
 class ValkeyStandaloneBuilder {
 
-    private var customDistroProviders: MutableMap<OperatingSystem, ValkeyInstallationSupplier> = HashMap()
+    private var customInstallationSuppliers: MutableMap<OperatingSystem, ValkeyInstallationSupplier> = HashMap()
     private var portProvider: PortProvider = PortProvider()
     private val valkeyConfBuilder = ValkeyConfBuilder()
 
-    fun distributionProvider(
+    fun installationSupplier(
         operatingSystem: OperatingSystem,
-        distributionProvider: ValkeyInstallationSupplier
+        installationSupplier: ValkeyInstallationSupplier
     ): ValkeyStandaloneBuilder {
-        customDistroProviders[operatingSystem] = distributionProvider
+        customInstallationSuppliers[operatingSystem] = installationSupplier
         return this
     }
 
@@ -64,15 +64,15 @@ class ValkeyStandaloneBuilder {
             valkeyConfBuilder.binds("::1", "127.0.0.1")
         }
         val operatingSystem = detectOperatingSystem()
-        val distributionProvider = customDistroProviders[operatingSystem] ?: DEFAULT_PROVIDERS[operatingSystem]
-        ?: throw IllegalStateException("No ValkeyDistributionProvider configured for current OS")
-        return ValkeyStandalone(distributionProvider, valkeyConfBuilder.build())
+        val installationSupplier = customInstallationSuppliers[operatingSystem] ?: DEFAULT_SUPPLIERS[operatingSystem]
+        ?: throw IllegalStateException("No installation supplier available for ${operatingSystem.displayName}")
+        return ValkeyStandalone(installationSupplier, valkeyConfBuilder.build())
     }
 
     fun clone(): ValkeyStandaloneBuilder {
         val clonedBuilder = ValkeyStandaloneBuilder()
             .importConf(valkeyConfBuilder.build())
-        clonedBuilder.customDistroProviders = HashMap(customDistroProviders)
+        clonedBuilder.customInstallationSuppliers = HashMap(customInstallationSuppliers)
         return clonedBuilder
     }
 }

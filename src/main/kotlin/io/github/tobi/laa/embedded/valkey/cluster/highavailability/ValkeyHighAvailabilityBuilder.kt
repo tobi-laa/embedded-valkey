@@ -36,8 +36,8 @@ class ValkeyHighAvailabilityBuilder {
         return this
     }
 
-    fun replicationGroup(masterName: String, slaveCount: Int): ValkeyHighAvailabilityBuilder {
-        this.groups.add(ReplicationGroup(masterName, portProvider, slaveCount))
+    fun replicationGroup(masterName: String, replicaCount: Int): ValkeyHighAvailabilityBuilder {
+        this.groups.add(ReplicationGroup(masterName, portProvider, replicaCount))
         return this
     }
 

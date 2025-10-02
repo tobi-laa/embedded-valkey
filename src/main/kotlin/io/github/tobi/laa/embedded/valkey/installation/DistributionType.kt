@@ -13,6 +13,7 @@ import io.github.tobi.laa.embedded.valkey.installation.DistributionType.VALKEY
  *
  * [MEMURAI] is furthermore included as - at the time of writing - it is the only distribution that supports Windows.
  */
+@Suppress("kotlin:S1128") // imports are used in KDoc (and are repeatedly being re-added by the IDE if removed)
 enum class DistributionType(val displayName: String) {
     VALKEY("Valkey"),
     REDIS("Redis"),
