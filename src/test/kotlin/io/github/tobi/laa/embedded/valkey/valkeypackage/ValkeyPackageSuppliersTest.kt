@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.Arguments.arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.support.ParameterDeclarations
 import java.util.stream.Stream
 
@@ -50,6 +51,19 @@ class ValkeyPackageSuppliersTest {
             thenLinuxPackageIsValid()
         }
 
+        @ParameterizedTest(name = "Creating Linux package supplier for {0} should not work")
+        @EnumSource(
+            value = OperatingSystem::class,
+            names = ["LINUX_X86_64", "LINUX_ARM64"],
+            mode = EnumSource.Mode.EXCLUDE
+        )
+        @DisplayName("Creating Linux package supplier for unsupported OS should not work")
+        fun `creating Linux package supplier for unsupported OS should not work`(operatingSystem: OperatingSystem) {
+            givenOperatingSystem(operatingSystem)
+            whenLinuxPackageFromClasspathSupplierIsCreated()
+            thenValidationErrorOccursSinceOperatingSystemIsNotLinux()
+        }
+
         @ParameterizedTest(name = "Loading package for {0} from classpath '{1}'")
         @ArgumentsSource(MacOsPackagesOnClasspath::class)
         @DisplayName("Loading MacOS package from classpath should work")
@@ -61,6 +75,19 @@ class ValkeyPackageSuppliersTest {
             whenPackageIsRetrieved()
             thenNoErrorOccurs()
             thenMacOsPackageIsValid()
+        }
+
+        @ParameterizedTest(name = "Creating MacOS package supplier for {0} should not work")
+        @EnumSource(
+            value = OperatingSystem::class,
+            names = ["MAC_OS_X86_64", "MAC_OS_ARM64"],
+            mode = EnumSource.Mode.EXCLUDE
+        )
+        @DisplayName("Creating MacOS package supplier for unsupported OS should not work")
+        fun `creating MacOS package supplier for unsupported OS should not work`(operatingSystem: OperatingSystem) {
+            givenOperatingSystem(operatingSystem)
+            whenMacOsPackageFromClasspathSupplierIsCreated()
+            thenValidationErrorOccursSinceOperatingSystemIsNotMacOs()
         }
 
         @Test
@@ -101,14 +128,46 @@ class ValkeyPackageSuppliersTest {
             )
         }
 
+        private fun givenOperatingSystem(operatingSystem: OperatingSystem) {
+            givenOperatingSystem = operatingSystem
+        }
+
         private fun whenPackageIsRetrieved() {
             retrievePackage = ThrowableAssert.ThrowingCallable {
                 retrievedPackage = givenPackageSupplier!!.retrievePackage()
             }
         }
 
+        private fun whenLinuxPackageFromClasspathSupplierIsCreated() {
+            retrievePackage = ThrowableAssert.ThrowingCallable {
+                loadValkeyIoLinuxPackageFromClasspath(
+                    classpathResource = "/valkey-packages/valkey-8.1.3-jammy-x86_64.tar.gz",
+                    operatingSystem = givenOperatingSystem!!
+                )
+            }
+        }
+
+        private fun whenMacOsPackageFromClasspathSupplierIsCreated() {
+            retrievePackage = ThrowableAssert.ThrowingCallable {
+                loadMacPortsPackageFromClasspath(
+                    classpathResource = "/valkey-packages/valkey-8.1.3_0.darwin_24.x86_64.tbz2",
+                    operatingSystem = givenOperatingSystem!!
+                )
+            }
+        }
+
         private fun thenNoErrorOccurs() {
             assertThatCode(retrievePackage!!).doesNotThrowAnyException()
+        }
+
+        private fun thenValidationErrorOccursSinceOperatingSystemIsNotLinux() {
+            assertThatCode(retrievePackage!!).isExactlyInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("Operating system must be either ${OperatingSystem.LINUX_X86_64} or ${OperatingSystem.LINUX_ARM64}")
+        }
+
+        private fun thenValidationErrorOccursSinceOperatingSystemIsNotMacOs() {
+            assertThatCode(retrievePackage!!).isExactlyInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("Operating system must be either ${OperatingSystem.MAC_OS_X86_64} or ${OperatingSystem.MAC_OS_ARM64}")
         }
 
         private fun thenLinuxPackageIsValid() {
