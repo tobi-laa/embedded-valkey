@@ -27,7 +27,7 @@ You could then, for example, use `ValkeyStandalone` to start and stop an embedde
 
 [source,java]
 ----
-include::https://https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
+include::https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
 ----
 
 This will, by default, start a Valkey server on a (more or less) random, free port.
