@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - '**'
+    paths-ignore:
+      - README.adoc
   pull_request:
     types:
       - opened
