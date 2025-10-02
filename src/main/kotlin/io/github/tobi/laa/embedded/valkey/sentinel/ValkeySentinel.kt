@@ -11,8 +11,6 @@ class ValkeySentinel(private val installationSupplier: ValkeyInstallationSupplie
     ValkeyNode {
 
     override val active: Boolean get() = process?.active ?: false
-    override val port: Int get() = config.port() ?: throw IllegalStateException("Port not configured")
-    override val binds: List<String> get() = config.binds()
     override val workingDirectory: Path
         get() = process?.workingDirectory ?: throw IllegalStateException("Process not started")
 
