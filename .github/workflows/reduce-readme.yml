@@ -21,6 +21,6 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           add: README.adoc
-          message: Rebuild reduced README
+          message: ':memo: Rebuild reduced README'
           committer_name: GitHub Actions
           committer_email: actions@github.com
