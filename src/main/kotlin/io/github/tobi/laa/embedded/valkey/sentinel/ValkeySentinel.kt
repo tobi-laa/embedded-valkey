@@ -2,12 +2,12 @@ package io.github.tobi.laa.embedded.valkey.sentinel
 
 import io.github.tobi.laa.embedded.valkey.ValkeyNode
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
-import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
 import io.github.tobi.laa.embedded.valkey.process.ValkeyProcess
 import java.io.IOException
 import java.nio.file.Path
 
-class ValkeySentinel(private val distroProvider: ValkeyDistributionProvider, override val config: ValkeyConf) :
+class ValkeySentinel(private val distroProvider: ValkeyInstallationSupplier, override val config: ValkeyConf) :
     ValkeyNode {
 
     override val active: Boolean get() = process?.active ?: false
@@ -20,9 +20,9 @@ class ValkeySentinel(private val distroProvider: ValkeyDistributionProvider, ove
 
     @Throws(IOException::class)
     override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-        val distro = distroProvider.provideDistribution()
+        val distro = distroProvider.installValkey()
         if (process == null) {
-            process = ValkeyProcess(valkeyDistribution = distro, config = config, sentinel = true)
+            process = ValkeyProcess(valkeyInstallation = distro, config = config, sentinel = true)
         }
         process!!.start(awaitReadiness, maxWaitTimeSeconds)
     }

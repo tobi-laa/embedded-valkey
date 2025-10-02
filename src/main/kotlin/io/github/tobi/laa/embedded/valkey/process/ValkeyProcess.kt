@@ -2,7 +2,7 @@ package io.github.tobi.laa.embedded.valkey.process
 
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfWriter
-import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistribution
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
 import org.slf4j.LoggerFactory.getLogger
 import org.slf4j.event.Level
 import java.io.IOException
@@ -16,10 +16,10 @@ import kotlin.io.path.absolutePathString
 class ValkeyProcess
 @JvmOverloads
 constructor(
-    val valkeyDistribution: ValkeyDistribution,
+    val valkeyInstallation: ValkeyInstallation,
     val workingDirectory: Path = Files.createTempDirectory(
-        valkeyDistribution.installationPath,
-        "${valkeyDistribution.distributionType.name.lowercase()}-${valkeyDistribution.version}-${valkeyDistribution.operatingSystem.name.lowercase()}"
+        valkeyInstallation.installationPath,
+        "${valkeyInstallation.distributionType.name.lowercase()}-${valkeyInstallation.version}-${valkeyInstallation.operatingSystem.name.lowercase()}"
     ),
     val config: ValkeyConf = ValkeyConf.DEFAULT_CONF,
     val charset: Charset = Charsets.UTF_8,
@@ -52,11 +52,11 @@ constructor(
         private set
 
     init {
-        require(Files.exists(valkeyDistribution.binaryPath)) {
-            "${valkeyDistribution.distributionType.displayName} binary does not exist at path: ${valkeyDistribution.binaryPath}"
+        require(Files.exists(valkeyInstallation.binaryPath)) {
+            "${valkeyInstallation.distributionType.displayName} binary does not exist at path: ${valkeyInstallation.binaryPath}"
         }
-        require(Files.isExecutable(valkeyDistribution.binaryPath)) {
-            "${valkeyDistribution.distributionType.displayName} binary is not executable at path: ${valkeyDistribution.binaryPath}"
+        require(Files.isExecutable(valkeyInstallation.binaryPath)) {
+            "${valkeyInstallation.distributionType.displayName} binary is not executable at path: ${valkeyInstallation.binaryPath}"
         }
         require(Files.exists(workingDirectory)) {
             "Working directory does not exist at path: $workingDirectory"
@@ -75,7 +75,7 @@ constructor(
                 log.warn("Process has already been started: {}", this)
                 return
             }
-            log.info("🫴 Starting Valkey process: {}", this)
+            log.info("🚀 Starting Valkey process: {}", this)
             createValkeyConfFile()
             buildArgs()
             buildAndStartProcess()
@@ -92,7 +92,7 @@ constructor(
 
     private fun createValkeyConfFile() {
         ValkeyConfWriter.write(config, configFile, charset)
-        log.debug("✍️ Wrote Valkey config to file: {}", configFile)
+        log.info("✍️ Wrote Valkey config to file: {}", configFile)
     }
 
     private fun buildArgs() {
@@ -105,7 +105,7 @@ constructor(
 
     private fun buildAndStartProcess() {
         val processBuilder = ProcessBuilder()
-            .command(listOf(valkeyDistribution.binaryPath.toString()) + args)
+            .command(listOf(valkeyInstallation.binaryPath.toString()) + args)
             .directory(workingDirectory.toFile())
         process = processBuilder.start()
     }
@@ -122,8 +122,8 @@ constructor(
                             log.atLevel(stdoutLogLevel)
                                 .log(
                                     "[{} v{} - pid: {} - stdout] {}",
-                                    valkeyDistribution.distributionType.displayName,
-                                    valkeyDistribution.version,
+                                    valkeyInstallation.distributionType.displayName,
+                                    valkeyInstallation.version,
                                     process.pid(),
                                     line
                                 )
@@ -133,7 +133,7 @@ constructor(
                     log.trace("Error while consuming stdout for {}, probably the process has been stopped.", this, e)
                 }
             },
-            "${valkeyDistribution.distributionType.name.lowercase()}-${process.pid()}-stdout-consuming-thread"
+            "${valkeyInstallation.distributionType.name.lowercase()}-${process.pid()}-stdout-consuming-thread"
         )
         stdoutConsumingThread.start()
 
@@ -144,8 +144,8 @@ constructor(
                         lines.forEach { line ->
                             log.atLevel(stderrLogLevel).log(
                                 "[{} v{} - pid: {} - stderr] {}",
-                                valkeyDistribution.distributionType.displayName,
-                                valkeyDistribution.version,
+                                valkeyInstallation.distributionType.displayName,
+                                valkeyInstallation.version,
                                 process.pid(),
                                 line
                             )
@@ -155,7 +155,7 @@ constructor(
                     log.trace("Error while consuming stderr for {}, probably the process has been stopped.", this, e)
                 }
             },
-            "${valkeyDistribution.distributionType.name.lowercase()}-${process.pid()}-stderr-consuming-thread"
+            "${valkeyInstallation.distributionType.name.lowercase()}-${process.pid()}-stderr-consuming-thread"
         )
         stderrConsumingThread.start()
     }
@@ -165,7 +165,7 @@ constructor(
             .addShutdownHook(
                 Thread(
                     { stop() },
-                    "${valkeyDistribution.distributionType.name.lowercase()}-${process.pid()}-shutdown-hook"
+                    "${valkeyInstallation.distributionType.name.lowercase()}-${process.pid()}-shutdown-hook"
                 )
             )
     }
@@ -238,6 +238,6 @@ constructor(
     }
 
     override fun toString(): String {
-        return "${valkeyDistribution.distributionType.displayName} v${valkeyDistribution.version} for ${valkeyDistribution.operatingSystem.displayName} (working directory: $workingDirectory, args: ${if (this::args.isInitialized) args else "not yet built"}, pid: ${if (this::process.isInitialized) process.pid() else "not started"})"
+        return "${valkeyInstallation.distributionType.displayName} v${valkeyInstallation.version} for ${valkeyInstallation.operatingSystem.displayName} (working directory: $workingDirectory, args: ${if (this::args.isInitialized) args else "not yet built"}, pid: ${if (this::process.isInitialized) process.pid() else "not started"})"
     }
 }

@@ -4,8 +4,8 @@ import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGr
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
-import io.github.tobi.laa.embedded.valkey.distribution.DEFAULT_PROVIDERS
-import io.github.tobi.laa.embedded.valkey.distribution.ValkeyDistributionProvider
+import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_PROVIDERS
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.ports.DEFAULT_VALKEY_PORT
 import io.github.tobi.laa.embedded.valkey.ports.PortProvider
@@ -18,7 +18,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
 
     constructor() : this(ValkeyConfBuilder())
 
-    private var distributionProvider: ValkeyDistributionProvider = DEFAULT_PROVIDERS[detectOperatingSystem()]!!
+    private var distributionProvider: ValkeyInstallationSupplier = DEFAULT_PROVIDERS[detectOperatingSystem()]!!
     private var portProvider: PortProvider = PortProvider()
     private var downAfterMilliseconds = 60000L
     private var failOverTimeout = 180000L
@@ -30,7 +30,7 @@ private constructor(private val valkeyConfBuilder: ValkeyConfBuilder = ValkeyCon
         valkeyConfBuilder.binds("::1", "127.0.0.1")
     }
 
-    fun distributionProvider(distributionProvider: ValkeyDistributionProvider): ValkeySentinelBuilder {
+    fun distributionProvider(distributionProvider: ValkeyInstallationSupplier): ValkeySentinelBuilder {
         this.distributionProvider = distributionProvider
         return this
     }

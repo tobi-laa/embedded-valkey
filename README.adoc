@@ -40,11 +40,15 @@ valkey.stop();
 This will, by default, start a Valkey server on a (more or less) random, free port. It will also attempt to download a
 fitting Valkey distribution for your operating system.
 
-!TODO! You can also provide a Valkey distribution yourself, for example:
+You can also provide a Valkey distributions yourself, for example:
 
 [source,java]
 ----
-TBD tbd = null; // TODO
+ValkeyStandalone valkey = ValkeyStandalone.builder()
+  .distributionProvider(OperatingSystem.MAC_OS_ARM64, downloadAndInstallMacOsDistroFromMacports(new Proxy(Type.HTTP, new InetSocketAddress("my.proxy.com", 8080)), OperatingSystem.MAC_OS_ARM64))
+  .distributionProvider(OperatingSystem.LINUX_X86_64, installValkeyIoDistroFromClasspath("/bundles/valkey-8.1.3-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
+  .distributionProvider(OperatingSystem.WINDOWS_X86_64, installNugetMemuraiDeveloperDistroFromClasspath("/bundles/memuraideveloper.4.1.6.nupkg"))
+  .build();
 ----
 
 All builders support a fluent API to configure the servers or clusters. For example:
