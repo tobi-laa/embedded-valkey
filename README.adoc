@@ -9,12 +9,6 @@ image:https://sonarcloud.io/api/project_badges/measure?project=tobi-laa_embedded
 
 This library provides an easy way to run an embedded Valkey server in your JVM projects, mainly for integration testing purposes.
 
-:toc:
-
-== Project history & acknowledgements
-
-This project is a refactored Kotlin port forked from the `embedded-redis` project by https://github.com/codemonstur/embedded-redis[codemonstur], which was forked from https://github.com/ozimov/embedded-redis[ozimov], which was originally forked from https://github.com/kstyrc/embedded-redis[kstyrc]
-
 == Usage
 
 To use the library, add the following dependency to your `pom.xml`:
@@ -39,8 +33,8 @@ valkey.start();
 valkey.stop();
 ----
 
-This will, by default, start a Valkey server on a (more or less) random, free port. It will also attempt to download a
-fitting Valkey distribution for your operating system.
+This will, by default, start a Valkey server on a (more or less) random, free port.
+It will also attempt to download a fitting Valkey distribution for your operating system.
 
 You can also provide a Valkey distributions yourself, for example:
 
@@ -53,7 +47,8 @@ ValkeyStandalone valkey = ValkeyStandalone.builder()
   .build();
 ----
 
-All builders support a fluent API to configure the servers or clusters. For example:
+All builders support a fluent API to configure the servers or clusters.
+For example:
 
 [source,java]
 ----
@@ -64,8 +59,9 @@ ValkeyStandalone valkey = ValkeyStandalone.builder()
   .build();
 ----
 
-All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults. You can override
-any configuration directive, some of them are even available as first-class citizens in the builders. For example:
+All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
+You can override any configuration directive, some of them are even available as first-class citizens in the builders.
+For example:
 
 [source,java]
 ----
@@ -121,25 +117,63 @@ class SomeIntegrationTestThatRequiresValkey {
 }
 ----
 
-For an example of setting up a sharded redis cluster check out the code
-in `RedisShardedServerClusterTest`.
+For an example of setting up a sharded redis cluster check out the code in `RedisShardedServerClusterTest`.
 
 === Retrieving ports
 
 TBD
 
-== Distributions
+== Valkey packages
 
-TBD - should describe where they are downloaded from and how to provide your own from the classpath
+The library does not ship with any Valkey binaries.
+Instead, it downloads (and extracts) Valkey packages on demand from various sources.
+The following distributions are supported out of the box:
+
+|===
+|Operating system |Distribution type |Currently used version |Packages downloaded from |Link to package
+
+|Linux `x86_64`
+|Valkey
+|`8.1.3`
+|https://valkey.io
+|https://download.valkey.io/releases/valkey-8.1.3-jammy-x86_64.tar.gz[`valkey-8.1.3-jammy-x86_64.tar.gz`]
+
+|Linux `arm64`
+|Valkey
+|`8.1.3`
+|https://valkey.io
+|https://download.valkey.io/releases/valkey-8.1.3-jammy-arm64.tar.gz[`valkey-8.1.3-jammy-arm64.tar.gz`]
+
+|macOS `arm64`
+|Valkey
+|`8.1.3`
+|https://macports.org
+|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_25.arm64.tbz2[`valkey-8.1.3_0.darwin_25.arm64.tbz2`]
+
+|macOS `x86_64`
+|Valkey
+|`8.1.3`
+|https://macports.org
+|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_24.x86_64.tbz2[`valkey-8.1.3_0.darwin_24.x86_64.tbz2`]
+
+|Windows `x86_64`
+|Memurai Developer
+|`4.1.6`
+|https://www.nuget.org/packages
+|https://www.nuget.org/api/v2/package/MemuraiDeveloper/4.1.6[`memuraideveloper.4.1.6.nupkg`]
+|===
+
+* Valkey from valkey.io (Linux x86_64, MacOS x86_64, MacOS ARM64)
+* Memurai Developer from memurai.com (Windows x86_64)
+* HankCP from github.com/HankCP/redis (MacOS x86_64,
 
 == Troubleshooting
 
 === SSL/TLS
 
-You might get an error when you try to start the default binary without
-having openssl installed. The default binaries have TLS support but
-require a library on the host OS. On MacOS you will probably get an
-error that looks like this:
+You might get an error when you try to start the default binary without having openssl installed.
+The default binaries have TLS support but require a library on the host OS.
+On MacOS you will probably get an error that looks like this:
 
 ....
 '/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib' (no such file),
@@ -149,11 +183,10 @@ error that looks like this:
 ....
 
 One option for resolving the issue is to install openssl using
-`brew install openssl@3`. Alternatively, you can use a binary that
-doesn’t have TLS support. Either by compiling your own from source, or
-by using HankCP’s binary at
-`ExecutableProvider.REDIS_7_2_MACOSX_14_SONOMA_HANKCP`, or downloading
-one from some other place.
+`brew install openssl@3`.
+Alternatively, you can use a binary that doesn’t have TLS support.
+Either by compiling your own from source, or by using HankCP’s binary at
+`ExecutableProvider.REDIS_7_2_MACOSX_14_SONOMA_HANKCP`, or downloading one from some other place.
 
 On linux the error will look like this:
 
@@ -162,15 +195,19 @@ On linux the error will look like this:
 shared object file: No such file or directory
 ....
 
-The problem is the same as on MacOS. You need a binary that doesn’t
-require the libssl library or you need to provide that library. If you
-are running the app on your host you can install the needed package
-using your package manager. Such as with apt-get
-(`sudo apt-get install openssl`). If you are running this inside a
-docker image you’ll need to make sure the library is available inside
-the image.
+The problem is the same as on MacOS.
+You need a binary that doesn’t require the libssl library or you need to provide that library.
+If you are running the app on your host you can install the needed package using your package manager.
+Such as with apt-get (`sudo apt-get install openssl`).
+If you are running this inside a docker image you’ll need to make sure the library is available inside the image.
 
-== Contributors
+== Acknowledgements
+
+=== Project history
+
+This project is a refactored Kotlin port forked from the `embedded-redis` project by https://github.com/codemonstur/embedded-redis[codemonstur], which was forked from https://github.com/ozimov/embedded-redis[ozimov], which was originally forked from https://github.com/kstyrc/embedded-redis[kstyrc]
+
+=== Contributors
 
 * Krzysztof Styrc (http://github.com/kstyrc[@kstyrc])
 * Piotr Turek (http://github.com/turu[@turu])
