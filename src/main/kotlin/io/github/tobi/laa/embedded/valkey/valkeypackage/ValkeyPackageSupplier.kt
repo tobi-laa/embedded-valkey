@@ -42,19 +42,17 @@ interface ValkeyPackageSupplier {
         alwaysExtract: Boolean = false,
         ensureBinaryIsExecutable: Boolean = true
     ): ValkeyInstallationSupplier {
-        return object : ValkeyInstallationSupplier {
-            override fun installValkey(): ValkeyInstallation {
-                val bundle = retrievePackage()
-                return ValkeyPackageExtractor(
-                    valkeyPackage = bundle,
-                    installationPath = (installationPath ?: resolveDefaultTempInstallationPath(
-                        bundle.distributionType,
-                        bundle.version,
-                        bundle.operatingSystem
-                    )),
-                    ensureBinaryIsExecutable = ensureBinaryIsExecutable
-                ).installValkey()
-            }
+        return ValkeyInstallationSupplier {
+            val bundle = retrievePackage()
+            ValkeyPackageExtractor(
+                valkeyPackage = bundle,
+                installationPath = (installationPath ?: resolveDefaultTempInstallationPath(
+                    bundle.distributionType,
+                    bundle.version,
+                    bundle.operatingSystem
+                )),
+                ensureBinaryIsExecutable = ensureBinaryIsExecutable
+            ).installValkey()
         }
     }
 }
