@@ -1,0 +1,179 @@
+:doctype: book
+
+// please note that the README.adoc in the root directory is generated via a GitHub Action!
+// you always want to edit the src/main/asciidoc/README.adoc file instead of the root README.adoc file!
+
+image:https://img.shields.io/maven-metadata/v/https/repo1.maven.org/maven2/io/github/tobi-laa/embedded-valkey/maven-metadata.xml.svg[Releases,link=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.github.tobi-laa%22%20AND%20a%3A%22embedded-valkey%22]
+link:./LICENSE[image:https://img.shields.io/badge/License-Apache%202.0-orange[Apache 2.0 License\]]
+image:https://sonarcloud.io/api/project_badges/measure?project=tobi-laa_embedded-valkey&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=tobi-laa_embedded-valkey]
+image:https://sonarcloud.io/api/project_badges/measure?project=tobi-laa_embedded-valkey&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=tobi-laa_embedded-valkey]
+
+= `embedded-valkey`
+
+This library provides an easy way to run an embedded Valkey server in your JVM projects, mainly for integration testing purposes.
+
+== Usage
+
+To use the library, add the following dependency to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.github.tobi-laa</groupId>
+    <artifactId>embedded-valkey</artifactId>
+    <version><!-- insert newest version here --></version>
+    <scope>test</scope>
+</dependency>
+----
+
+You could then, for example, use `ValkeyStandalone` to start and stop an embedded Valkey server:
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
+----
+
+This will, by default, start a Valkey server on a (more or less) random, free port.
+It will also attempt to download a fitting Valkey distribution for your operating system.
+
+You can also provide a Valkey distributions yourself, for example:
+
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=27..31]
+----
+
+All builders support a fluent API to configure the servers or clusters.
+For example:
+
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=37..42]
+----
+
+All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
+You can override any configuration directive, some of them are even available as first-class citizens in the builders.
+For example:
+
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=47..57]
+----
+
+=== Setting up a cluster
+
+The library supports setting up the following types of Valkey clusters:
+
+* High-availability clusters with Sentinels, main nodes and replicas
++
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=64..74]
+----
+* Sharded clusters with node replication
++
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=79..86]
+----
+
+=== Retrieving ports
+
+After starting a Valkey server or cluster, you can retrieve the ports the servers are bound to.
+The way in which you do this depends on whether you started a single node or a cluster:
+
+[source,java]
+----
+include::../../../src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=92..107]
+----
+
+== Valkey packages
+
+The library does not ship with any Valkey binaries.
+Instead, it downloads (and extracts) Valkey packages on demand from various sources.
+The following distributions are supported out of the box:
+
+|===
+|Operating system |Distribution type |Currently used version |Packages downloaded from |Link to package
+
+|Linux `x86_64`
+|Valkey
+|`8.1.3`
+|https://valkey.io
+|https://download.valkey.io/releases/valkey-8.1.3-jammy-x86_64.tar.gz[`valkey-8.1.3-jammy-x86_64.tar.gz`]
+
+|Linux `arm64`
+|Valkey
+|`8.1.3`
+|https://valkey.io
+|https://download.valkey.io/releases/valkey-8.1.3-jammy-arm64.tar.gz[`valkey-8.1.3-jammy-arm64.tar.gz`]
+
+|macOS `arm64`
+|Valkey
+|`8.1.3`
+|https://macports.org
+|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_25.arm64.tbz2[`valkey-8.1.3_0.darwin_25.arm64.tbz2`]
+
+|macOS `x86_64`
+|Valkey
+|`8.1.3`
+|https://macports.org
+|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_24.x86_64.tbz2[`valkey-8.1.3_0.darwin_24.x86_64.tbz2`]
+
+|Windows `x86_64`
+|Memurai Developer
+|`4.1.6`
+|https://www.nuget.org/packages
+|https://www.nuget.org/api/v2/package/MemuraiDeveloper/4.1.6[`memuraideveloper.4.1.6.nupkg`]
+|===
+
+== Troubleshooting
+
+=== SSL/TLS
+
+You might get an error when you try to start the default binary without having openssl installed.
+The default binaries have TLS support but require a library on the host OS.
+On macOS you will probably get an error that looks like this:
+
+....
+'/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib' (no such file),
+'/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib' (no such file),
+'/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib' (no such file),
+'/usr/lib/libssl.3.dylib' (no such file, not in dyld cache)
+....
+
+One option for resolving the issue is to install openssl using
+`brew install openssl@3`.
+Alternatively, you can use a binary that doesn’t have TLS support.
+Either by compiling your own from source, or by using HankCP’s binary at
+`ExecutableProvider.REDIS_7_2_MACOSX_14_SONOMA_HANKCP`, or downloading one from some other place.
+
+On linux the error will look like this:
+
+....
+/app/redis-server-6.2.6-v5-linux-amd64: error while loading shared libraries: libssl.so.3: cannot open
+shared object file: No such file or directory
+....
+
+The problem is the same as on macOS.
+You need a binary that doesn’t require the libssl library or you need to provide that library.
+If you are running the app on your host you can install the needed package using your package manager.
+Such as with apt-get (`sudo apt-get install openssl`).
+If you are running this inside a docker image you’ll need to make sure the library is available inside the image.
+
+== Acknowledgements
+
+=== Project history
+
+This project is a refactored Kotlin port forked from the `embedded-redis` project by https://github.com/codemonstur/embedded-redis[codemonstur], which was forked from https://github.com/ozimov/embedded-redis[ozimov], which was originally forked from https://github.com/kstyrc/embedded-redis[kstyrc]
+
+=== Contributors
+
+* Krzysztof Styrc (http://github.com/kstyrc[@kstyrc])
+* Piotr Turek (http://github.com/turu[@turu])
+* anthonyu (http://github.com/anthonyu[@anthonyu])
+* Artem Orobets (http://github.com/enisher[@enisher])
+* Sean Simonsen (http://github.com/SeanSimonsen[@SeanSimonsen])
+* Rob Winch (http://github.com/rwinch[@rwinch])
+* Cristian Badila (http://github.com/cristi-badila[@cristi-badila])
+* Jurgen Voorneveld (http://github.com/codemonstur[@codemonstur])
