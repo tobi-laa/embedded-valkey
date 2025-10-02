@@ -1,5 +1,8 @@
 :doctype: book
 
+// please note that the README.adoc in the root directory is generated via a GitHub Action
+// you always want to edit the src/main/asciidoc/README.adoc file instead of the root README.adoc file!
+
 image:https://img.shields.io/maven-metadata/v/https/repo1.maven.org/maven2/io/github/tobi-laa/embedded-valkey/maven-metadata.xml.svg[Releases,link=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.github.tobi-laa%22%20AND%20a%3A%22embedded-valkey%22]
 link:./LICENSE[image:https://img.shields.io/badge/License-Apache%202.0-orange[Apache 2.0 License\]]
 image:https://sonarcloud.io/api/project_badges/measure?project=tobi-laa_embedded-valkey&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=tobi-laa_embedded-valkey]
@@ -27,7 +30,7 @@ You could then, for example, use `ValkeyStandalone` to start and stop an embedde
 
 [source,java]
 ----
-include::https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=13..16]
+link:https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[role=include]
 ----
 
 This will, by default, start a Valkey server on a (more or less) random, free port.
@@ -37,7 +40,11 @@ You can also provide a Valkey distributions yourself, for example:
 
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=27..31]
+ValkeyStandalone valkey = ValkeyStandalone.builder().build();
+valkey.start();
+// do some work
+valkey.stop();
+}
 ----
 
 All builders support a fluent API to configure the servers or clusters.
@@ -45,7 +52,12 @@ For example:
 
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=37..42]
+    .installationSupplier(OperatingSystem.WINDOWS_X86_64, installWinX64MemuraiPackageFromClasspath("/bundles/memuraideveloper.4.1.6.nupkg"))
+    .build();
+}
+
+private void simpleValkeyStandaloneFluentConfigExample() throws IOException {
+ValkeyInstallationSupplier customInstallationProvider = null;
 ----
 
 All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
@@ -54,7 +66,17 @@ For example:
 
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=47..57]
+        .build();
+}
+
+private void advancedValkeyStandaloneFluentConfigExample() throws IOException {
+ValkeyInstallationSupplier customInstallationProvider = null;
+ValkeyStandalone valkey = ValkeyStandalone.builder()
+        .installationSupplier(OperatingSystem.MAC_OS_ARM64, customInstallationProvider)
+        .importConf(Paths.get("/path/to/your/base/valkey.conf"))
+        // everything that follows will override settings in the imported configuration
+        .bind("127.0.0.1") // good for local development on Windows to prevent security popups
+        .port(6379)
 ----
 
 === Setting up a cluster
@@ -65,13 +87,30 @@ The library supports setting up the following types of Valkey clusters:
 +
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=64..74]
+
+private void valkeyHighAvailClusterExample() throws IOException {
+//creates a cluster with 3 sentinels, quorum size of 2 and 3 replication groups, each with one main node and one replica
+ValkeyHighAvailability valkey = ValkeyHighAvailability.builder()
+        .withSentinelBuilder(ValkeySentinel.builder())
+        .sentinelCount(3)
+        .quorumSize(2)
+        .replicationGroup("main1", 1)
+        .replicationGroup("main2", 1)
+        .replicationGroup("main3", 1)
+        .build();
 ----
 * Sharded clusters with node replication
 +
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=79..86]
+
+private void valkeyShardedClusterExample() throws IOException {
+ValkeyShardedCluster valkey = ValkeyShardedCluster.builder()
+        .shard("main1", 1)
+        .shard("main2", 1)
+        .shard("main3", 1)
+        .build();
+valkey.start();
 ----
 
 === Retrieving ports
@@ -81,7 +120,22 @@ The way in which you do this depends on whether you started a single node or a c
 
 [source,java]
 ----
-include::src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[lines=92..107]
+ValkeyStandalone standalone = ValkeyStandalone.builder().build();
+standalone.start();
+int port = standalone.getPort(); // works the same way for sentinels
+
+ValkeyHighAvailability highAvail = ValkeyHighAvailability.builder().build();
+highAvail.start();
+List<Integer> sentinelPorts = highAvail.getSentinels().stream().map(ValkeyNode::getPort).toList();
+
+ValkeyShardedCluster cluster = ValkeyShardedCluster.builder()
+        .shard("main1", 1)
+        .shard("main2", 1)
+        .shard("main3", 1)
+        .build();
+cluster.start();
+List<Integer> mainNodePorts = cluster.getMainNodes().stream().map(ValkeyNode::getPort).toList();
+List<Integer> replicaPorts = cluster.getReplicas().stream().map(ValkeyNode::getPort).toList();
 ----
 
 == Valkey packages
