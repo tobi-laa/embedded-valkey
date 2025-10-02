@@ -30,7 +30,10 @@ You could then, for example, use `ValkeyStandalone` to start and stop an embedde
 
 [source,java]
 ----
-link:https://raw.githubusercontent.com/tobi-laa/embedded-valkey/refs/heads/main/src/test/java/io/github/tobi/laa/embedded/valkey/examples/Examples.java[role=include]
+ValkeyStandalone valkey = ValkeyStandalone.builder().build();
+valkey.start();
+// do some work
+valkey.stop();
 ----
 
 This will, by default, start a Valkey server on a (more or less) random, free port.
@@ -40,11 +43,11 @@ You can also provide a Valkey distributions yourself, for example:
 
 [source,java]
 ----
-ValkeyStandalone valkey = ValkeyStandalone.builder().build();
-valkey.start();
-// do some work
-valkey.stop();
-}
+ValkeyStandalone valkey = ValkeyStandalone.builder()
+    .installationSupplier(OperatingSystem.MAC_OS_ARM64, downloadAndInstallMacOsPackageFromMacports(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("my.proxy.com", 8080)), OperatingSystem.MAC_OS_ARM64))
+    .installationSupplier(OperatingSystem.LINUX_X86_64, installValkeyIoLinuxPackageFromClasspath("/bundles/valkey-8.1.3-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
+    .installationSupplier(OperatingSystem.WINDOWS_X86_64, installWinX64MemuraiPackageFromClasspath("/bundles/memuraideveloper.4.1.6.nupkg"))
+    .build();
 ----
 
 All builders support a fluent API to configure the servers or clusters.
@@ -52,12 +55,12 @@ For example:
 
 [source,java]
 ----
-    .installationSupplier(OperatingSystem.WINDOWS_X86_64, installWinX64MemuraiPackageFromClasspath("/bundles/memuraideveloper.4.1.6.nupkg"))
-    .build();
-}
-
-private void simpleValkeyStandaloneFluentConfigExample() throws IOException {
 ValkeyInstallationSupplier customInstallationProvider = null;
+ValkeyStandalone valkey = ValkeyStandalone.builder()
+        .installationSupplier(OperatingSystem.MAC_OS_ARM64, customInstallationProvider)
+        .port(6379)
+        .replicaOf("locahost", 6378)
+        .build();
 ----
 
 All embedded Valkey instances will generate a `valkey.conf` on the fly, based on sensible defaults.
@@ -66,10 +69,6 @@ For example:
 
 [source,java]
 ----
-        .build();
-}
-
-private void advancedValkeyStandaloneFluentConfigExample() throws IOException {
 ValkeyInstallationSupplier customInstallationProvider = null;
 ValkeyStandalone valkey = ValkeyStandalone.builder()
         .installationSupplier(OperatingSystem.MAC_OS_ARM64, customInstallationProvider)
@@ -77,6 +76,11 @@ ValkeyStandalone valkey = ValkeyStandalone.builder()
         // everything that follows will override settings in the imported configuration
         .bind("127.0.0.1") // good for local development on Windows to prevent security popups
         .port(6379)
+        .replicaOf("locahost", 6378)
+        .directive("daemonize", "no")
+        .directive("appendonly", "no")
+        .directive("maxmemory", "128M")
+        .build();
 ----
 
 === Setting up a cluster
@@ -87,8 +91,6 @@ The library supports setting up the following types of Valkey clusters:
 +
 [source,java]
 ----
-
-private void valkeyHighAvailClusterExample() throws IOException {
 //creates a cluster with 3 sentinels, quorum size of 2 and 3 replication groups, each with one main node and one replica
 ValkeyHighAvailability valkey = ValkeyHighAvailability.builder()
         .withSentinelBuilder(ValkeySentinel.builder())
@@ -98,19 +100,22 @@ ValkeyHighAvailability valkey = ValkeyHighAvailability.builder()
         .replicationGroup("main2", 1)
         .replicationGroup("main3", 1)
         .build();
+valkey.start();
+// do some work
+valkey.stop();
 ----
 * Sharded clusters with node replication
 +
 [source,java]
 ----
-
-private void valkeyShardedClusterExample() throws IOException {
 ValkeyShardedCluster valkey = ValkeyShardedCluster.builder()
         .shard("main1", 1)
         .shard("main2", 1)
         .shard("main3", 1)
         .build();
 valkey.start();
+// do some work
+valkey.stop();
 ----
 
 === Retrieving ports
