@@ -9,7 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.REDUCE_README_TOKEN }}
       - name: Install Asciidoctor Reducer
         run: sudo gem install asciidoctor-reducer
       - name: Reduce README
@@ -19,3 +21,6 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           add: README.adoc
+          message: Rebuild reduced README
+          committer_name: GitHub Actions
+          committer_email: actions@github.com
