@@ -1,6 +1,6 @@
 :doctype: book
 
-// please note that the README.adoc in the root directory is generated via a GitHub Action!
+// please note that the README.adoc in the root directory is generated via a GitHub Action
 // you always want to edit the src/main/asciidoc/README.adoc file instead of the root README.adoc file!
 
 image:https://img.shields.io/maven-metadata/v/https/repo1.maven.org/maven2/io/github/tobi-laa/embedded-valkey/maven-metadata.xml.svg[Releases,link=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.github.tobi-laa%22%20AND%20a%3A%22embedded-valkey%22]
