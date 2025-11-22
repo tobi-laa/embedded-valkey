@@ -3,16 +3,12 @@ package io.github.tobi.laa.embedded.valkey.valkeypackage
 import io.github.tobi.laa.embedded.valkey.installation.DistributionType
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.slf4j.LoggerFactory
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.net.Proxy
 import java.net.URI
+import java.nio.file.*
 import java.nio.file.Files.copy
 import java.nio.file.Files.newOutputStream
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.security.MessageDigest
@@ -22,7 +18,7 @@ import kotlin.io.path.notExists
 /**
  * Downloads a Valkey package from a remote location.
  *
- * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"8.1.3"`.
+ * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"9.0.0"`.
  * @param operatingSystem The operating system for which the Valkey installation is built.
  * @param binaryPathWithinPackage The relative path to the Valkey server binary within the downloaded package.
  * @param archiveType The type of the archive (e.g., `TAR_GZ`).

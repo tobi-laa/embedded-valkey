@@ -10,7 +10,7 @@ import kotlin.io.path.isDirectory
  * directory where the distribution is installed, and the [binaryPath] points to the Valkey server binary within that
  * installation.
  *
- * @param version The version of the Valkey distribution, i.e. `"8.1.3"`.
+ * @param version The version of the Valkey distribution, i.e. `"9.0.0"`.
  * @param operatingSystem The operating system for which the Valkey distribution is built.
  * @param distributionType The type of the Valkey distribution (default is [DistributionType.VALKEY]).
  * @param installationPath The path to the directory where the Valkey distribution is installed.

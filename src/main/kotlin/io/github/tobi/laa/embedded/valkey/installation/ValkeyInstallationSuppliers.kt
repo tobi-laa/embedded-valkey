@@ -1,25 +1,8 @@
 package io.github.tobi.laa.embedded.valkey.installation
 
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.LINUX_ARM64
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.LINUX_X86_64
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.MAC_OS_ARM64
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.MAC_OS_X86_64
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.WINDOWS_X86_64
-import io.github.tobi.laa.embedded.valkey.valkeypackage.DEFAULT_MACPORTS_BUILD_FILE_PATHS
-import io.github.tobi.laa.embedded.valkey.valkeypackage.DEFAULT_MACPORTS_CHECKSUMS
-import io.github.tobi.laa.embedded.valkey.valkeypackage.DEFAULT_MEMURAI_VERSION
-import io.github.tobi.laa.embedded.valkey.valkeypackage.DEFAULT_VALKEY_LINUX_VERSION
-import io.github.tobi.laa.embedded.valkey.valkeypackage.DEFAULT_VALKEY_MAC_OS_VERSION
-import io.github.tobi.laa.embedded.valkey.valkeypackage.NUGET_FILE_CHECKSUMS
-import io.github.tobi.laa.embedded.valkey.valkeypackage.VALKEY_IO_FILE_CHECKSUMS
-import io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSupplier
-import io.github.tobi.laa.embedded.valkey.valkeypackage.downloadLinuxPackageFromValkeyIo
-import io.github.tobi.laa.embedded.valkey.valkeypackage.downloadMacOsPackageFromMacPorts
-import io.github.tobi.laa.embedded.valkey.valkeypackage.downloadWinX64MemuraiPackageFromNuget
-import io.github.tobi.laa.embedded.valkey.valkeypackage.loadMacPortsPackageFromClasspath
-import io.github.tobi.laa.embedded.valkey.valkeypackage.loadValkeyIoLinuxPackageFromClasspath
-import io.github.tobi.laa.embedded.valkey.valkeypackage.loadWinX64MemuraiPackageFromClasspath
+import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
+import io.github.tobi.laa.embedded.valkey.valkeypackage.*
 import java.net.Proxy
 import java.nio.file.Path
 
@@ -59,7 +42,7 @@ fun downloadAndInstallLinuxPackageFromValkeyIo(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Valkey download page](https://valkey.io/download/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-8.1.3-linux-x86_64.tar.gz"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.0-linux-x86_64.tar.gz"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [LINUX_X86_64]. *Must* be a Linux operating system.
  * @param installationPath The path where the Valkey package should be installed. If `null`, a temporary directory will be used.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].
@@ -172,7 +155,7 @@ fun downloadAndInstallMemuraiDeveloperForX64FromNuget(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Memurai NuGet page](https://www.nuget.org/packages/MemuraiDeveloper/) for the specified version.
  *
- * @param classpathResource The classpath resource path to the Memurai package, e.g. `"/valkey/MemuraiDeveloper.4.1.6.nupkg"`.
+ * @param classpathResource The classpath resource path to the Memurai package, e.g. `"/valkey/MemuraiDeveloper.4.1.7.nupkg"`.
  * @param installationPath The path where the Valkey package should be installed. If `null`, a temporary directory will be used.
  * @param memuraiVersion The Memurai version to load. Defaults to [DEFAULT_MEMURAI_VERSION].
  * @return A [ValkeyInstallationSupplier] that loads and installs the specified Memurai Developer package for Windows x64 from the classpath.
