@@ -9,7 +9,7 @@ import kotlin.io.path.exists
  * Represents a Valkey distribution bundle for a specific [version] and [operatingSystem]. The [path] points to an
  * archive file containing the Valkey distribution.
  *
- * @param version The version of the Valkey distribution, i.e. `"8.1.3"`.
+ * @param version The version of the Valkey distribution, i.e. `"9.0.0"`.
  * @param operatingSystem The operating system for which the Valkey distribution is built.
  * @param distributionType The type of the Valkey distribution (default is [DistributionType.VALKEY]).
  * @param path The path to the Valkey distribution bundle (archive).

@@ -73,7 +73,7 @@ fun downloadLinuxPackageFromValkeyIo(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Valkey download page](https://valkey.io/download/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-8.1.3-linux-x86_64.tar.gz"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.0-linux-x86_64.tar.gz"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [LINUX_X86_64]. *Must* be a Linux operating system.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].
  * @return A [ValkeyPackageSupplier] that loads the specified Valkey package for Linux from the classpath.
@@ -137,7 +137,7 @@ internal val DEFAULT_MACPORTS_CHECKSUMS =
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [MAC_OS_X86_64]. *Must* be a macOS operating system.
  * @param valkeyVersion The Valkey version to download. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
  * @param buildFilePath The build file path within the MacPorts package repository. This *must* be specified if a (non-default) Valkey version should be downloaded.
- * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-8.1.3_0.darwin_24.x86_64.tbz2`.
+ * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-9.0.0_0.darwin_24.x86_64.tbz2`.
  * @param sha256FileChecksum The expected SHA-256 checksum of the downloaded package for integrity verification. If `null`, no integrity verification will be performed.
  * If a checksum is available for the specified version and operating system, it will be used by default.
  * As MacPorts does not publish SHA-256 checksums, you will have to compute them manually for other versions and operating systems.
@@ -177,7 +177,7 @@ fun downloadMacOsPackageFromMacPorts(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [MacPorts package repository](https://packages.macports.org/valkey/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-8.1.3_0.darwin_24.x86_64.tbz2"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.0_0.darwin_24.x86_64.tbz2"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [MAC_OS_X86_64]. *Must* be a macOS operating system.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
  * @return A [ValkeyPackageSupplier] that downloads the specified Valkey package for macOS.
@@ -247,7 +247,7 @@ fun downloadWinX64MemuraiPackageFromNuget(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Memurai NuGet page](https://www.nuget.org/packages/MemuraiDeveloper/) for the specified version.
  *
- * @param classpathResource The classpath resource path to the Memurai package, e.g. `"/valkey/MemuraiDeveloper.4.1.6.nupkg"`.
+ * @param classpathResource The classpath resource path to the Memurai package, e.g. `"/valkey/MemuraiDeveloper.4.1.7.nupkg"`.
  * @param memuraiVersion The Memurai version to load. Defaults to [DEFAULT_MEMURAI_VERSION].
  * @return A [ValkeyPackageSupplier] that loads the specified Memurai Developer package for Windows x64 from the classpath.
  */
