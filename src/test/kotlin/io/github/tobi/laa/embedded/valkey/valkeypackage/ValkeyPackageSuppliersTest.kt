@@ -4,17 +4,11 @@ import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.ThrowableAssert
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.*
 import org.junit.jupiter.params.provider.Arguments.arguments
-import org.junit.jupiter.params.provider.ArgumentsProvider
-import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.support.ParameterDeclarations
 import java.util.stream.Stream
 
@@ -124,7 +118,7 @@ class ValkeyPackageSuppliersTest {
         private fun givenWindowsPackageSupplier() {
             givenOperatingSystem = OperatingSystem.WINDOWS_X86_64
             givenPackageSupplier = loadWinX64MemuraiPackageFromClasspath(
-                classpathResource = "/valkey-packages/memuraideveloper.4.1.6.nupkg"
+                classpathResource = "/valkey-packages/memuraideveloper.4.1.7.nupkg"
             )
         }
 
@@ -141,7 +135,7 @@ class ValkeyPackageSuppliersTest {
         private fun whenLinuxPackageFromClasspathSupplierIsCreated() {
             retrievePackage = ThrowableAssert.ThrowingCallable {
                 loadValkeyIoLinuxPackageFromClasspath(
-                    classpathResource = "/valkey-packages/valkey-8.1.3-jammy-x86_64.tar.gz",
+                    classpathResource = "/valkey-packages/valkey-9.0.0-jammy-x86_64.tar.gz",
                     operatingSystem = givenOperatingSystem!!
                 )
             }
@@ -150,7 +144,7 @@ class ValkeyPackageSuppliersTest {
         private fun whenMacOsPackageFromClasspathSupplierIsCreated() {
             retrievePackage = ThrowableAssert.ThrowingCallable {
                 loadMacPortsPackageFromClasspath(
-                    classpathResource = "/valkey-packages/valkey-8.1.3_0.darwin_24.x86_64.tbz2",
+                    classpathResource = "/valkey-packages/valkey-9.0.0_0.darwin_24.x86_64.tbz2",
                     operatingSystem = givenOperatingSystem!!
                 )
             }
@@ -198,8 +192,8 @@ class ValkeyPackageSuppliersTest {
             context: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
-                arguments(OperatingSystem.LINUX_X86_64, "/valkey-packages/valkey-8.1.3-jammy-x86_64.tar.gz"),
-                arguments(OperatingSystem.LINUX_ARM64, "/valkey-packages/valkey-8.1.3-jammy-arm64.tar.gz")
+                arguments(OperatingSystem.LINUX_X86_64, "/valkey-packages/valkey-9.0.0-jammy-x86_64.tar.gz"),
+                arguments(OperatingSystem.LINUX_ARM64, "/valkey-packages/valkey-9.0.0-jammy-arm64.tar.gz")
             )
         }
     }
@@ -210,8 +204,8 @@ class ValkeyPackageSuppliersTest {
             context: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
-                arguments(OperatingSystem.MAC_OS_X86_64, "/valkey-packages/valkey-8.1.3_0.darwin_24.x86_64.tbz2"),
-                arguments(OperatingSystem.MAC_OS_ARM64, "/valkey-packages/valkey-8.1.3_0.darwin_25.arm64.tbz2")
+                arguments(OperatingSystem.MAC_OS_X86_64, "/valkey-packages/valkey-9.0.0_0.darwin_24.x86_64.tbz2"),
+                arguments(OperatingSystem.MAC_OS_ARM64, "/valkey-packages/valkey-9.0.0_0.darwin_25.arm64.tbz2")
             )
         }
     }

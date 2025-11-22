@@ -98,33 +98,33 @@ The following distributions are supported out of the box:
 
 |Linux `x86_64`
 |Valkey
-|`8.1.3`
+|`9.0.0`
 |https://valkey.io
-|https://download.valkey.io/releases/valkey-8.1.3-jammy-x86_64.tar.gz[`valkey-8.1.3-jammy-x86_64.tar.gz`]
+|https://download.valkey.io/releases/valkey-9.0.0-jammy-x86_64.tar.gz[`valkey-9.0.0-jammy-x86_64.tar.gz`]
 
 |Linux `arm64`
 |Valkey
-|`8.1.3`
+|`9.0.0`
 |https://valkey.io
-|https://download.valkey.io/releases/valkey-8.1.3-jammy-arm64.tar.gz[`valkey-8.1.3-jammy-arm64.tar.gz`]
+|https://download.valkey.io/releases/valkey-9.0.0-jammy-arm64.tar.gz[`valkey-9.0.0-jammy-arm64.tar.gz`]
 
 |macOS `arm64`
 |Valkey
-|`8.1.3`
+|`9.0.0`
 |https://macports.org
-|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_25.arm64.tbz2[`valkey-8.1.3_0.darwin_25.arm64.tbz2`]
+|https://packages.macports.com/valkey/valkey-9.0.0_0.darwin_25.arm64.tbz2[`valkey-9.0.0_0.darwin_25.arm64.tbz2`]
 
 |macOS `x86_64`
 |Valkey
-|`8.1.3`
+|`9.0.0`
 |https://macports.org
-|https://packages.macports.com/valkey/valkey-8.1.3_0.darwin_24.x86_64.tbz2[`valkey-8.1.3_0.darwin_24.x86_64.tbz2`]
+|https://packages.macports.com/valkey/valkey-9.0.0_0.darwin_24.x86_64.tbz2[`valkey-9.0.0_0.darwin_24.x86_64.tbz2`]
 
 |Windows `x86_64`
 |Memurai Developer
-|`4.1.6`
+|`4.1.7`
 |https://www.nuget.org/packages
-|https://www.nuget.org/api/v2/package/MemuraiDeveloper/4.1.6[`memuraideveloper.4.1.6.nupkg`]
+|https://www.nuget.org/api/v2/package/MemuraiDeveloper/4.1.7[`memuraideveloper.4.1.7.nupkg`]
 |===
 
 == Troubleshooting

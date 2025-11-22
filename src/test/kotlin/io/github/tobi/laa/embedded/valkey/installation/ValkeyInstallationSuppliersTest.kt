@@ -6,7 +6,8 @@ import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.web.client.RestClient
@@ -16,7 +17,6 @@ class ValkeyInstallationSuppliersTest {
 
     @Nested
     @DisplayName("Ensure that the latest Valkey (or Memurai) versions are provided by default")
-    @Disabled("https://github.com/tobi-laa/embedded-valkey/issues/29")
     inner class LatestVersionsAreProvided {
 
         @DisplayName("Latest stable Valkey/Redis/Memurai version is provided")
