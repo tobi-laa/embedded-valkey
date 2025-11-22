@@ -42,3 +42,8 @@ build/
 
 ### Kotlin ###
 .kotlin
+
+dependency-reduced-pom.xml
+
+## Ignore everything Continue.dev related for now
+.continue/
