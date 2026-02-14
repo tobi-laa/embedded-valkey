@@ -290,21 +290,23 @@ class ValkeyHighAvailibilityTest {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20)
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
-            var pool: JedisSentinelPool? = null
-            var keepPool = false
-            try {
-                pool = JedisSentinelPool(masterName, sentinelHosts)
-                pool.resource.use { jedis ->
-                    jedis.set("__embedded_valkey_master_probe__", "1")
-                    jedis.del("__embedded_valkey_master_probe__")
-                    keepPool = true
-                    return pool
-                }
-            } catch (e: Exception) {
-                lastError = e
-            } finally {
-                if (!keepPool) {
-                    pool?.destroy()
+            for (sentinelHost in sentinelHosts) {
+                val (host, port) = sentinelHost.split(":", limit = 2)
+                try {
+                    Jedis(host, port.toInt()).use { sentinel ->
+                        val masterAddr = sentinel.sentinelGetMasterAddrByName(masterName)
+                        if (masterAddr != null && masterAddr.size >= 2) {
+                            val masterHost = masterAddr[0]
+                            val masterPort = masterAddr[1].toInt()
+                            Jedis(masterHost, masterPort).use { master ->
+                                master.set("__embedded_valkey_master_probe__", "1")
+                                master.del("__embedded_valkey_master_probe__")
+                            }
+                            return JedisSentinelPool(masterName, sentinelHosts)
+                        }
+                    }
+                } catch (e: Exception) {
+                    lastError = e
                 }
             }
             TimeUnit.MILLISECONDS.sleep(250)
