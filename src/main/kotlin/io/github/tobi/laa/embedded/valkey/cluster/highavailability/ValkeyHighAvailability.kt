@@ -2,8 +2,10 @@ package io.github.tobi.laa.embedded.valkey.cluster.highavailability
 
 import io.github.tobi.laa.embedded.valkey.ValkeyNode
 import io.github.tobi.laa.embedded.valkey.cluster.ValkeyCluster
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyDirective
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
+import redis.clients.jedis.Jedis
 import java.io.IOException
 
 class ValkeyHighAvailability(
@@ -23,6 +25,7 @@ class ValkeyHighAvailability(
         for (server in servers) {
             server.start(awaitReadiness, maxWaitTimeSeconds)
         }
+        promoteConfiguredMasters()
         for (sentinel in sentinels) {
             sentinel.start(awaitReadiness, maxWaitTimeSeconds)
         }
@@ -44,6 +47,18 @@ class ValkeyHighAvailability(
 
     fun serverPorts(): List<Int> {
         return servers.map { it.port }.toList()
+    }
+
+    private fun promoteConfiguredMasters() {
+        for (server in servers) {
+            val port = server.config.port() ?: continue
+            val isReplica = server.config.directives(ValkeyDirective.KEYWORD_REPLICAOF).isNotEmpty()
+            if (!isReplica) {
+                Jedis("127.0.0.1", port).use { jedis ->
+                    jedis.replicaofNoOne()
+                }
+            }
+        }
     }
 
     companion object {
