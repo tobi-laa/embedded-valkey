@@ -18,7 +18,7 @@ import kotlin.io.path.notExists
 /**
  * Downloads a Valkey package from a remote location.
  *
- * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"9.0.0"`.
+ * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"9.0.2"`.
  * @param operatingSystem The operating system for which the Valkey installation is built.
  * @param binaryPathWithinPackage The relative path to the Valkey server binary within the downloaded package.
  * @param archiveType The type of the archive (e.g., `TAR_GZ`).
