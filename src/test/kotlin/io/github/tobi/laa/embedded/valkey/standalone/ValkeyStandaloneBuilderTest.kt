@@ -1,5 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.standalone
 
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
@@ -7,6 +8,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 @DisplayName("Tests for ValkeyStandaloneBuilder")
 class ValkeyStandaloneBuilderTest {
@@ -92,5 +96,33 @@ class ValkeyStandaloneBuilderTest {
     @DisplayName("ValkeyStandalone companion builder method should return a builder")
     fun `companion builder returns builder`() {
         assertThat(ValkeyStandalone.builder()).isInstanceOf(ValkeyStandaloneBuilder::class.java)
+    }
+
+    @Test
+    @DisplayName("importConf(Path) should import configuration from a file")
+    fun `importConf with path imports file`(@TempDir tempDir: Path) {
+        val confFile = tempDir.resolve("test.conf")
+        Files.writeString(confFile, "port 6399\n")
+
+        val os = detectOperatingSystem()
+        val server = ValkeyStandaloneBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .importConf(confFile)
+            .build()
+
+        assertThat(server.config.port()).isEqualTo(6399)
+    }
+
+    @Test
+    @DisplayName("importConf(ValkeyConf) should import configuration from ValkeyConf object")
+    fun `importConf with ValkeyConf imports directives`() {
+        val conf = ValkeyConfBuilder().port(6398).build()
+        val os = detectOperatingSystem()
+        val server = ValkeyStandaloneBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .importConf(conf)
+            .build()
+
+        assertThat(server.config.port()).isEqualTo(6398)
     }
 }

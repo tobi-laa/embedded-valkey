@@ -36,6 +36,50 @@ class ValkeyPackageSupplierTest {
         assertThat(installation.binaryPath).exists()
     }
 
+    @Test
+    @DisplayName("thenExtract with only alwaysExtract parameter should use default installationPath")
+    fun `thenExtract with alwaysExtract uses default installationPath`() {
+        val archive = createZipWithBinary("valkey/bin/valkey-server")
+        val packageSupplier = object : ValkeyPackageSupplier {
+            override fun retrievePackage(): ValkeyPackage {
+                return ValkeyPackage(
+                    version = "9.0.2",
+                    operatingSystem = OperatingSystem.LINUX_X86_64,
+                    distributionType = DistributionType.VALKEY,
+                    path = archive,
+                    binaryPathWithinPackage = Path.of("valkey", "bin", "valkey-server"),
+                    archiveType = ArchiveType.ZIP
+                )
+            }
+        }
+
+        val installation = packageSupplier.thenExtract(alwaysExtract = true).installValkey()
+
+        assertThat(installation.installationPath).exists()
+        assertThat(installation.binaryPath).exists()
+    }
+
+    @Test
+    @DisplayName("thenExtract with ensureBinaryIsExecutable parameter should use defaults for other params")
+    fun `thenExtract with ensureBinaryIsExecutable uses defaults`() {
+        val archive = createZipWithBinary("valkey/bin/valkey-server")
+        val packageSupplier = object : ValkeyPackageSupplier {
+            override fun retrievePackage(): ValkeyPackage {
+                return ValkeyPackage(
+                    version = "9.0.2",
+                    operatingSystem = OperatingSystem.LINUX_X86_64,
+                    distributionType = DistributionType.VALKEY,
+                    path = archive,
+                    binaryPathWithinPackage = Path.of("valkey", "bin", "valkey-server"),
+                    archiveType = ArchiveType.ZIP
+                )
+            }
+        }
+
+        val supplier = packageSupplier.thenExtract(ensureBinaryIsExecutable = true)
+        assertThat(supplier).isNotNull
+    }
+
     private fun createZipWithBinary(entryName: String): Path {
         val zipPath = Files.createTempFile("valkey-package", ".zip")
         ZipOutputStream(Files.newOutputStream(zipPath)).use { zip ->

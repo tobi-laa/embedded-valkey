@@ -198,6 +198,73 @@ class ValkeyShardedClusterUnitTest {
     }
 
     @Test
+    @DisplayName("Companion builder should return a ValkeyShardedClusterBuilder")
+    fun `companion builder returns builder`() {
+        assertThat(ValkeyShardedCluster.builder()).isInstanceOf(ValkeyShardedClusterBuilder::class.java)
+    }
+
+    @Test
+    @DisplayName("Starting should stop cluster when linkReplicasAndShards fails")
+    fun `start stops cluster on link failure`() {
+        Mockito.mockConstruction(Jedis::class.java) { mock, _ ->
+            Mockito.`when`(mock.clusterMyId()).thenThrow(RuntimeException("connection refused"))
+        }.use {
+            every { mainNode.stop(any(), any(), any()) } just runs
+            val cluster = ValkeyShardedCluster(
+                nodes = listOf(mainNode),
+                replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
+                initializationTimeout = Duration.ZERO
+            )
+
+            assertThrows(RuntimeException::class.java) { cluster.start(awaitReadiness = false, maxWaitTimeSeconds = 1) }
+        }
+    }
+
+    @Test
+    @DisplayName("waitForNodeToAppearInCluster should throw when node never appears")
+    fun `waitForNodeToAppearInCluster throws on timeout`() {
+        Mockito.mockConstruction(Jedis::class.java) { mock, _ ->
+            Mockito.`when`(mock.clusterNodes()).thenReturn("other-node-id")
+        }.use {
+            val cluster = ValkeyShardedCluster(
+                nodes = listOf(mainNode),
+                replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
+                initializationTimeout = Duration.ZERO
+            )
+
+            val method = cluster.javaClass.getDeclaredMethod("waitForNodeToAppearInCluster", Jedis::class.java, String::class.java)
+            method.isAccessible = true
+            val jedis = Jedis("127.0.0.1", 7000)
+            val exception = assertThrows(InvocationTargetException::class.java) {
+                method.invoke(cluster, jedis, "missing-node-id")
+            }
+            assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
+        }
+    }
+
+    @Test
+    @DisplayName("waitForClusterToHaveStatusOK should throw when cluster never becomes ok")
+    fun `waitForClusterToHaveStatusOK throws on timeout`() {
+        Mockito.mockConstruction(Jedis::class.java) { mock, _ ->
+            Mockito.`when`(mock.clusterInfo()).thenReturn("cluster_state:fail")
+        }.use {
+            val cluster = ValkeyShardedCluster(
+                nodes = listOf(mainNode),
+                replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
+                initializationTimeout = Duration.ZERO
+            )
+
+            val method = cluster.javaClass.getDeclaredMethod("waitForClusterToHaveStatusOK", Jedis::class.java)
+            method.isAccessible = true
+            val jedis = Jedis("127.0.0.1", 7000)
+            val exception = assertThrows(InvocationTargetException::class.java) {
+                method.invoke(cluster, jedis)
+            }
+            assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
+        }
+    }
+
+    @Test
     @DisplayName("Waiting for predicate should throw setup exception when thread is interrupted")
     fun `waitForPredicateToPass throws on interruption`() {
         val cluster = ValkeyShardedCluster(

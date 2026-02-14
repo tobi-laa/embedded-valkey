@@ -35,6 +35,12 @@ class ValkeyHighAvailabilityUnitTest {
     }
 
     @Test
+    @DisplayName("Companion builder should return a ValkeyHighAvailabilityBuilder")
+    fun `companion builder returns builder`() {
+        assertThat(ValkeyHighAvailability.builder()).isInstanceOf(ValkeyHighAvailabilityBuilder::class.java)
+    }
+
+    @Test
     @DisplayName("Should return correct server ports, sentinel ports, and all nodes")
     fun `returns server and sentinel ports`() {
         val sentinel = ValkeySentinel(

@@ -1,12 +1,16 @@
 package io.github.tobi.laa.embedded.valkey.sentinel
 
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
+import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 @DisplayName("Tests for ValkeySentinelBuilder")
 class ValkeySentinelBuilderTest {
@@ -128,5 +132,48 @@ class ValkeySentinelBuilderTest {
     @DisplayName("ValkeySentinel companion builder method should return a builder")
     fun `companion builder returns builder`() {
         assertThat(ValkeySentinel.builder()).isInstanceOf(ValkeySentinelBuilder::class.java)
+    }
+
+    @Test
+    @DisplayName("importConf(Path) should import configuration from a file")
+    fun `importConf with path imports file`(@TempDir tempDir: Path) {
+        val confFile = tempDir.resolve("sentinel.conf")
+        Files.writeString(confFile, "loglevel notice\n")
+
+        val os = detectOperatingSystem()
+        val sentinel = ValkeySentinelBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .importConf(confFile)
+            .build()
+
+        assertThat(sentinel.config.directives("loglevel")).isNotEmpty
+    }
+
+    @Test
+    @DisplayName("importConf(String) should import configuration from a file path string")
+    fun `importConf with string path imports file`(@TempDir tempDir: Path) {
+        val confFile = tempDir.resolve("sentinel.conf")
+        Files.writeString(confFile, "loglevel debug\n")
+
+        val os = detectOperatingSystem()
+        val sentinel = ValkeySentinelBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .importConf(confFile.toString())
+            .build()
+
+        assertThat(sentinel.config.directives("loglevel")).isNotEmpty
+    }
+
+    @Test
+    @DisplayName("importConf(ValkeyConf) should import configuration from ValkeyConf object")
+    fun `importConf with ValkeyConf imports directives`() {
+        val conf = ValkeyConfBuilder().directive("loglevel", "warning").build()
+        val os = detectOperatingSystem()
+        val sentinel = ValkeySentinelBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .importConf(conf)
+            .build()
+
+        assertThat(sentinel.config.directives("loglevel")).isNotEmpty
     }
 }

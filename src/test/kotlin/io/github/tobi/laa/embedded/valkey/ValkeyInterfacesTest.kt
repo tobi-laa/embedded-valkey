@@ -65,6 +65,46 @@ class ValkeyInterfacesTest {
     }
 
     @Test
+    @DisplayName("Partial-arg start should fill in default for maxWaitTimeSeconds")
+    fun `start with only awaitReadiness fills default maxWaitTimeSeconds`() {
+        val valkey = RecordingValkey()
+        valkey.start(awaitReadiness = false)
+        assertEquals(false to 10L, valkey.startArgs)
+    }
+
+    @Test
+    @DisplayName("Partial-arg start should fill in default for awaitReadiness")
+    fun `start with only maxWaitTimeSeconds fills default awaitReadiness`() {
+        val valkey = RecordingValkey()
+        valkey.start(maxWaitTimeSeconds = 5)
+        assertEquals(true to 5L, valkey.startArgs)
+    }
+
+    @Test
+    @DisplayName("Partial-arg stop should fill in defaults for maxWaitTimeSeconds and removeWorkingDir")
+    fun `stop with only forcibly fills defaults`() {
+        val valkey = RecordingValkey()
+        valkey.stop(forcibly = true)
+        assertEquals(Triple(true, 10L, false), valkey.stopArgs)
+    }
+
+    @Test
+    @DisplayName("Partial-arg stop should fill in default for removeWorkingDir")
+    fun `stop with forcibly and maxWaitTimeSeconds fills default removeWorkingDir`() {
+        val valkey = RecordingValkey()
+        valkey.stop(forcibly = true, maxWaitTimeSeconds = 5)
+        assertEquals(Triple(true, 5L, false), valkey.stopArgs)
+    }
+
+    @Test
+    @DisplayName("Partial-arg stop should fill in defaults for forcibly and maxWaitTimeSeconds")
+    fun `stop with only removeWorkingDir fills defaults`() {
+        val valkey = RecordingValkey()
+        valkey.stop(removeWorkingDir = true)
+        assertEquals(Triple(false, 10L, true), valkey.stopArgs)
+    }
+
+    @Test
     @DisplayName("Cluster default start and stop should delegate with default parameter values")
     fun `cluster default start and stop delegate with defaults`() {
         val cluster = RecordingCluster()
@@ -75,6 +115,22 @@ class ValkeyInterfacesTest {
 
         assertEquals(true to 10L, cluster.startArgs)
         assertEquals(Triple(false, 10L, false), cluster.stopArgs)
+    }
+
+    @Test
+    @DisplayName("Cluster partial-arg start should fill in default maxWaitTimeSeconds")
+    fun `cluster start with only awaitReadiness fills default`() {
+        val cluster = RecordingCluster()
+        cluster.start(awaitReadiness = false)
+        assertEquals(false to 10L, cluster.startArgs)
+    }
+
+    @Test
+    @DisplayName("Cluster partial-arg stop should fill in defaults")
+    fun `cluster stop with only forcibly fills defaults`() {
+        val cluster = RecordingCluster()
+        cluster.stop(forcibly = true)
+        assertEquals(Triple(true, 10L, false), cluster.stopArgs)
     }
 
     @Test

@@ -205,7 +205,7 @@
                                 <!-- Platform-specific branches impossible to cover on a single OS -->
                                 <exclude>**/DetectOperatingSystemKt*</exclude>
                                 <!-- Kotlin interface default method implementations - only reachable from Java callers -->
-                                <exclude>**/*$DefaultImpls</exclude>
+                                <exclude>**/*DefaultImpls*</exclude>
                             </excludes>
                         </configuration>
                         <executions>
@@ -220,6 +220,12 @@
                                 <goals>
                                     <goal>report</goal>
                                 </goals>
+                                <configuration>
+                                    <excludes>
+                                        <exclude>**/DetectOperatingSystemKt*</exclude>
+                                        <exclude>**/*DefaultImpls*</exclude>
+                                    </excludes>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -262,6 +268,25 @@
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
         <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>

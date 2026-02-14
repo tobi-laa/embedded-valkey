@@ -1,10 +1,14 @@
 package io.github.tobi.laa.embedded.valkey.conf
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 @DisplayName("Tests for ValkeyConfBuilder")
 class ValkeyConfBuilderTest {
@@ -78,5 +82,31 @@ class ValkeyConfBuilderTest {
 
         assertEquals(listOf("::1"), conf.binds())
         assertEquals(6379, conf.port())
+    }
+
+    @Test
+    @DisplayName("replicaOf port validation should reject ports outside the valid range")
+    fun `replicaOf rejects invalid ports`() {
+        val builder = ValkeyConfBuilder()
+
+        assertThrows(IllegalStateException::class.java) { builder.replicaOf("localhost", 0) }
+        assertThrows(IllegalStateException::class.java) { builder.replicaOf("localhost", 65536) }
+    }
+
+    @Test
+    @DisplayName("port() should return null when no port directive exists")
+    fun `port returns null when no port set`() {
+        val conf = ValkeyConfBuilder().build()
+
+        assertNull(conf.port())
+    }
+
+    @Test
+    @DisplayName("ValkeyConfWriter.write without charset should use UTF-8 by default")
+    fun `ValkeyConfWriter write without charset uses UTF-8`(@TempDir tempDir: Path) {
+        val confFile = tempDir.resolve("test.conf")
+        val conf = ValkeyConfBuilder().port(6380).build()
+        ValkeyConfWriter.write(conf, confFile)
+        assertThat(Files.readString(confFile)).contains("6380")
     }
 }

@@ -180,6 +180,53 @@ class ValkeyProcessTest {
     }
 
     @Test
+    @DisplayName("Constructor should reject a non-existent working directory")
+    fun `constructor rejects non-existent working directory`() {
+        val script = createScript("#!/bin/sh\nexit 0\n")
+        val installation = createInstallation(script)
+        val nonExistentDir = Path.of("/tmp/non-existent-dir-" + System.nanoTime())
+        assertThrows(IllegalArgumentException::class.java) {
+            ValkeyProcess(
+                valkeyInstallation = installation,
+                workingDirectory = nonExistentDir,
+                config = ValkeyConfBuilder().build()
+            )
+        }
+    }
+
+    @Test
+    @DisplayName("Constructor should reject a working directory that is not a directory")
+    fun `constructor rejects non-directory working directory`() {
+        val script = createScript("#!/bin/sh\nexit 0\n")
+        val installation = createInstallation(script)
+        val regularFile = Files.createTempFile("not-a-dir", ".txt")
+        assertThrows(IllegalArgumentException::class.java) {
+            ValkeyProcess(
+                valkeyInstallation = installation,
+                workingDirectory = regularFile,
+                config = ValkeyConfBuilder().build()
+            )
+        }
+    }
+
+    @Test
+    @DisplayName("Process should capture stderr output from the running process")
+    fun `stderr output is captured`() {
+        val script = createScript(
+            "#!/bin/sh\n" +
+                "echo \"Ready to accept connections\"\n" +
+                "echo \"Some error message\" >&2\n" +
+                "while true; do sleep 1; done\n"
+        )
+        val installation = createInstallation(script)
+        val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
+
+        process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
+        Thread.sleep(200) // give stderr thread time to read
+        process.stop(forcibly = true, maxWaitTimeSeconds = 1)
+    }
+
+    @Test
     @DisplayName("toString should include process PID after start")
     fun `toString includes pid after start`() {
         val script = createScript(
