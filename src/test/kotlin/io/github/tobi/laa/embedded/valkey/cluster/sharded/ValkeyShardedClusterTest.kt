@@ -3,6 +3,7 @@ package io.github.tobi.laa.embedded.valkey.cluster.sharded
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import redis.clients.jedis.HostAndPort
@@ -11,6 +12,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 @IntegrationTest
+@DisplayName("Integration tests for ValkeyShardedCluster")
 internal class ValkeyShardedClusterTest {
 
     private var cluster: ValkeyShardedCluster? = null
@@ -30,6 +32,7 @@ internal class ValkeyShardedClusterTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data after the cluster has started")
     fun testSimpleOperationsAfterClusterStart() {
         JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jc ->
             jc.set("somekey", "somevalue")
@@ -38,6 +41,7 @@ internal class ValkeyShardedClusterTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data when using ephemeral ports")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterClusterWithEphemeralPortsStart() {
         cluster!!.stop()
@@ -54,6 +58,7 @@ internal class ValkeyShardedClusterTest {
     }
 
     @Test
+    @DisplayName("Stopping and restarting the cluster should work without errors")
     @Throws(IOException::class)
     fun shouldAllowSubsequentRuns() {
         cluster!!.stop()
@@ -65,6 +70,7 @@ internal class ValkeyShardedClusterTest {
     }
 
     @Test
+    @DisplayName("Multiple start/stop cycles in the same directory should work without errors")
     fun shouldAllowSubsequentRunsInSameDirectory() {
         cluster!!.stop()
         cluster = ValkeyShardedCluster.builder()

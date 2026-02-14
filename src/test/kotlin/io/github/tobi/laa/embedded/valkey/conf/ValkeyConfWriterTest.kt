@@ -1,12 +1,15 @@
 package io.github.tobi.laa.embedded.valkey.conf
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
+@DisplayName("Tests for ValkeyConfWriter")
 class ValkeyConfWriterTest {
 
     @Test
+    @DisplayName("Arguments containing whitespace or quotes should be properly escaped")
     fun `writer quotes and escapes arguments when needed`() {
         val conf = ValkeyConf(
             listOf(

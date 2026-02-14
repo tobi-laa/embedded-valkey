@@ -5,6 +5,7 @@ import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.net.URI
 import java.nio.file.Files
@@ -12,9 +13,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 
+@DisplayName("Tests for ValkeyPackageDownloader")
 class ValkeyPackageDownloaderTest {
 
     @Test
+    @DisplayName("Downloaded package should be cached and verified against its checksum")
     fun `downloads package with checksum verification and copies from cache`() {
         val source = Files.createTempFile("valkey-source", ".zip")
         val content = "payload".toByteArray()
@@ -46,6 +49,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("Cached file should be used without re-downloading")
     fun `uses cached file without downloading`() {
         val cacheFile = Files.createTempFile("valkey-cache", ".zip")
         Files.write(cacheFile, "cached".toByteArray())
@@ -69,6 +73,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("Download without caching should write directly to the download location")
     fun `download without cache writes to download location`() {
         val source = Files.createTempFile("valkey-source", ".zip")
         Files.write(source, "payload".toByteArray())
@@ -91,6 +96,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("Checksum mismatch should throw FileChecksumMismatchException")
     fun `checksum mismatch throws exception`() {
         val source = Files.createTempFile("valkey-source", ".zip")
         Files.write(source, "payload".toByteArray())
@@ -109,6 +115,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("Constructor should reject blank version and require checksum when verification is enabled")
     fun `constructor validation requires version and checksum`() {
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyPackageDownloader(
@@ -134,6 +141,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("humanReadableByteCount() should format all magnitude ranges correctly")
     fun `human readable byte count covers all branches`() {
         val method = Class.forName("io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageDownloaderKt")
             .getDeclaredMethod("humanReadableByteCount", Long::class.javaPrimitiveType)
@@ -157,6 +165,7 @@ class ValkeyPackageDownloaderTest {
     }
 
     @Test
+    @DisplayName("Default cache path should follow the expected naming layout")
     fun `default cache path builder uses expected layout`() {
         val method = Class.forName("io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageDownloaderKt")
             .getDeclaredMethod("resolveDefaultTempFilePath", String::class.java, OperatingSystem::class.java, ArchiveType::class.java)
