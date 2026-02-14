@@ -6,13 +6,12 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
-import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
 
 @IntegrationTest
 class SpringDataConnectivityTest {
     private var valkeyStandalone: ValkeyStandalone? = null
-    private var template: RedisTemplate<String?, String?>? = null
+    private var template: StringRedisTemplate? = null
     private var connectionFactory: JedisConnectionFactory? = null
 
     @BeforeEach
