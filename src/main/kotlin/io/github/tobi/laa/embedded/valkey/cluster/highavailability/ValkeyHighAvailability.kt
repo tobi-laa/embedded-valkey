@@ -20,11 +20,11 @@ class ValkeyHighAvailability(
 
     @Throws(IOException::class)
     override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-        for (sentinel in sentinels) {
-            sentinel.start(awaitReadiness, maxWaitTimeSeconds)
-        }
         for (server in servers) {
             server.start(awaitReadiness, maxWaitTimeSeconds)
+        }
+        for (sentinel in sentinels) {
+            sentinel.start(awaitReadiness, maxWaitTimeSeconds)
         }
     }
 
