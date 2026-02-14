@@ -38,3 +38,12 @@ The project can be built from the root directory using:
 
 Releases are automatically built and published to Maven Central once a tag following the semantic versioning pattern is pushed (i.e. `v1.0.0`).
 The artifact version should correspond to the aforementioned tag, meaning a tag such as `v1.0.0` should only be applied if the artifact version within the project's `pom.xml` is `1.0.0`.
+
+To simplify the release process, the
+https://maven.apache.org/maven-release/maven-release-plugin/[Maven Release Plugin]
+can be used like this:
+
+[,bash]
+----
+./mvnw release:prepare release:clean -B
+----
