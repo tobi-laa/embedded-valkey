@@ -11,7 +11,6 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisSentinelPool
 import java.io.IOException
 import java.net.UnknownHostException
-import java.util.Set
 import java.util.concurrent.TimeUnit
 
 @IntegrationTest
@@ -48,7 +47,7 @@ class ValkeyHighAvailibilityTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("ourmaster", Set.of<String?>("localhost:26379"))
+            pool = awaitMasterPool("ourmaster", setOf("localhost:26379"))
             jedis = testPool(pool)
         } finally {
             if (jedis != null) {
@@ -74,7 +73,7 @@ class ValkeyHighAvailibilityTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("ourmaster", Set.of<String?>("localhost:26379"))
+            pool = awaitMasterPool("ourmaster", setOf("localhost:26379"))
             jedis = testPool(pool)
         } finally {
             if (jedis != null) {
@@ -100,7 +99,7 @@ class ValkeyHighAvailibilityTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("ourmaster", Set.of<String?>("localhost:26379"))
+            pool = awaitMasterPool("ourmaster", setOf("localhost:26379"))
             jedis = testPool(pool)
         } finally {
             if (jedis != null) {
@@ -126,7 +125,7 @@ class ValkeyHighAvailibilityTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("ourmaster", Set.of<String?>("localhost:26379", "localhost:26380"))
+            pool = awaitMasterPool("ourmaster", setOf("localhost:26379", "localhost:26380"))
             jedis = testPool(pool)
         } finally {
             if (jedis != null) {
@@ -147,7 +146,7 @@ class ValkeyHighAvailibilityTest {
             .replicationGroup("ourmaster", 2)
             .build()
         cluster.start()
-        val hosts: MutableSet<String?> = HashSet()
+        val hosts: MutableSet<String> = HashSet()
         for (p in cluster.sentinelPorts()) {
             hosts.add("localhost:" + p)
         }
@@ -192,18 +191,9 @@ class ValkeyHighAvailibilityTest {
         var jedis2: Jedis? = null
         var jedis3: Jedis? = null
         try {
-            pool1 = awaitMasterPool(
-                master1,
-                Set.of<String?>("localhost:26379", "localhost:26380", "localhost:26381")
-            )
-            pool2 = awaitMasterPool(
-                master2,
-                Set.of<String?>("localhost:26379", "localhost:26380", "localhost:26381")
-            )
-            pool3 = awaitMasterPool(
-                master3,
-                Set.of<String?>("localhost:26379", "localhost:26380", "localhost:26381")
-            )
+            pool1 = awaitMasterPool(master1, setOf("localhost:26379", "localhost:26380", "localhost:26381"))
+            pool2 = awaitMasterPool(master2, setOf("localhost:26379", "localhost:26380", "localhost:26381"))
+            pool3 = awaitMasterPool(master3, setOf("localhost:26379", "localhost:26380", "localhost:26381"))
             jedis1 = testPool(pool1)
             jedis2 = testPool(pool2)
             jedis3 = testPool(pool3)
@@ -243,7 +233,7 @@ class ValkeyHighAvailibilityTest {
             .replicationGroup(master3, 1)
             .build()
         cluster.start()
-        val hosts: MutableSet<String?> = HashSet()
+        val hosts: MutableSet<String> = HashSet()
         for (p in cluster.sentinelPorts()) {
             hosts.add("localhost:" + p)
         }
@@ -296,14 +286,14 @@ class ValkeyHighAvailibilityTest {
         return jedis
     }
 
-    private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String?>): JedisSentinelPool {
+    private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String>): JedisSentinelPool {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
             val pool = JedisSentinelPool(masterName, sentinelHosts)
             try {
                 pool.resource.use { jedis ->
-                    if (jedis.role.firstOrNull()?.toString() == "master") {
+                    if (jedis.role().firstOrNull()?.toString() == "master") {
                         return pool
                     }
                 }

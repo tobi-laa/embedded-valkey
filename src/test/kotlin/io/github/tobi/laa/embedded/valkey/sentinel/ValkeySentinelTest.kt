@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisSentinelPool
 import java.io.IOException
-import java.util.Set
 import java.util.concurrent.TimeUnit
 
 @IntegrationTest
@@ -54,7 +53,7 @@ internal class ValkeySentinelTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("mymain", Set.of<String?>(*arrayOf<String>("localhost:26379")))
+            pool = awaitMasterPool("mymain", setOf("localhost:26379"))
             jedis = pool.getResource()
             jedis.mset("abc", "1", "def", "2")
 
@@ -73,14 +72,14 @@ internal class ValkeySentinelTest {
         }
     }
 
-    private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String?>): JedisSentinelPool {
+    private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String>): JedisSentinelPool {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
             val pool = JedisSentinelPool(masterName, sentinelHosts)
             try {
                 pool.resource.use { jedis ->
-                    if (jedis.role.firstOrNull()?.toString() == "master") {
+                    if (jedis.role().firstOrNull()?.toString() == "master") {
                         return pool
                     }
                 }
