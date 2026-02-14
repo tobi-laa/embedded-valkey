@@ -59,7 +59,7 @@ internal class ValkeySentinelTest {
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = awaitMasterPool("mymain", setOf("localhost:26379"))
+            pool = awaitMasterPool("mymain", setOf("localhost:${sentinel!!.port}"))
             jedis = pool.getResource()
             jedis.mset("abc", "1", "def", "2")
 
@@ -87,10 +87,10 @@ internal class ValkeySentinelTest {
             try {
                 pool = JedisSentinelPool(masterName, sentinelHosts)
                 pool.resource.use { jedis ->
-                    if (jedis.role().firstOrNull()?.toString() == "master") {
-                        keepPool = true
-                        return pool
-                    }
+                    jedis.set("__embedded_valkey_master_probe__", "1")
+                    jedis.del("__embedded_valkey_master_probe__")
+                    keepPool = true
+                    return pool
                 }
             } catch (e: Exception) {
                 lastError = e

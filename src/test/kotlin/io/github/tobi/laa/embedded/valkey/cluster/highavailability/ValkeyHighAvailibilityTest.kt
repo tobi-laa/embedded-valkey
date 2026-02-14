@@ -295,10 +295,10 @@ class ValkeyHighAvailibilityTest {
             try {
                 pool = JedisSentinelPool(masterName, sentinelHosts)
                 pool.resource.use { jedis ->
-                    if (jedis.role().firstOrNull()?.toString() == "master") {
-                        keepPool = true
-                        return pool
-                    }
+                    jedis.set("__embedded_valkey_master_probe__", "1")
+                    jedis.del("__embedded_valkey_master_probe__")
+                    keepPool = true
+                    return pool
                 }
             } catch (e: Exception) {
                 lastError = e
