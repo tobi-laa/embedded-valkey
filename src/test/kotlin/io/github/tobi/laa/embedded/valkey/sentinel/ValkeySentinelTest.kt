@@ -1,7 +1,9 @@
 package io.github.tobi.laa.embedded.valkey.sentinel
 
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import redis.clients.jedis.Jedis
@@ -45,8 +47,13 @@ internal class ValkeySentinelTest {
     @Test
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRun() {
-        server = ValkeyStandalone.builder().build()
-        sentinel = ValkeySentinel.builder().bind(bindAddress).build()
+        val portProvider = PortProvider()
+        val serverPort = portProvider.next()
+        server = ValkeyStandalone.builder().port(serverPort).build()
+        sentinel = ValkeySentinel.builder()
+            .bind(bindAddress)
+            .monitor(ReplicationGroup("mymain", serverPort, emptyList()))
+            .build()
         server!!.start()
         sentinel!!.start()
 
@@ -77,17 +84,21 @@ internal class ValkeySentinelTest {
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
             var pool: JedisSentinelPool? = null
+            var keepPool = false
             try {
                 pool = JedisSentinelPool(masterName, sentinelHosts)
                 pool.resource.use { jedis ->
                     if (jedis.role().firstOrNull()?.toString() == "master") {
+                        keepPool = true
                         return pool
                     }
                 }
             } catch (e: Exception) {
                 lastError = e
             } finally {
-                pool?.destroy()
+                if (!keepPool) {
+                    pool?.destroy()
+                }
             }
             TimeUnit.MILLISECONDS.sleep(250)
         }

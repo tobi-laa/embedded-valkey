@@ -291,17 +291,21 @@ class ValkeyHighAvailibilityTest {
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
             var pool: JedisSentinelPool? = null
+            var keepPool = false
             try {
                 pool = JedisSentinelPool(masterName, sentinelHosts)
                 pool.resource.use { jedis ->
                     if (jedis.role().firstOrNull()?.toString() == "master") {
+                        keepPool = true
                         return pool
                     }
                 }
             } catch (e: Exception) {
                 lastError = e
             } finally {
-                pool?.destroy()
+                if (!keepPool) {
+                    pool?.destroy()
+                }
             }
             TimeUnit.MILLISECONDS.sleep(250)
         }
