@@ -50,10 +50,9 @@ internal class ValkeySentinelTest {
         val portProvider = PortProvider()
         val serverPort = portProvider.next()
         server = ValkeyStandalone.builder().port(serverPort).build()
-        sentinel = ValkeySentinel.builder()
-            .bind(bindAddress)
-            .monitor(ReplicationGroup("mymain", serverPort, emptyList()))
-            .build()
+        val sentinelBuilder = ValkeySentinel.builder().bind(bindAddress)
+        sentinelBuilder.monitor(ReplicationGroup("mymain", serverPort, emptyList()))
+        sentinel = sentinelBuilder.build()
         server!!.start()
         sentinel!!.start()
 
