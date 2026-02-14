@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 @IntegrationTest
 @DisplayName("Integration tests for ValkeyShardedCluster")
-internal class ValkeyShardedClusterTest {
+internal class ValkeyShardedClusterIntegrationTest {
 
     private var cluster: ValkeyShardedCluster? = null
 

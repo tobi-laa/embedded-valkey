@@ -16,7 +16,7 @@ import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
 
 @IntegrationTest
 @DisplayName("Integration tests for ValkeyHighAvailability")
-class ValkeyHighAvailibilityTest {
+class ValkeyHighAvailabilityIntegrationTest {
     private val sentinelBuilder = ValkeySentinel.builder()
     private val bindAddress: String? = null
 
