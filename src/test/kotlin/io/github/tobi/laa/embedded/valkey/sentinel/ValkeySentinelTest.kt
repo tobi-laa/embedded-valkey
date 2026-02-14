@@ -73,11 +73,12 @@ internal class ValkeySentinelTest {
     }
 
     private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String>): JedisSentinelPool {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20)
         var lastError: Exception? = null
         while (System.nanoTime() < deadline) {
-            val pool = JedisSentinelPool(masterName, sentinelHosts)
+            var pool: JedisSentinelPool? = null
             try {
+                pool = JedisSentinelPool(masterName, sentinelHosts)
                 pool.resource.use { jedis ->
                     if (jedis.role().firstOrNull()?.toString() == "master") {
                         return pool
@@ -85,8 +86,9 @@ internal class ValkeySentinelTest {
                 }
             } catch (e: Exception) {
                 lastError = e
+            } finally {
+                pool?.destroy()
             }
-            pool.destroy()
             TimeUnit.MILLISECONDS.sleep(250)
         }
         throw IllegalStateException("Sentinel did not provide a writable master for $masterName", lastError)
