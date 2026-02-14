@@ -6,6 +6,7 @@ import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisSentinelPool
 import java.io.IOException
@@ -78,31 +79,4 @@ internal class ValkeySentinelTest {
         }
     }
 
-    private fun awaitMasterPool(masterName: String, sentinelHosts: Set<String>): JedisSentinelPool {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20)
-        var lastError: Exception? = null
-        while (System.nanoTime() < deadline) {
-            for (sentinelHost in sentinelHosts) {
-                val (host, port) = sentinelHost.split(":", limit = 2)
-                try {
-                    Jedis(host, port.toInt()).use { sentinel ->
-                        val masterAddr = sentinel.sentinelGetMasterAddrByName(masterName)
-                        if (masterAddr != null && masterAddr.size >= 2) {
-                            val masterHost = masterAddr[0]
-                            val masterPort = masterAddr[1].toInt()
-                            Jedis(masterHost, masterPort).use { master ->
-                                master.set("__embedded_valkey_master_probe__", "1")
-                                master.del("__embedded_valkey_master_probe__")
-                            }
-                            return JedisSentinelPool(masterName, sentinelHosts)
-                        }
-                    }
-                } catch (e: Exception) {
-                    lastError = e
-                }
-            }
-            TimeUnit.MILLISECONDS.sleep(250)
-        }
-        throw IllegalStateException("Sentinel did not provide a writable master for $masterName", lastError)
-    }
 }
