@@ -45,5 +45,12 @@ build/
 
 dependency-reduced-pom.xml
 
-## Ignore everything Continue.dev related for now
-.continue/
+### Continue.dev
+.continue
+
+### Jetbrains AI
+.ai
+.aiassistant
+
+### Claude Code
+CLAUDE.md

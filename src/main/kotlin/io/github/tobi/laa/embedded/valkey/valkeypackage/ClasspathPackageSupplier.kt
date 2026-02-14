@@ -10,8 +10,8 @@ import kotlin.io.path.toPath
 /**
  * Loads a Valkey package from a classpath resource.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.0-linux-x86_64.tar.gz"`.
- * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"9.0.0"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.2-linux-x86_64.tar.gz"`.
+ * @param valkeyVersion The version of the Valkey installation bundled within the package, e.g. `"9.0.2"`.
  * @param operatingSystem The operating system for which the Valkey installation is built.
  * @param binaryPathWithinPackage The relative path to the Valkey server binary within the package.
  * @param archiveType The type of the archive (e.g., `TAR_GZ`).

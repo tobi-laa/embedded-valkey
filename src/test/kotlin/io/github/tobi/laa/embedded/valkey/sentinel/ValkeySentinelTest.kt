@@ -1,13 +1,15 @@
 package io.github.tobi.laa.embedded.valkey.sentinel
 
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
+import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisSentinelPool
 import java.io.IOException
-import java.util.Set
 import java.util.concurrent.TimeUnit
 
 @IntegrationTest
@@ -46,15 +48,19 @@ internal class ValkeySentinelTest {
     @Test
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRun() {
-        server = ValkeyStandalone.builder().build()
-        sentinel = ValkeySentinel.builder().bind(bindAddress).build()
+        val portProvider = PortProvider()
+        val serverPort = portProvider.next()
+        server = ValkeyStandalone.builder().port(serverPort).build()
+        val sentinelBuilder = ValkeySentinel.builder().bind(bindAddress)
+        sentinelBuilder.monitor(ReplicationGroup("mymain", serverPort, emptyList()))
+        sentinel = sentinelBuilder.build()
         server!!.start()
         sentinel!!.start()
 
         var pool: JedisSentinelPool? = null
         var jedis: Jedis? = null
         try {
-            pool = JedisSentinelPool("mymain", Set.of<String?>(*arrayOf<String>("localhost:26379")))
+            pool = awaitMasterPool("mymain", setOf("localhost:${sentinel!!.port}"))
             jedis = pool.getResource()
             jedis.mset("abc", "1", "def", "2")
 
@@ -72,4 +78,5 @@ internal class ValkeySentinelTest {
             server!!.stop()
         }
     }
+
 }

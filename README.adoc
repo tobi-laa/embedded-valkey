@@ -45,7 +45,7 @@ You can also provide a Valkey distributions yourself, for example:
 ----
 ValkeyStandalone valkey = ValkeyStandalone.builder()
         .installationSupplier(OperatingSystem.MAC_OS_ARM64, downloadAndInstallMacOsPackageFromMacports(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("my.proxy.com", 8080)), OperatingSystem.MAC_OS_ARM64))
-        .installationSupplier(OperatingSystem.LINUX_X86_64, installValkeyIoLinuxPackageFromClasspath("/bundles/valkey-9.0.0-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
+        .installationSupplier(OperatingSystem.LINUX_X86_64, installValkeyIoLinuxPackageFromClasspath("/bundles/valkey-9.0.2-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
         .installationSupplier(OperatingSystem.WINDOWS_X86_64, installWinX64MemuraiPackageFromClasspath("/bundles/memuraideveloper.4.1.7.nupkg"))
         .build();
 ----
@@ -154,27 +154,27 @@ The following distributions are supported out of the box:
 
 |Linux `x86_64`
 |Valkey
-|`9.0.0`
+|`9.0.2`
 |https://valkey.io
-|https://download.valkey.io/releases/valkey-9.0.0-jammy-x86_64.tar.gz[`valkey-9.0.0-jammy-x86_64.tar.gz`]
+|https://download.valkey.io/releases/valkey-9.0.2-jammy-x86_64.tar.gz[`valkey-9.0.2-jammy-x86_64.tar.gz`]
 
 |Linux `arm64`
 |Valkey
-|`9.0.0`
+|`9.0.2`
 |https://valkey.io
-|https://download.valkey.io/releases/valkey-9.0.0-jammy-arm64.tar.gz[`valkey-9.0.0-jammy-arm64.tar.gz`]
+|https://download.valkey.io/releases/valkey-9.0.2-jammy-arm64.tar.gz[`valkey-9.0.2-jammy-arm64.tar.gz`]
 
 |macOS `arm64`
 |Valkey
-|`9.0.0`
+|`9.0.2`
 |https://macports.org
-|https://packages.macports.com/valkey/valkey-9.0.0_0.darwin_25.arm64.tbz2[`valkey-9.0.0_0.darwin_25.arm64.tbz2`]
+|https://packages.macports.com/valkey/valkey-9.0.2_0.darwin_25.arm64.tbz2[`valkey-9.0.2_0.darwin_25.arm64.tbz2`]
 
 |macOS `x86_64`
 |Valkey
-|`9.0.0`
+|`9.0.2`
 |https://macports.org
-|https://packages.macports.com/valkey/valkey-9.0.0_0.darwin_24.x86_64.tbz2[`valkey-9.0.0_0.darwin_24.x86_64.tbz2`]
+|https://packages.macports.com/valkey/valkey-9.0.2_0.darwin_24.x86_64.tbz2[`valkey-9.0.2_0.darwin_24.x86_64.tbz2`]
 
 |Windows `x86_64`
 |Memurai Developer

@@ -33,7 +33,7 @@ valkey.stop();
 private void valkeyStandaloneWithCustomInstallationSuppliersExample() throws IOException {
 ValkeyStandalone valkey = ValkeyStandalone.builder()
         .installationSupplier(OperatingSystem.MAC_OS_ARM64, downloadAndInstallMacOsPackageFromMacports(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("my.proxy.com", 8080)), OperatingSystem.MAC_OS_ARM64))
-        .installationSupplier(OperatingSystem.LINUX_X86_64, installValkeyIoLinuxPackageFromClasspath("/bundles/valkey-9.0.0-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
+        .installationSupplier(OperatingSystem.LINUX_X86_64, installValkeyIoLinuxPackageFromClasspath("/bundles/valkey-9.0.2-jammy-x86_64.tar.gz", OperatingSystem.LINUX_X86_64))
         .installationSupplier(OperatingSystem.WINDOWS_X86_64, installWinX64MemuraiPackageFromClasspath("/bundles/memuraideveloper.4.1.7.nupkg"))
         .build();
 }
