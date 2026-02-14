@@ -89,6 +89,7 @@ class ValkeyInstallationSuppliersTest {
     inner class InstallationSupplierValidation {
 
         @Test
+        @DisplayName("Should reject non-Linux operating system for Linux installer")
         fun `linux installer rejects non-linux operating system`() {
             assertThrows(IllegalArgumentException::class.java) {
                 downloadAndInstallLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
@@ -96,6 +97,7 @@ class ValkeyInstallationSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should reject MacPorts installer when no build file path exists for version")
         fun `macports installer requires build file path`() {
             assertThrows(IllegalArgumentException::class.java) {
                 downloadAndInstallMacOsPackageFromMacports(valkeyVersion = "0.0.0")
@@ -103,6 +105,7 @@ class ValkeyInstallationSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should reject non-Linux operating system for classpath Linux installer")
         fun `classpath linux installer rejects non-linux operating system`() {
             assertThrows(IllegalArgumentException::class.java) {
                 installValkeyIoLinuxPackageFromClasspath(

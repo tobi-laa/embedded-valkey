@@ -191,6 +191,7 @@ class ValkeyPackageSuppliersTest {
     inner class DownloadPackageSuppliers {
 
         @Test
+        @DisplayName("Should accept a supported Linux operating system")
         fun `download Linux package supplier accepts supported OS`() {
             val supplier = downloadLinuxPackageFromValkeyIo(
                 operatingSystem = OperatingSystem.LINUX_X86_64,
@@ -205,6 +206,7 @@ class ValkeyPackageSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should reject an unsupported Linux operating system")
         fun `download Linux package supplier rejects unsupported OS`() {
             assertThatCode {
                 downloadLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
@@ -212,6 +214,7 @@ class ValkeyPackageSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should reject an unsupported macOS operating system")
         fun `download macOS package supplier rejects unsupported OS`() {
             assertThatCode {
                 downloadMacOsPackageFromMacPorts(operatingSystem = OperatingSystem.LINUX_X86_64)
@@ -219,6 +222,7 @@ class ValkeyPackageSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should require a build file path for macOS packages")
         fun `download macOS package supplier requires build file path`() {
             assertThatCode {
                 downloadMacOsPackageFromMacPorts(valkeyVersion = "0.0.0")
@@ -226,6 +230,7 @@ class ValkeyPackageSuppliersTest {
         }
 
         @Test
+        @DisplayName("Should allow missing checksum for Windows packages")
         fun `download windows package supplier allows missing checksum`() {
             val supplier = downloadWinX64MemuraiPackageFromNuget(sha256FileChecksum = null)
 
