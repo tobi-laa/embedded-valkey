@@ -1,0 +1,42 @@
+package io.github.tobi.laa.embedded.valkey.standalone
+
+import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
+import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+
+@DisplayName("Tests for ValkeyStandaloneBuilder")
+class ValkeyStandaloneBuilderTest {
+
+    @Test
+    @DisplayName("Building should apply default port and bind addresses")
+    fun `build applies default port and binds`() {
+        val os = detectOperatingSystem()
+        val builder = ValkeyStandaloneBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+
+        val server = builder.build()
+
+        assertThat(server.config.port()).isNotNull
+        assertThat(server.config.binds()).contains("::1", "127.0.0.1")
+    }
+
+    @Test
+    @DisplayName("Cloning should preserve custom installation suppliers and configuration")
+    fun `clone preserves custom suppliers and configuration`() {
+        val os = detectOperatingSystem()
+        val builder = ValkeyStandaloneBuilder()
+            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .bind("0.0.0.0")
+            .port(6390)
+            .directive("maxmemory", "1mb")
+
+        val cloned = builder.clone()
+        val server = cloned.build()
+
+        assertThat(server.config.port()).isEqualTo(6390)
+        assertThat(server.config.binds()).contains("0.0.0.0")
+        assertThat(server.config.directives("maxmemory")).isNotEmpty
+    }
+}
