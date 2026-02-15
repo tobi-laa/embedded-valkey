@@ -1,10 +1,13 @@
 package io.github.tobi.laa.embedded.valkey.valkeypackage
 
 import io.github.tobi.laa.embedded.valkey.installation.DistributionType
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
+import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.ThrowableAssert
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
@@ -13,80 +16,126 @@ import java.util.zip.ZipOutputStream
 @DisplayName("Tests for ValkeyPackageSupplier")
 class ValkeyPackageSupplierTest {
 
-    @Test
-    @DisplayName("thenExtract should install the package to a default temp path and produce a valid installation")
-    fun `thenExtract installs package using default temp path`() {
-        val archive = createZipWithBinary("valkey/bin/valkey-server")
-        val packageSupplier = object : ValkeyPackageSupplier {
-            override fun retrievePackage(): ValkeyPackage {
-                return ValkeyPackage(
-                    version = "9.0.2",
-                    operatingSystem = OperatingSystem.LINUX_X86_64,
-                    distributionType = DistributionType.VALKEY,
-                    path = archive,
-                    binaryPathWithinPackage = Path.of("valkey", "bin", "valkey-server"),
-                    archiveType = ArchiveType.ZIP
-                )
-            }
-        }
+    @field:TempDir
+    private lateinit var tempDir: Path
 
-        val installation = packageSupplier.thenExtract(alwaysExtract = true).installValkey()
+    private var givenBinaryContent: ByteArray? = null
+    private var givenPackage: Path? = null
+    private var givenInstallationPath: Path? = null
+    private var givenPackageSupplier: ValkeyPackageSupplier? = null
+    private var extractAndInstall: ThrowableAssert.ThrowingCallable? = null
+    private var actualValkeyInstallation: ValkeyInstallation? = null
 
-        assertThat(installation.installationPath).exists()
-        assertThat(installation.binaryPath).exists()
+    @BeforeEach
+    fun reset() {
+        givenBinaryContent = null
+        givenPackage = null
+        givenInstallationPath = null
+        givenPackageSupplier = null
+        extractAndInstall = null
+        actualValkeyInstallation = null
     }
 
     @Test
-    @DisplayName("thenExtract with only alwaysExtract parameter should use default installationPath")
-    fun `thenExtract with alwaysExtract uses default installationPath`() {
-        val archive = createZipWithBinary("valkey/bin/valkey-server")
-        val packageSupplier = object : ValkeyPackageSupplier {
-            override fun retrievePackage(): ValkeyPackage {
-                return ValkeyPackage(
-                    version = "9.0.2",
-                    operatingSystem = OperatingSystem.LINUX_X86_64,
-                    distributionType = DistributionType.VALKEY,
-                    path = archive,
-                    binaryPathWithinPackage = Path.of("valkey", "bin", "valkey-server"),
-                    archiveType = ArchiveType.ZIP
-                )
-            }
-        }
+    @DisplayName("thenExtract should install the package to a default temp path and produce a valid installation")
+    fun `thenExtract installs package using default temp path`() {
+        givenPseudoValkeyPackageSupplier()
+        whenPackageExtractedAndInstalled()
+        thenNoErrorShouldOccur()
+        thenInstallationPathShouldExist()
+        thenBinaryShouldContainExpectedContent()
+    }
 
-        val installation = packageSupplier.thenExtract(alwaysExtract = true).installValkey()
-
-        assertThat(installation.installationPath).exists()
-        assertThat(installation.binaryPath).exists()
+    @Test
+    @DisplayName("thenExtract with alwaysExtract=true should install the package to a default temp path and produce a valid installation")
+    fun `thenExtract with alwaysExtract installs package using default temp path`() {
+        givenPseudoValkeyPackageSupplier()
+        whenPackageForceExtractedAndInstalled()
+        thenNoErrorShouldOccur()
+        thenInstallationPathShouldExist()
+        thenBinaryShouldContainExpectedContent()
     }
 
     @Test
     @DisplayName("thenExtract with ensureBinaryIsExecutable parameter should use defaults for other params")
-    fun `thenExtract with ensureBinaryIsExecutable uses defaults`() {
-        val archive = createZipWithBinary("valkey/bin/valkey-server")
-        val packageSupplier = object : ValkeyPackageSupplier {
+    fun `thenExtract with ensureBinaryIsExecutable installs package using default temp path`() {
+        givenPseudoValkeyPackageSupplier()
+        whenPackageExtractedInstalledAndMadeExecutable()
+        thenNoErrorShouldOccur()
+        thenInstallationPathShouldExist()
+        thenBinaryShouldContainExpectedContent()
+    }
+
+    @Test
+    @DisplayName("thenExtract with ensureBinaryIsExecutable parameter should use defaults for other params")
+    fun `thenExtract with custom installation folder installs package using default temp path`() {
+        givenPseudoValkeyPackageSupplier()
+        whenPackageExtractedAndInstalledToCustomFolder()
+        thenNoErrorShouldOccur()
+        thenInstallationPathShouldExistUnderneathCustomFolder()
+        thenBinaryShouldContainExpectedContent()
+    }
+
+    private fun givenPseudoValkeyPackageSupplier() {
+        givenBinaryContent = "binary".toByteArray()
+        givenPackage = Files.createTempFile(tempDir, "valkey-package", ".zip")
+        ZipOutputStream(Files.newOutputStream(givenPackage!!)).use { zip ->
+            zip.putNextEntry(ZipEntry("valkey/bin/valkey-server"))
+            zip.write(givenBinaryContent!!)
+            zip.closeEntry()
+        }
+        givenPackageSupplier = object : ValkeyPackageSupplier {
             override fun retrievePackage(): ValkeyPackage {
                 return ValkeyPackage(
                     version = "9.0.2",
                     operatingSystem = OperatingSystem.LINUX_X86_64,
                     distributionType = DistributionType.VALKEY,
-                    path = archive,
+                    path = givenPackage!!,
                     binaryPathWithinPackage = Path.of("valkey", "bin", "valkey-server"),
                     archiveType = ArchiveType.ZIP
                 )
             }
         }
-
-        val supplier = packageSupplier.thenExtract(ensureBinaryIsExecutable = true)
-        assertThat(supplier).isNotNull
     }
 
-    private fun createZipWithBinary(entryName: String): Path {
-        val zipPath = Files.createTempFile("valkey-package", ".zip")
-        ZipOutputStream(Files.newOutputStream(zipPath)).use { zip ->
-            zip.putNextEntry(ZipEntry(entryName))
-            zip.write("binary".toByteArray())
-            zip.closeEntry()
+    private fun whenPackageExtractedAndInstalled() {
+        extractAndInstall = { actualValkeyInstallation = givenPackageSupplier!!.thenExtract().installValkey() }
+    }
+
+    private fun whenPackageForceExtractedAndInstalled() {
+        extractAndInstall =
+            { actualValkeyInstallation = givenPackageSupplier!!.thenExtract(alwaysExtract = true).installValkey() }
+    }
+
+    private fun whenPackageExtractedInstalledAndMadeExecutable() {
+        extractAndInstall = {
+            actualValkeyInstallation =
+                givenPackageSupplier!!.thenExtract(ensureBinaryIsExecutable = true).installValkey()
         }
-        return zipPath
+    }
+
+    private fun whenPackageExtractedAndInstalledToCustomFolder() {
+        givenInstallationPath = Files.createTempDirectory(tempDir, null)
+        extractAndInstall =
+            {
+                actualValkeyInstallation =
+                    givenPackageSupplier!!.thenExtract(installationPath = givenInstallationPath).installValkey()
+            }
+    }
+
+    private fun thenNoErrorShouldOccur() {
+        assertThatCode(extractAndInstall).doesNotThrowAnyException()
+    }
+
+    private fun thenInstallationPathShouldExist() {
+        assertThat(actualValkeyInstallation!!.installationPath).exists()
+    }
+
+    private fun thenInstallationPathShouldExistUnderneathCustomFolder() {
+        assertThat(actualValkeyInstallation!!.installationPath).startsWith(givenInstallationPath!!)
+    }
+
+    private fun thenBinaryShouldContainExpectedContent() {
+        assertThat(actualValkeyInstallation!!.binaryPath).hasBinaryContent(givenBinaryContent)
     }
 }
