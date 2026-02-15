@@ -186,6 +186,61 @@ class ValkeyPackageSuppliersTest {
         }
     }
 
+    @Nested
+    @DisplayName("Tests for download-based package suppliers")
+    inner class DownloadPackageSuppliers {
+
+        @Test
+        @DisplayName("Should accept a supported Linux operating system")
+        fun `download Linux package supplier accepts supported OS`() {
+            val supplier = downloadLinuxPackageFromValkeyIo(
+                operatingSystem = OperatingSystem.LINUX_X86_64,
+                sha256FileChecksum = null
+            )
+
+            assertThat(supplier).isInstanceOf(ValkeyPackageDownloader::class.java)
+            val downloader = supplier as ValkeyPackageDownloader
+            assertThat(downloader.operatingSystem).isEqualTo(OperatingSystem.LINUX_X86_64)
+            assertThat(downloader.sha256FileChecksum).isNull()
+            assertThat(downloader.verifyFileChecksum).isFalse()
+        }
+
+        @Test
+        @DisplayName("Should reject an unsupported Linux operating system")
+        fun `download Linux package supplier rejects unsupported OS`() {
+            assertThatCode {
+                downloadLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
+            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        @Test
+        @DisplayName("Should reject an unsupported macOS operating system")
+        fun `download macOS package supplier rejects unsupported OS`() {
+            assertThatCode {
+                downloadMacOsPackageFromMacPorts(operatingSystem = OperatingSystem.LINUX_X86_64)
+            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        @Test
+        @DisplayName("Should require a build file path for macOS packages")
+        fun `download macOS package supplier requires build file path`() {
+            assertThatCode {
+                downloadMacOsPackageFromMacPorts(valkeyVersion = "0.0.0")
+            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        @Test
+        @DisplayName("Should allow missing checksum for Windows packages")
+        fun `download windows package supplier allows missing checksum`() {
+            val supplier = downloadWinX64MemuraiPackageFromNuget(sha256FileChecksum = null)
+
+            assertThat(supplier).isInstanceOf(ValkeyPackageDownloader::class.java)
+            val downloader = supplier as ValkeyPackageDownloader
+            assertThat(downloader.sha256FileChecksum).isNull()
+            assertThat(downloader.verifyFileChecksum).isFalse()
+        }
+    }
+
     class LinuxPackagesOnClasspath : ArgumentsProvider {
         override fun provideArguments(
             parameters: ParameterDeclarations,

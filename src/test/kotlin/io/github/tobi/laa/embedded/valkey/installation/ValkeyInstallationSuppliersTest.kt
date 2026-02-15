@@ -6,8 +6,8 @@ import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.web.client.RestClient
@@ -81,6 +81,38 @@ class ValkeyInstallationSuppliersTest {
                 .map { it.attribute("href")!!.value }
                 .map { it.replace(Regex("^valkey-((:?[0-9]+\\.)+[0-9]+).*?$"), "$1") }
                 .maxWith(semanticVersionComparator)
+        }
+    }
+
+    @Nested
+    @DisplayName("Validation of installation suppliers")
+    inner class InstallationSupplierValidation {
+
+        @Test
+        @DisplayName("Should reject non-Linux operating system for Linux installer")
+        fun `linux installer rejects non-linux operating system`() {
+            assertThrows(IllegalArgumentException::class.java) {
+                downloadAndInstallLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject MacPorts installer when no build file path exists for version")
+        fun `macports installer requires build file path`() {
+            assertThrows(IllegalArgumentException::class.java) {
+                downloadAndInstallMacOsPackageFromMacports(valkeyVersion = "0.0.0")
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject non-Linux operating system for classpath Linux installer")
+        fun `classpath linux installer rejects non-linux operating system`() {
+            assertThrows(IllegalArgumentException::class.java) {
+                installValkeyIoLinuxPackageFromClasspath(
+                    classpathResource = "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz",
+                    operatingSystem = OperatingSystem.MAC_OS_X86_64
+                )
+            }
         }
     }
 }

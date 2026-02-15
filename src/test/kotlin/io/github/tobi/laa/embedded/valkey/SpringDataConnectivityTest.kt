@@ -4,11 +4,13 @@ import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.builder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 
 @IntegrationTest
+@DisplayName("Spring Data Redis connectivity tests")
 class SpringDataConnectivityTest {
     private var valkeyStandalone: ValkeyStandalone? = null
     private var template: StringRedisTemplate? = null
@@ -30,6 +32,7 @@ class SpringDataConnectivityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data using Spring Data Redis")
     fun shouldBeAbleToUseSpringData() {
         template!!.opsForValue().set("foo", "bar")
 

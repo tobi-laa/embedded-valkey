@@ -4,11 +4,13 @@ import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 
 @IntegrationTest
+@DisplayName("Tests for Valkey server cluster replication")
 class ValkeyServerClusterTest {
     private var valkeyStandalone1: ValkeyStandalone? = null
     private var valkeyStandalone2: ValkeyStandalone? = null
@@ -25,6 +27,7 @@ class ValkeyServerClusterTest {
     }
 
     @Test
+    @DisplayName("It should be possible to perform simple read/write operations on a replicated cluster")
     fun testSimpleOperationsAfterRun() {
         var pool: JedisPool? = null
         var jedis: Jedis? = null

@@ -133,7 +133,7 @@ class ValkeyShardedCluster(
         }
     }
 
-    private fun setupReplicas(clusterMeetTarget: Int) {
+    internal fun setupReplicas(clusterMeetTarget: Int) {
         for (entry in replicasPortsByMainNodePort.entries) {
             val mainNodeId: String = mainNodeIdsByPort[entry.key] ?: throw ValkeyShardedClusterSetupException(
                 "No main node ID found for port: ${entry.key}"
@@ -157,21 +157,21 @@ class ValkeyShardedCluster(
         }
     }
 
-    private fun waitForNodeToAppearInCluster(jedis: Jedis, nodeId: String) {
+    internal fun waitForNodeToAppearInCluster(jedis: Jedis, nodeId: String) {
         val nodeReady = waitForPredicateToPass(Supplier { jedis.clusterNodes().contains(nodeId) })
         if (!nodeReady) {
             throw ValkeyShardedClusterSetupException("Node was not ready before timeout")
         }
     }
 
-    private fun waitForClusterToHaveStatusOK(jedis: Jedis) {
+    internal fun waitForClusterToHaveStatusOK(jedis: Jedis) {
         val clusterIsReady = waitForPredicateToPass(Supplier { jedis.clusterInfo().contains("cluster_state:ok") })
         if (!clusterIsReady) {
             throw ValkeyShardedClusterSetupException("Cluster did not have status OK before timeout")
         }
     }
 
-    private fun waitForClusterToBeInteractReady() {
+    internal fun waitForClusterToBeInteractReady() {
         val clusterIsReady = waitForPredicateToPass(Supplier {
             try {
                 JedisCluster(HostAndPort(CLUSTER_IP, nodes.first().port)).use { jc ->
@@ -188,7 +188,7 @@ class ValkeyShardedCluster(
         }
     }
 
-    private fun waitForPredicateToPass(predicate: Supplier<Boolean>): Boolean {
+    internal fun waitForPredicateToPass(predicate: Supplier<Boolean>): Boolean {
         val maxWaitInMillis = initializationTimeout.toMillis()
 
         var waited = 0

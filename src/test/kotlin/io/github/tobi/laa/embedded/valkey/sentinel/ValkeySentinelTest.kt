@@ -5,6 +5,7 @@ import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGr
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.ports.PortProvider
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
 import redis.clients.jedis.Jedis
@@ -13,6 +14,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 @IntegrationTest
+@DisplayName("Integration tests for ValkeySentinel")
 internal class ValkeySentinelTest {
     private val bindAddress = "localhost"
 
@@ -20,6 +22,7 @@ internal class ValkeySentinelTest {
     private var server: ValkeyStandalone? = null
 
     @Test
+    @DisplayName("Starting and stopping a sentinel with a server should work without errors")
     @Throws(InterruptedException::class, IOException::class)
     fun testSimpleRun() {
         server = ValkeyStandalone.builder().build()
@@ -32,6 +35,7 @@ internal class ValkeySentinelTest {
     }
 
     @Test
+    @DisplayName("Multiple start/stop cycles of the sentinel should work without errors")
     @Throws(IOException::class)
     fun shouldAllowSubsequentRuns() {
         sentinel = ValkeySentinel.builder().bind(bindAddress).build()
@@ -46,6 +50,7 @@ internal class ValkeySentinelTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data via a sentinel-monitored master")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRun() {
         val portProvider = PortProvider()

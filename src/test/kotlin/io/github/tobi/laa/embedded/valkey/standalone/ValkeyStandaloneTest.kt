@@ -3,6 +3,7 @@ package io.github.tobi.laa.embedded.valkey.standalone
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.builder
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import redis.clients.jedis.JedisPool
 import java.io.BufferedReader
@@ -11,10 +12,12 @@ import java.io.InputStreamReader
 import java.util.regex.Pattern
 
 @IntegrationTest
+@DisplayName("Integration tests for ValkeyStandalone")
 internal class ValkeyStandaloneTest {
     private var valkeyStandalone: ValkeyStandalone? = null
 
     @Test
+    @DisplayName("Starting a standalone Valkey instance should work without errors")
     @Throws(Exception::class)
     fun testSimpleRun() {
         valkeyStandalone = builder().port(6381).build()
@@ -22,6 +25,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("Calling start multiple times without stopping should not cause errors")
     @Throws(IOException::class)
     fun shouldAllowMultipleRunsWithoutStop() {
         valkeyStandalone = builder().port(6381).build()
@@ -30,6 +34,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("Multiple start/stop cycles should work without errors")
     @Throws(IOException::class)
     fun shouldAllowSubsequentRuns() {
         valkeyStandalone = builder().port(6381).build()
@@ -44,6 +49,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data after the server has started")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRun() {
         valkeyStandalone = builder().port(6381).build()
@@ -60,6 +66,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("The active flag should be false before the server is started")
     @Throws(IOException::class)
     fun shouldIndicateInactiveBeforeStart() {
         valkeyStandalone = builder().port(6381).build()
@@ -67,6 +74,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("The active flag should be true after the server is started")
     @Throws(IOException::class)
     fun shouldIndicateActiveAfterStart() {
         valkeyStandalone = builder().port(6381).build()
@@ -75,6 +83,7 @@ internal class ValkeyStandaloneTest {
     }
 
     @Test
+    @DisplayName("The active flag should be false after the server is stopped")
     @Throws(IOException::class)
     fun shouldIndicateInactiveAfterStop() {
         valkeyStandalone = builder().port(6381).build()

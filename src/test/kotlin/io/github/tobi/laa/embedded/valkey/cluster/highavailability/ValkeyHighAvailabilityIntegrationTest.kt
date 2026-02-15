@@ -5,6 +5,7 @@ import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import redis.clients.jedis.Jedis
@@ -14,7 +15,8 @@ import java.net.UnknownHostException
 import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
 
 @IntegrationTest
-class ValkeyHighAvailibilityTest {
+@DisplayName("Integration tests for ValkeyHighAvailability")
+class ValkeyHighAvailabilityIntegrationTest {
     private val sentinelBuilder = ValkeySentinel.builder()
     private val bindAddress: String? = null
 
@@ -35,6 +37,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with a single master and no replicas")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithSingleMasterNoSlavesCluster() {
         val cluster = ValkeyHighAvailability.builder()
@@ -61,6 +64,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with a single master and one replica")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithSingleMasterAndOneSlave() {
         val cluster = ValkeyHighAvailability.builder()
@@ -87,6 +91,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with a single master and multiple replicas")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithSingleMasterMultipleSlaves() {
         val cluster = ValkeyHighAvailability.builder()
@@ -113,6 +118,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with two sentinels, one master, and multiple replicas")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithTwoSentinelsSingleMasterMultipleSlaves() {
         val cluster = ValkeyHighAvailability.builder()
@@ -139,6 +145,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with two predefined sentinels and ephemeral ports")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithTwoPredefinedSentinelsSingleMasterMultipleSlaves() {
         val cluster = ValkeyHighAvailability.builder()
@@ -169,6 +176,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with three sentinels, three masters, and one replica per master")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithThreeSentinelsThreeMastersOneSlavePerMasterCluster() {
         val master1 = "master1"
@@ -221,6 +229,7 @@ class ValkeyHighAvailibilityTest {
     }
 
     @Test
+    @DisplayName("It should be possible to read and write data with three sentinels, three masters, and one replica per master using ephemeral ports")
     @Throws(IOException::class)
     fun testSimpleOperationsAfterRunWithThreeSentinelsThreeMastersOneSlavePerMasterEphemeralCluster() {
         val master1 = "master1"
