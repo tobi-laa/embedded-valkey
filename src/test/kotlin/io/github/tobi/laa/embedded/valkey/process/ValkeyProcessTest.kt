@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -119,7 +121,8 @@ class ValkeyProcessTest {
     }
 
     @Test
-    @DisplayName("Constructor should reject a non-executable binary path")
+    @EnabledOnOs(OS.LINUX, OS.MAC)
+    @DisplayName("Constructor should reject a non-executable binary path (Unix only, Windows has no executable permission bits)")
     fun `constructor rejects non-executable binary`() {
         val installDir = Files.createTempDirectory("valkey-install")
         val suffix = if (isWindows()) ".bat" else ".sh"
@@ -159,7 +162,7 @@ class ValkeyProcessTest {
     @DisplayName("Constructor should reject a non-existent working directory")
     fun `constructor rejects non-existent working directory`() {
         val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
-        val nonExistentDir = Path.of("/tmp/non-existent-dir-" + System.nanoTime())
+        val nonExistentDir = Path.of(System.getProperty("java.io.tmpdir"), "non-existent-dir-" + System.nanoTime())
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
                 valkeyInstallation = installation,
