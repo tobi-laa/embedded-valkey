@@ -43,8 +43,7 @@
     <properties>
         <sonar.organization>tobi-laa</sonar.organization>
         <!-- Platform-specific branches impossible to cover on a single OS -->
-        <!-- Kotlin interface default method implementations - only reachable from Java callers -->
-        <sonar.coverage.exclusions>**/DetectOperatingSystemKt*,**/*DefaultImpls*</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>**/DetectOperatingSystem.kt</sonar.coverage.exclusions>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <kotlin.version>2.3.10</kotlin.version>
@@ -274,6 +273,7 @@
                 <configuration>
                     <args>
                         <arg>-Xjsr305=strict</arg>
+                        <arg>-jvm-default=no-compatibility</arg>
                     </args>
                 </configuration>
                 <dependencies>
