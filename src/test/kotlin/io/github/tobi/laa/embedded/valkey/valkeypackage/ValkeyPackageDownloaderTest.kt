@@ -2,11 +2,13 @@ package io.github.tobi.laa.embedded.valkey.valkeypackage
 
 import io.github.tobi.laa.embedded.valkey.installation.DistributionType
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,15 +18,19 @@ import java.security.MessageDigest
 @DisplayName("Tests for ValkeyPackageDownloader")
 class ValkeyPackageDownloaderTest {
 
+    @TempDir
+    private lateinit var tempDir: Path
+
     @Test
     @DisplayName("Downloaded package should be cached and verified against its checksum")
     fun `downloads package with checksum verification and copies from cache`() {
-        val source = Files.createTempFile("valkey-source", ".zip")
+        val source = tempDir.resolve("valkey-source.zip")
         val content = "payload".toByteArray()
         Files.write(source, content)
-        val cacheFile = Files.createTempFile("valkey-cache", ".zip")
-        Files.deleteIfExists(cacheFile)
-        val downloadLocation = Files.createTempDirectory("valkey-download").resolve("valkey.zip")
+        val cacheFile = tempDir.resolve("cache").resolve("valkey-cache.zip")
+        Files.createDirectories(cacheFile.parent)
+        val downloadLocation = tempDir.resolve("download").resolve("valkey.zip")
+        Files.createDirectories(downloadLocation.parent)
         val checksum = sha256(content)
 
         val downloader = ValkeyPackageDownloader(
@@ -42,18 +48,20 @@ class ValkeyPackageDownloaderTest {
 
         val packageResult = downloader.retrievePackage()
 
-        assertTrue(Files.exists(cacheFile))
-        assertTrue(Files.exists(downloadLocation))
-        assertEquals(downloadLocation, packageResult.path)
-        assertEquals(checksum, sha256(Files.readAllBytes(downloadLocation)))
+        assertThat(cacheFile).exists()
+        assertThat(downloadLocation).exists()
+        assertThat(packageResult.path).isEqualTo(downloadLocation)
+        assertThat(sha256(Files.readAllBytes(downloadLocation))).isEqualTo(checksum)
     }
 
     @Test
     @DisplayName("Cached file should be used without re-downloading")
     fun `uses cached file without downloading`() {
-        val cacheFile = Files.createTempFile("valkey-cache", ".zip")
+        val cacheFile = tempDir.resolve("cache").resolve("valkey-cache.zip")
+        Files.createDirectories(cacheFile.parent)
         Files.write(cacheFile, "cached".toByteArray())
-        val downloadLocation = Files.createTempDirectory("valkey-download").resolve("valkey.zip")
+        val downloadLocation = tempDir.resolve("download").resolve("valkey.zip")
+        Files.createDirectories(downloadLocation.parent)
 
         val downloader = ValkeyPackageDownloader(
             valkeyVersion = "9.0.2",
@@ -68,16 +76,17 @@ class ValkeyPackageDownloaderTest {
 
         val packageResult = downloader.retrievePackage()
 
-        assertEquals(downloadLocation, packageResult.path)
-        assertTrue(Files.exists(downloadLocation))
+        assertThat(packageResult.path).isEqualTo(downloadLocation)
+        assertThat(downloadLocation).exists()
     }
 
     @Test
     @DisplayName("Download without caching should write directly to the download location")
     fun `download without cache writes to download location`() {
-        val source = Files.createTempFile("valkey-source", ".zip")
+        val source = tempDir.resolve("valkey-source.zip")
         Files.write(source, "payload".toByteArray())
-        val downloadLocation = Files.createTempDirectory("valkey-download").resolve("valkey.zip")
+        val downloadLocation = tempDir.resolve("download").resolve("valkey.zip")
+        Files.createDirectories(downloadLocation.parent)
 
         val downloader = ValkeyPackageDownloader(
             valkeyVersion = "9.0.2",
@@ -91,14 +100,14 @@ class ValkeyPackageDownloaderTest {
 
         val packageResult = downloader.retrievePackage()
 
-        assertEquals(downloadLocation, packageResult.path)
-        assertTrue(Files.exists(downloadLocation))
+        assertThat(packageResult.path).isEqualTo(downloadLocation)
+        assertThat(downloadLocation).exists()
     }
 
     @Test
     @DisplayName("Checksum mismatch should throw FileChecksumMismatchException")
     fun `checksum mismatch throws exception`() {
-        val source = Files.createTempFile("valkey-source", ".zip")
+        val source = tempDir.resolve("valkey-source.zip")
         Files.write(source, "payload".toByteArray())
 
         val downloader = ValkeyPackageDownloader(
@@ -111,13 +120,14 @@ class ValkeyPackageDownloaderTest {
             verifyFileChecksum = true
         )
 
-        assertThrows(FileChecksumMismatchException::class.java) { downloader.retrievePackage() }
+        assertThatThrownBy { downloader.retrievePackage() }
+            .isInstanceOf(FileChecksumMismatchException::class.java)
     }
 
     @Test
     @DisplayName("Constructor should reject blank version and require checksum when verification is enabled")
     fun `constructor validation requires version and checksum`() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThatThrownBy {
             ValkeyPackageDownloader(
                 valkeyVersion = " ",
                 operatingSystem = OperatingSystem.LINUX_X86_64,
@@ -125,9 +135,9 @@ class ValkeyPackageDownloaderTest {
                 archiveType = ArchiveType.ZIP,
                 downloadUri = URI("file:///tmp/valkey.zip")
             )
-        }
+        }.isInstanceOf(IllegalArgumentException::class.java)
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThatThrownBy {
             ValkeyPackageDownloader(
                 valkeyVersion = "9.0.2",
                 operatingSystem = OperatingSystem.LINUX_X86_64,
@@ -137,45 +147,33 @@ class ValkeyPackageDownloaderTest {
                 sha256FileChecksum = null,
                 verifyFileChecksum = true
             )
-        }
+        }.isInstanceOf(IllegalArgumentException::class.java)
     }
 
-    @Test
-    @DisplayName("humanReadableByteCount() should format all magnitude ranges correctly")
-    fun `human readable byte count covers all branches`() {
-        val method = Class.forName("io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageDownloaderKt")
-            .getDeclaredMethod("humanReadableByteCount", Long::class.javaPrimitiveType)
-        method.isAccessible = true
-
-        val cases = listOf(
-            -1L,
-            10L,
-            1024L,
-            1_048_576L,
-            1_073_741_824L,
-            1_099_511_627_776L,
-            1_125_844_931_261_235L,
-            1_125_844_931_261_236L
-        )
-
-        for (bytes in cases) {
-            val result = method.invoke(null, bytes) as String
-            assertTrue(result.isNotBlank())
-        }
+    @ParameterizedTest(name = "humanReadableByteCount({0}) should return \"{1}\"")
+    @CsvSource(
+        "-1, N/A",
+        "10, 10 B",
+        "1024, 1.0 KiB",
+        "1048576, 1.0 MiB",
+        "1073741824, 1.0 GiB",
+        "1099511627776, 4294967296.0 TiB",
+        "1125844931261236, 4294757580.8 PiB",
+        "1152865209611504845, 4294757580.8 EiB"
+    )
+    @DisplayName("humanReadableByteCount() should format byte counts into human-readable strings")
+    fun `humanReadableByteCount formats bytes correctly`(bytes: Long, expected: String) {
+        assertThat(humanReadableByteCount(bytes)).isEqualTo(expected)
     }
 
     @Test
     @DisplayName("Default cache path should follow the expected naming layout")
     fun `default cache path builder uses expected layout`() {
-        val method = Class.forName("io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageDownloaderKt")
-            .getDeclaredMethod("resolveDefaultTempFilePath", String::class.java, OperatingSystem::class.java, ArchiveType::class.java)
-        method.isAccessible = true
+        val path = resolveDefaultTempFilePath("9.0.2", OperatingSystem.LINUX_X86_64, ArchiveType.ZIP)
+        val pathAsString = path.toString()
 
-        val path = method.invoke(null, "9.0.2", OperatingSystem.LINUX_X86_64, ArchiveType.ZIP) as Path
-        val asString = path.toString()
-
-        assertTrue(asString.contains("valkey-9.0.2-linux_x86_64"))
-        assertTrue(asString.endsWith(".zip"))
+        assertThat(pathAsString).contains("valkey-9.0.2-linux_x86_64")
+        assertThat(pathAsString).endsWith(".zip")
     }
 
     private fun sha256(bytes: ByteArray): String {

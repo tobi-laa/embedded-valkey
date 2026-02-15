@@ -2,153 +2,165 @@ package io.github.tobi.laa.embedded.valkey
 
 import io.github.tobi.laa.embedded.valkey.cluster.ValkeyCluster
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.Runs
+import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import java.nio.file.Files
-import java.nio.file.Path
 
 @DisplayName("Tests for Valkey, ValkeyNode, and ValkeyCluster interfaces")
 class ValkeyInterfacesTest {
 
-    private class RecordingValkey : Valkey {
-        var startArgs: Pair<Boolean, Long>? = null
-        var stopArgs: Triple<Boolean, Long, Boolean>? = null
-
-        override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-            startArgs = awaitReadiness to maxWaitTimeSeconds
-        }
-
-        override fun stop(forcibly: Boolean, maxWaitTimeSeconds: Long, removeWorkingDir: Boolean) {
-            stopArgs = Triple(forcibly, maxWaitTimeSeconds, removeWorkingDir)
-        }
-    }
-
-    private class RecordingNode(override val config: io.github.tobi.laa.embedded.valkey.conf.ValkeyConf) : ValkeyNode {
-        override val active: Boolean = false
-        override val workingDirectory: Path = Files.createTempDirectory("valkey-node")
-
-        override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-            throw UnsupportedOperationException("not needed")
-        }
-
-        override fun stop(forcibly: Boolean, maxWaitTimeSeconds: Long, removeWorkingDir: Boolean) {
-            throw UnsupportedOperationException("not needed")
-        }
-    }
-
-    private class RecordingCluster : ValkeyCluster {
-        var startArgs: Pair<Boolean, Long>? = null
-        var stopArgs: Triple<Boolean, Long, Boolean>? = null
-        override val nodes: List<ValkeyNode> = emptyList()
-
-        override fun start(awaitReadiness: Boolean, maxWaitTimeSeconds: Long) {
-            startArgs = awaitReadiness to maxWaitTimeSeconds
-        }
-
-        override fun stop(forcibly: Boolean, maxWaitTimeSeconds: Long, removeWorkingDir: Boolean) {
-            stopArgs = Triple(forcibly, maxWaitTimeSeconds, removeWorkingDir)
-        }
-    }
-
     @Test
-    @DisplayName("Default start and stop should delegate with default parameter values")
-    fun `default start and stop delegate with defaults`() {
-        val valkey = RecordingValkey()
+    @DisplayName("Default no-arg start() should delegate with awaitReadiness=true and maxWaitTimeSeconds=10")
+    fun `default start delegates with defaults`() {
+        val valkey = mockk<Valkey>()
+        every { valkey.start(any(), any()) } just Runs
+        every { valkey.start() } answers { callOriginal() }
 
         valkey.start()
+
+        verify { valkey.start(awaitReadiness = true, maxWaitTimeSeconds = 10) }
+    }
+
+    @Test
+    @DisplayName("Default no-arg stop() should delegate with forcibly=false, maxWaitTimeSeconds=10, removeWorkingDir=false")
+    fun `default stop delegates with defaults`() {
+        val valkey = mockk<Valkey>()
+        every { valkey.stop(any(), any(), any()) } just Runs
+        every { valkey.stop() } answers { callOriginal() }
+
         valkey.stop()
 
-        assertEquals(true to 10L, valkey.startArgs)
-        assertEquals(Triple(false, 10L, false), valkey.stopArgs)
+        verify { valkey.stop(forcibly = false, maxWaitTimeSeconds = 10, removeWorkingDir = false) }
     }
 
     @Test
-    @DisplayName("Partial-arg start should fill in default for maxWaitTimeSeconds")
+    @DisplayName("start(awaitReadiness=false) should fill in default maxWaitTimeSeconds=10")
     fun `start with only awaitReadiness fills default maxWaitTimeSeconds`() {
-        val valkey = RecordingValkey()
+        val valkey = mockk<Valkey>()
+        every { valkey.start(any(), any()) } just Runs
+
         valkey.start(awaitReadiness = false)
-        assertEquals(false to 10L, valkey.startArgs)
+
+        verify { valkey.start(awaitReadiness = false, maxWaitTimeSeconds = 10) }
     }
 
     @Test
-    @DisplayName("Partial-arg start should fill in default for awaitReadiness")
+    @DisplayName("start(maxWaitTimeSeconds=5) should fill in default awaitReadiness=true")
     fun `start with only maxWaitTimeSeconds fills default awaitReadiness`() {
-        val valkey = RecordingValkey()
+        val valkey = mockk<Valkey>()
+        every { valkey.start(any(), any()) } just Runs
+
         valkey.start(maxWaitTimeSeconds = 5)
-        assertEquals(true to 5L, valkey.startArgs)
+
+        verify { valkey.start(awaitReadiness = true, maxWaitTimeSeconds = 5) }
     }
 
     @Test
-    @DisplayName("Partial-arg stop should fill in defaults for maxWaitTimeSeconds and removeWorkingDir")
+    @DisplayName("stop(forcibly=true) should fill in defaults maxWaitTimeSeconds=10 and removeWorkingDir=false")
     fun `stop with only forcibly fills defaults`() {
-        val valkey = RecordingValkey()
+        val valkey = mockk<Valkey>()
+        every { valkey.stop(any(), any(), any()) } just Runs
+
         valkey.stop(forcibly = true)
-        assertEquals(Triple(true, 10L, false), valkey.stopArgs)
+
+        verify { valkey.stop(forcibly = true, maxWaitTimeSeconds = 10, removeWorkingDir = false) }
     }
 
     @Test
-    @DisplayName("Partial-arg stop should fill in default for removeWorkingDir")
+    @DisplayName("stop(forcibly=true, maxWaitTimeSeconds=5) should fill in default removeWorkingDir=false")
     fun `stop with forcibly and maxWaitTimeSeconds fills default removeWorkingDir`() {
-        val valkey = RecordingValkey()
+        val valkey = mockk<Valkey>()
+        every { valkey.stop(any(), any(), any()) } just Runs
+
         valkey.stop(forcibly = true, maxWaitTimeSeconds = 5)
-        assertEquals(Triple(true, 5L, false), valkey.stopArgs)
+
+        verify { valkey.stop(forcibly = true, maxWaitTimeSeconds = 5, removeWorkingDir = false) }
     }
 
     @Test
-    @DisplayName("Partial-arg stop should fill in defaults for forcibly and maxWaitTimeSeconds")
+    @DisplayName("stop(removeWorkingDir=true) should fill in defaults forcibly=false and maxWaitTimeSeconds=10")
     fun `stop with only removeWorkingDir fills defaults`() {
-        val valkey = RecordingValkey()
+        val valkey = mockk<Valkey>()
+        every { valkey.stop(any(), any(), any()) } just Runs
+
         valkey.stop(removeWorkingDir = true)
-        assertEquals(Triple(false, 10L, true), valkey.stopArgs)
+
+        verify { valkey.stop(forcibly = false, maxWaitTimeSeconds = 10, removeWorkingDir = true) }
     }
 
     @Test
-    @DisplayName("Cluster default start and stop should delegate with default parameter values")
-    fun `cluster default start and stop delegate with defaults`() {
-        val cluster = RecordingCluster()
-        val asValkey: Valkey = cluster
+    @DisplayName("Cluster default no-arg start() should delegate with awaitReadiness=true and maxWaitTimeSeconds=10")
+    fun `cluster default start delegates with defaults`() {
+        val cluster = mockk<ValkeyCluster>()
+        every { cluster.start(any(), any()) } just Runs
+        every { cluster.start() } answers { callOriginal() }
 
-        asValkey.start()
-        asValkey.stop()
+        cluster.start()
 
-        assertEquals(true to 10L, cluster.startArgs)
-        assertEquals(Triple(false, 10L, false), cluster.stopArgs)
+        verify { cluster.start(awaitReadiness = true, maxWaitTimeSeconds = 10) }
     }
 
     @Test
-    @DisplayName("Cluster partial-arg start should fill in default maxWaitTimeSeconds")
+    @DisplayName("Cluster default no-arg stop() should delegate with forcibly=false, maxWaitTimeSeconds=10, removeWorkingDir=false")
+    fun `cluster default stop delegates with defaults`() {
+        val cluster = mockk<ValkeyCluster>()
+        every { cluster.stop(any(), any(), any()) } just Runs
+        every { cluster.stop() } answers { callOriginal() }
+
+        cluster.stop()
+
+        verify { cluster.stop(forcibly = false, maxWaitTimeSeconds = 10, removeWorkingDir = false) }
+    }
+
+    @Test
+    @DisplayName("Cluster start(awaitReadiness=false) should fill in default maxWaitTimeSeconds=10")
     fun `cluster start with only awaitReadiness fills default`() {
-        val cluster = RecordingCluster()
+        val cluster = mockk<ValkeyCluster>()
+        every { cluster.start(any(), any()) } just Runs
+
         cluster.start(awaitReadiness = false)
-        assertEquals(false to 10L, cluster.startArgs)
+
+        verify { cluster.start(awaitReadiness = false, maxWaitTimeSeconds = 10) }
     }
 
     @Test
-    @DisplayName("Cluster partial-arg stop should fill in defaults")
+    @DisplayName("Cluster stop(forcibly=true) should fill in defaults maxWaitTimeSeconds=10 and removeWorkingDir=false")
     fun `cluster stop with only forcibly fills defaults`() {
-        val cluster = RecordingCluster()
+        val cluster = mockk<ValkeyCluster>()
+        every { cluster.stop(any(), any(), any()) } just Runs
+
         cluster.stop(forcibly = true)
-        assertEquals(Triple(true, 10L, false), cluster.stopArgs)
+
+        verify { cluster.stop(forcibly = true, maxWaitTimeSeconds = 10, removeWorkingDir = false) }
     }
 
     @Test
-    @DisplayName("Node should expose port and bind addresses from its configuration")
+    @DisplayName("ValkeyNode should expose port and bind addresses from its configuration")
     fun `node exposes port and binds from config`() {
         val conf = ValkeyConfBuilder().port(6380).binds("127.0.0.1", "::1").build()
-        val node = RecordingNode(conf)
+        val node = mockk<ValkeyNode>()
+        every { node.config } returns conf
+        every { node.port } answers { callOriginal() }
+        every { node.binds } answers { callOriginal() }
 
-        assertEquals(6380, node.port)
-        assertEquals(listOf("127.0.0.1", "::1"), node.binds)
+        assertThat(node.port).isEqualTo(6380)
+        assertThat(node.binds).isEqualTo(listOf("127.0.0.1", "::1"))
     }
 
     @Test
-    @DisplayName("Node port should throw IllegalStateException when port is not configured")
+    @DisplayName("ValkeyNode port should throw IllegalStateException when port is not configured")
     fun `node port throws if not configured`() {
         val conf = ValkeyConfBuilder().build()
-        val node = RecordingNode(conf)
+        val node = mockk<ValkeyNode>()
+        every { node.config } returns conf
+        every { node.port } answers { callOriginal() }
 
-        assertThrows(IllegalStateException::class.java) { node.port }
+        assertThatThrownBy { node.port }.isInstanceOf(IllegalStateException::class.java)
     }
 }

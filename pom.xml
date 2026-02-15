@@ -221,12 +221,6 @@
                                 <goals>
                                     <goal>report</goal>
                                 </goals>
-                                <configuration>
-                                    <excludes>
-                                        <exclude>**/DetectOperatingSystemKt*</exclude>
-                                        <exclude>**/*DefaultImpls*</exclude>
-                                    </excludes>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

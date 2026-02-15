@@ -181,7 +181,7 @@ constructor(
     }
 }
 
-private fun resolveDefaultTempFilePath(
+internal fun resolveDefaultTempFilePath(
     valkeyVersion: String,
     operatingSystem: OperatingSystem,
     archiveType: ArchiveType
@@ -191,7 +191,7 @@ private fun resolveDefaultTempFilePath(
     "valkey-$valkeyVersion-${operatingSystem.name.lowercase()}.${archiveType.fileExtension}"
 )
 
-private fun humanReadableByteCount(bytes: Long) = when {
+internal fun humanReadableByteCount(bytes: Long) = when {
     bytes == Long.MIN_VALUE || bytes < 0 -> "N/A"
     bytes < 1024L -> "$bytes B"
     bytes <= 0xfffccccccccccccL shr 40 -> "%.1f KiB".format(bytes.toDouble() / (0x1 shl 10))

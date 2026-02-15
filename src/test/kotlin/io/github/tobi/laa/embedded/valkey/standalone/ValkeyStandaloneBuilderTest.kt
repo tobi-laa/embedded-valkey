@@ -103,7 +103,7 @@ class ValkeyStandaloneBuilderTest {
     @DisplayName("importConf(Path) should import configuration from a file")
     fun `importConf with path imports file`(@TempDir tempDir: Path) {
         val confFile = tempDir.resolve("test.conf")
-        Files.writeString(confFile, "port 6399\n")
+        Files.writeString(confFile, "port 6399" + System.lineSeparator())
 
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()

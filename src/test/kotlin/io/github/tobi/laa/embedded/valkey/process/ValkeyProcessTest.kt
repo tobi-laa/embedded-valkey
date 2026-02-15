@@ -201,9 +201,9 @@ class ValkeyProcessTest {
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
-        val str = process.toString()
-        assertThat(str).contains("pid:")
-        assertThat(str).doesNotContain("not started")
+        val processDescription = process.toString()
+        assertThat(processDescription).contains("pid:")
+        assertThat(processDescription).doesNotContain("not started")
         process.stop(forcibly = true, maxWaitTimeSeconds = 1)
     }
 

@@ -66,11 +66,11 @@ class ValkeySentinelBuilderTest {
         val sentinel = builder.build()
 
         val directives = sentinel.config.directives("sentinel")
-        assertThat(directives).anySatisfy { d ->
-            assertThat(d.arguments).contains("monitor", "master1", "127.0.0.1", "6380")
+        assertThat(directives).anySatisfy { directive ->
+            assertThat(directive.arguments).contains("monitor", "master1", "127.0.0.1", "6380")
         }
-        assertThat(directives).anySatisfy { d ->
-            assertThat(d.arguments).contains("monitor", "master2", "127.0.0.1", "6382")
+        assertThat(directives).anySatisfy { directive ->
+            assertThat(directive.arguments).contains("monitor", "master2", "127.0.0.1", "6382")
         }
     }
 
@@ -88,11 +88,11 @@ class ValkeySentinelBuilderTest {
         val sentinel = builder.build()
 
         val directives = sentinel.config.directives("sentinel")
-        assertThat(directives).anySatisfy { d ->
-            assertThat(d.arguments).contains("down-after-milliseconds", "mymain", "5000")
+        assertThat(directives).anySatisfy { directive ->
+            assertThat(directive.arguments).contains("down-after-milliseconds", "mymain", "5000")
         }
-        assertThat(directives).anySatisfy { d ->
-            assertThat(d.arguments).contains("failover-timeout", "mymain", "10000")
+        assertThat(directives).anySatisfy { directive ->
+            assertThat(directive.arguments).contains("failover-timeout", "mymain", "10000")
         }
     }
 
@@ -139,7 +139,7 @@ class ValkeySentinelBuilderTest {
     @DisplayName("importConf(Path) should import configuration from a file")
     fun `importConf with path imports file`(@TempDir tempDir: Path) {
         val confFile = tempDir.resolve("sentinel.conf")
-        Files.writeString(confFile, "loglevel notice\n")
+        Files.writeString(confFile, "loglevel notice" + System.lineSeparator())
 
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
@@ -154,7 +154,7 @@ class ValkeySentinelBuilderTest {
     @DisplayName("importConf(String) should import configuration from a file path string")
     fun `importConf with string path imports file`(@TempDir tempDir: Path) {
         val confFile = tempDir.resolve("sentinel.conf")
-        Files.writeString(confFile, "loglevel debug\n")
+        Files.writeString(confFile, "loglevel debug" + System.lineSeparator())
 
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
