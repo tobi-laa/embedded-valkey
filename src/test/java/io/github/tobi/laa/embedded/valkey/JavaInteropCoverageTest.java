@@ -1,7 +1,6 @@
 package io.github.tobi.laa.embedded.valkey;
 
 import io.github.tobi.laa.embedded.valkey.cluster.sharded.Shard;
-import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder;
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation;
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyPackageExtractor;
@@ -270,8 +269,10 @@ class JavaInteropCoverageTest {
             var process = new ValkeyProcess(installation);
             // start() 0-arg overload (defaults: awaitServerReady=true, maxWaitTimeSeconds=10)
             process.start();
+            assertThat(process.getActive()).isTrue();
             // stop() 0-arg overload (defaults: forcibly=false, maxWaitTimeSeconds=10, removeWorkingDirectory=false)
             process.stop();
+            assertThat(process.getActive()).isFalse();
         }
 
         @Test
@@ -282,8 +283,10 @@ class JavaInteropCoverageTest {
             var process = new ValkeyProcess(installation);
             // start(boolean) 1-arg overload (awaitServerReady=false, default maxWaitTimeSeconds)
             process.start(false);
+            assertThat(process.getActive()).isTrue();
             // stop(boolean) 1-arg overload (forcibly=true, default maxWaitTimeSeconds)
             process.stop(true);
+            assertThat(process.getActive()).isFalse();
         }
 
         @Test
@@ -294,8 +297,10 @@ class JavaInteropCoverageTest {
             var process = new ValkeyProcess(installation);
             // start(boolean, long) - awaitServerReady=true, maxWaitTimeSeconds=3
             process.start(true, 3L);
+            assertThat(process.getActive()).isTrue();
             // stop(boolean, long) 2-arg overload - forcibly=true, maxWaitTimeSeconds=1
             process.stop(true, 1L);
+            assertThat(process.getActive()).isFalse();
         }
     }
 

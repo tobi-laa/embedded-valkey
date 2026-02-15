@@ -1,3 +1,5 @@
+@file:Suppress("kotlin:S1874") // JedisCluster is deprecated but no non-deprecated cluster API exists in Jedis 7.x
+
 package io.github.tobi.laa.embedded.valkey.cluster.sharded
 
 import io.github.tobi.laa.embedded.valkey.cluster.ValkeyCluster
