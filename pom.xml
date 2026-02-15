@@ -52,6 +52,9 @@
 
     <properties>
         <sonar.organization>tobi-laa</sonar.organization>
+        <!-- Platform-specific branches impossible to cover on a single OS -->
+        <!-- Kotlin interface default method implementations - only reachable from Java callers -->
+        <sonar.coverage.exclusions>**/DetectOperatingSystemKt*,**/*DefaultImpls*</sonar.coverage.exclusions>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <kotlin.version>2.3.10</kotlin.version>
@@ -201,14 +204,6 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <!-- Platform-specific branches impossible to cover on a single OS -->
-                                <exclude>**/DetectOperatingSystemKt*</exclude>
-                                <!-- Kotlin interface default method implementations - only reachable from Java callers -->
-                                <exclude>**/*DefaultImpls*</exclude>
-                            </excludes>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>
