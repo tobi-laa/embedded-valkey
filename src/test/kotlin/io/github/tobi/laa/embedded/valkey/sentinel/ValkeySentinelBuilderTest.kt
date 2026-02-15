@@ -3,6 +3,7 @@ package io.github.tobi.laa.embedded.valkey.sentinel
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
+import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -20,7 +21,7 @@ class ValkeySentinelBuilderTest {
     fun `build adds default monitor when no replication groups configured`() {
         val os = detectOperatingSystem()
         val builder = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
 
         val sentinel = builder.build()
 
@@ -36,7 +37,7 @@ class ValkeySentinelBuilderTest {
     fun `clone preserves replication groups and configuration`() {
         val os = detectOperatingSystem()
         val builder = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .bind("0.0.0.0")
             .port(26390)
             .quorumSize(2)
@@ -58,7 +59,7 @@ class ValkeySentinelBuilderTest {
     fun `build with replication groups adds monitors`() {
         val os = detectOperatingSystem()
         val builder = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
         builder.monitor(ReplicationGroup("master1", 6380, listOf(6381)))
         builder.monitor(ReplicationGroup("master2", 6382, emptyList()))
 
@@ -78,7 +79,7 @@ class ValkeySentinelBuilderTest {
     fun `setter methods are chainable`() {
         val os = detectOperatingSystem()
         val builder = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .downAfterMilliseconds(5000)
             .failOverTimeout(10000)
             .parallelSyncs(2)
@@ -100,7 +101,7 @@ class ValkeySentinelBuilderTest {
     fun `sentinel reports inactive when not started`() {
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         assertThat(sentinel.active).isFalse()
@@ -111,7 +112,7 @@ class ValkeySentinelBuilderTest {
     fun `sentinel throws on workingDirectory before start`() {
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         assertThrows(IllegalStateException::class.java) { sentinel.workingDirectory }
@@ -122,7 +123,7 @@ class ValkeySentinelBuilderTest {
     fun `sentinel stop is safe when not started`() {
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         sentinel.stop()
@@ -142,7 +143,7 @@ class ValkeySentinelBuilderTest {
 
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .importConf(confFile)
             .build()
 
@@ -157,7 +158,7 @@ class ValkeySentinelBuilderTest {
 
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .importConf(confFile.toString())
             .build()
 
@@ -170,7 +171,7 @@ class ValkeySentinelBuilderTest {
         val conf = ValkeyConfBuilder().directive("loglevel", "warning").build()
         val os = detectOperatingSystem()
         val sentinel = ValkeySentinelBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .importConf(conf)
             .build()
 

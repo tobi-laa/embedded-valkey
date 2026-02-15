@@ -3,6 +3,7 @@ package io.github.tobi.laa.embedded.valkey.standalone
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
+import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -20,7 +21,7 @@ class ValkeyStandaloneBuilderTest {
     fun `build applies default port and binds`() {
         val os = detectOperatingSystem()
         val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
 
         val server = builder.build()
 
@@ -33,7 +34,7 @@ class ValkeyStandaloneBuilderTest {
     fun `clone preserves custom suppliers and configuration`() {
         val os = detectOperatingSystem()
         val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .bind("0.0.0.0")
             .port(6390)
             .directive("maxmemory", "1mb")
@@ -51,7 +52,7 @@ class ValkeyStandaloneBuilderTest {
     fun `build applies replicaOf`() {
         val os = detectOperatingSystem()
         val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .replicaOf("localhost", 6379)
 
         val server = builder.build()
@@ -64,7 +65,7 @@ class ValkeyStandaloneBuilderTest {
     fun `standalone reports inactive when not started`() {
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         assertThat(server.active).isFalse()
@@ -75,7 +76,7 @@ class ValkeyStandaloneBuilderTest {
     fun `standalone throws on workingDirectory before start`() {
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         assertThrows(IllegalStateException::class.java) { server.workingDirectory }
@@ -86,7 +87,7 @@ class ValkeyStandaloneBuilderTest {
     fun `standalone stop is safe when not started`() {
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .build()
 
         server.stop()
@@ -106,7 +107,7 @@ class ValkeyStandaloneBuilderTest {
 
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .importConf(confFile)
             .build()
 
@@ -119,7 +120,7 @@ class ValkeyStandaloneBuilderTest {
         val conf = ValkeyConfBuilder().port(6398).build()
         val os = detectOperatingSystem()
         val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier("#!/bin/sh\nsleep 1\n", os))
+            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
             .importConf(conf)
             .build()
 

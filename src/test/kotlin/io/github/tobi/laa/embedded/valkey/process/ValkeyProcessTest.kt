@@ -3,7 +3,10 @@ package io.github.tobi.laa.embedded.valkey.process
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.installation.DistributionType
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
-import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
+import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
+import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
+import io.github.tobi.laa.embedded.valkey.testing.createExecutableScript
+import io.github.tobi.laa.embedded.valkey.testing.isWindows
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -19,12 +22,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Process should start and stop successfully with readiness check")
     fun `starts and stops with readiness`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "echo \"Ready to accept connections\"\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_READY_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
@@ -35,12 +33,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Sentinel process should start and match sentinel-specific readiness output")
     fun `starts sentinel and matches sentinel readiness`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "echo \"Sentinel runid is 123\"\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_SENTINEL_READY_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build(), sentinel = true)
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
@@ -50,8 +43,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Starting should throw IOException when the process terminates prematurely")
     fun `start throws when process terminates early`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         assertThrows(IOException::class.java) { process.start(awaitServerReady = true, maxWaitTimeSeconds = 1) }
@@ -60,8 +52,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Stopping a process that was never started should not throw")
     fun `stop is safe when never started`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         assertDoesNotThrow { process.stop() }
@@ -70,12 +61,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Stopping should force termination when graceful shutdown times out")
     fun `stop forces termination on timeout`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "trap '' TERM\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.IGNORE_TERM_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = false, maxWaitTimeSeconds = 1)
@@ -85,8 +71,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("toString should return a representation without throwing")
     fun `toString reports args state`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         assertDoesNotThrow { process.toString() }
@@ -95,12 +80,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Stopping with removeWorkingDirectory should delete the working directory")
     fun `stop removes working directory when requested`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "echo \"Ready to accept connections\"\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_READY_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
@@ -113,11 +93,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Starting should throw IOException when the process is alive but never becomes ready")
     fun `start throws when process never becomes ready`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.IGNORE_TERM_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         assertThrows(IOException::class.java) { process.start(awaitServerReady = true, maxWaitTimeSeconds = 1) }
@@ -132,8 +108,8 @@ class ValkeyProcessTest {
             ValkeyProcess(
                 valkeyInstallation = ValkeyInstallation(
                     version = "9.0.2",
-                    operatingSystem = OperatingSystem.LINUX_X86_64,
-                    distributionType = DistributionType.VALKEY,
+                    operatingSystem = detectOperatingSystem(),
+                    distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
                     installationPath = installDir,
                     binaryPath = nonExistent
                 ),
@@ -146,14 +122,15 @@ class ValkeyProcessTest {
     @DisplayName("Constructor should reject a non-executable binary path")
     fun `constructor rejects non-executable binary`() {
         val installDir = Files.createTempDirectory("valkey-install")
-        val notExecutable = Files.createTempFile(installDir, "valkey", ".sh")
+        val suffix = if (isWindows()) ".bat" else ".sh"
+        val notExecutable = Files.createTempFile(installDir, "valkey", suffix)
         notExecutable.toFile().setExecutable(false)
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
                 valkeyInstallation = ValkeyInstallation(
                     version = "9.0.2",
-                    operatingSystem = OperatingSystem.LINUX_X86_64,
-                    distributionType = DistributionType.VALKEY,
+                    operatingSystem = detectOperatingSystem(),
+                    distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
                     installationPath = installDir,
                     binaryPath = notExecutable
                 ),
@@ -165,8 +142,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Property accessors should return the configured values")
     fun `property accessors return configured values`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val config = ValkeyConfBuilder().build()
         val process = ValkeyProcess(valkeyInstallation = installation, config = config)
 
@@ -182,8 +158,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Constructor should reject a non-existent working directory")
     fun `constructor rejects non-existent working directory`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val nonExistentDir = Path.of("/tmp/non-existent-dir-" + System.nanoTime())
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
@@ -197,8 +172,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Constructor should reject a working directory that is not a directory")
     fun `constructor rejects non-directory working directory`() {
-        val script = createScript("#!/bin/sh\nexit 0\n")
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.EXIT_IMMEDIATELY))
         val regularFile = Files.createTempFile("not-a-dir", ".txt")
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
@@ -212,13 +186,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("Process should capture stderr output from the running process")
     fun `stderr output is captured`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "echo \"Ready to accept connections\"\n" +
-                "echo \"Some error message\" >&2\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_READY_AND_STDERR_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
@@ -229,12 +197,7 @@ class ValkeyProcessTest {
     @Test
     @DisplayName("toString should include process PID after start")
     fun `toString includes pid after start`() {
-        val script = createScript(
-            "#!/bin/sh\n" +
-                "echo \"Ready to accept connections\"\n" +
-                "while true; do sleep 1; done\n"
-        )
-        val installation = createInstallation(script)
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_READY_AND_SLEEP))
         val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
@@ -248,17 +211,10 @@ class ValkeyProcessTest {
         val installDir = Files.createTempDirectory("valkey-install")
         return ValkeyInstallation(
             version = "9.0.2",
-            operatingSystem = OperatingSystem.LINUX_X86_64,
-            distributionType = DistributionType.VALKEY,
+            operatingSystem = detectOperatingSystem(),
+            distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
             installationPath = installDir,
             binaryPath = binary
         )
-    }
-
-    private fun createScript(contents: String): Path {
-        val script = Files.createTempFile("valkey-script", ".sh")
-        Files.writeString(script, contents)
-        script.toFile().setExecutable(true)
-        return script
     }
 }

@@ -11,11 +11,11 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,11 +24,15 @@ import java.nio.file.Paths
 @DisplayName("Tests for ValkeyPackageExtractor")
 class ValkeyPackageExtractorTest {
 
+    @TempDir
+    private lateinit var tempDir: Path
+
     @Test
     @DisplayName("ZIP archive should be extracted to the installation path")
     fun `extracts zip archive to installation path`() {
         val archive = createZipArchive(mapOf("bin/valkey-server" to "binary".toByteArray(), "dir/" to ByteArray(0)))
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("zip-install")
+        Files.createDirectories(installPath)
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
             installationPath = installPath,
@@ -38,15 +42,16 @@ class ValkeyPackageExtractorTest {
 
         val installation = extractor.installValkey()
 
-        assertTrue(Files.exists(installation.binaryPath))
-        assertTrue(Files.isDirectory(installPath.resolve("dir")))
+        assertThat(installation.binaryPath).exists()
+        assertThat(installPath.resolve("dir")).isDirectory()
     }
 
     @Test
     @DisplayName("TAR.GZ archive should be extracted to the installation path")
     fun `extracts tar gz archive to installation path`() {
         val archive = createTarArchive(ArchiveType.TAR_GZ, mapOf("bin/valkey-server" to "binary".toByteArray()))
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("targz-install")
+        Files.createDirectories(installPath)
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(archive, ArchiveType.TAR_GZ, Paths.get("bin/valkey-server")),
             installationPath = installPath,
@@ -56,14 +61,15 @@ class ValkeyPackageExtractorTest {
 
         val installation = extractor.installValkey()
 
-        assertTrue(Files.exists(installation.binaryPath))
+        assertThat(installation.binaryPath).exists()
     }
 
     @Test
     @DisplayName("TAR.BZ2 archive should be extracted to the installation path")
     fun `extracts tar bzip2 archive to installation path`() {
         val archive = createTarArchive(ArchiveType.TAR_BZ2, mapOf("bin/valkey-server" to "binary".toByteArray()))
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("tarbz2-install")
+        Files.createDirectories(installPath)
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(archive, ArchiveType.TAR_BZ2, Paths.get("bin/valkey-server")),
             installationPath = installPath,
@@ -73,17 +79,18 @@ class ValkeyPackageExtractorTest {
 
         val installation = extractor.installValkey()
 
-        assertTrue(Files.exists(installation.binaryPath))
+        assertThat(installation.binaryPath).exists()
     }
 
     @Test
     @DisplayName("Extraction should be skipped when the binary already exists")
     fun `skips extraction when binary already exists`() {
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("skip-install")
         val binaryPath = installPath.resolve("bin/valkey-server")
         Files.createDirectories(binaryPath.parent)
         Files.write(binaryPath, "ready".toByteArray())
-        val archive = Files.createTempFile("valkey", ".zip")
+        val archive = tempDir.resolve("dummy.zip")
+        Files.createFile(archive)
 
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
@@ -94,13 +101,14 @@ class ValkeyPackageExtractorTest {
 
         val installation = extractor.installValkey()
 
-        assertEquals(binaryPath, installation.binaryPath)
+        assertThat(installation.binaryPath).isEqualTo(binaryPath)
     }
 
     @Test
     @DisplayName("Zip slip attack should be detected and rejected")
     fun `throws when archive extraction attempts zip slip`() {
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("zipslip-install")
+        Files.createDirectories(installPath)
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(createZipArchive(mapOf("bin/valkey-server" to "ok".toByteArray())), ArchiveType.ZIP, Paths.get("bin/valkey-server")),
             installationPath = installPath,
@@ -117,7 +125,8 @@ class ValkeyPackageExtractorTest {
     @DisplayName("Missing binary after extraction should cause an error")
     fun `throws when binary is missing after extraction`() {
         val archive = createZipArchive(mapOf("bin/other" to "missing".toByteArray()))
-        val installPath = Files.createTempDirectory("valkey-install")
+        val installPath = tempDir.resolve("missing-install")
+        Files.createDirectories(installPath)
         val extractor = ValkeyPackageExtractor(
             valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
             installationPath = installPath,
@@ -137,7 +146,7 @@ class ValkeyPackageExtractorTest {
             OperatingSystem.LINUX_X86_64
         )
 
-        assertTrue(path.toString().contains("valkey-9.0.2-linux_x86_64"))
+        assertThat(path.toString()).contains("valkey-9.0.2-linux_x86_64")
     }
 
     private fun createPackage(archive: Path, archiveType: ArchiveType, binaryPath: Path): ValkeyPackage {
@@ -151,7 +160,7 @@ class ValkeyPackageExtractorTest {
     }
 
     private fun createZipArchive(entries: Map<String, ByteArray>): Path {
-        val file = Files.createTempFile("valkey", ".zip")
+        val file = tempDir.resolve("archive-${System.nanoTime()}.zip")
         ZipArchiveOutputStream(Files.newOutputStream(file)).use { output ->
             for ((name, content) in entries) {
                 val entry = ZipArchiveEntry(name)
@@ -170,7 +179,7 @@ class ValkeyPackageExtractorTest {
 
     private fun createTarArchive(type: ArchiveType, entries: Map<String, ByteArray>): Path {
         val suffix = if (type == ArchiveType.TAR_GZ) ".tar.gz" else ".tar.bz2"
-        val file = Files.createTempFile("valkey", suffix)
+        val file = tempDir.resolve("archive-${System.nanoTime()}$suffix")
         val baseStream = Files.newOutputStream(file)
         val compressed = if (type == ArchiveType.TAR_GZ) {
             GzipCompressorOutputStream(baseStream)

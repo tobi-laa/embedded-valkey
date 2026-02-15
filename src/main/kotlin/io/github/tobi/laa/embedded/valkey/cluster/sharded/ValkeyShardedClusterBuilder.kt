@@ -48,7 +48,7 @@ class ValkeyShardedClusterBuilder {
     }
 
     @Throws(IOException::class)
-    private fun buildReplicas(shard: Shard): List<ValkeyStandalone> {
+    internal fun buildReplicas(shard: Shard): List<ValkeyStandalone> {
         val replicas: MutableList<ValkeyStandalone> = ArrayList<ValkeyStandalone>()
         val replicaPorts: MutableSet<Int> =
             replicasPortsByMainNodePort[shard.mainNodePort] ?: throw IllegalStateException(

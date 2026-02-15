@@ -17,7 +17,6 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisCluster
 import redis.clients.jedis.args.ClusterResetType
 import java.io.IOException
-import java.lang.reflect.InvocationTargetException
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -166,13 +165,9 @@ class ValkeyShardedClusterUnitTest {
             initializationTimeout = Duration.ZERO
         )
 
-        val method = cluster.javaClass.getDeclaredMethod("setupReplicas", Int::class.java)
-        method.isAccessible = true
-        val exception = assertThrows(InvocationTargetException::class.java) {
-            method.invoke(cluster, 7000)
+        assertThrows(ValkeyShardedClusterSetupException::class.java) {
+            cluster.setupReplicas(7000)
         }
-
-        assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
     }
 
     @Test
@@ -187,13 +182,9 @@ class ValkeyShardedClusterUnitTest {
                 initializationTimeout = Duration.ZERO
             )
 
-            val method = cluster.javaClass.getDeclaredMethod("waitForClusterToBeInteractReady")
-            method.isAccessible = true
-            val exception = assertThrows(InvocationTargetException::class.java) {
-                method.invoke(cluster)
+            assertThrows(ValkeyShardedClusterSetupException::class.java) {
+                cluster.waitForClusterToBeInteractReady()
             }
-
-            assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
         }
     }
 
@@ -232,13 +223,10 @@ class ValkeyShardedClusterUnitTest {
                 initializationTimeout = Duration.ZERO
             )
 
-            val method = cluster.javaClass.getDeclaredMethod("waitForNodeToAppearInCluster", Jedis::class.java, String::class.java)
-            method.isAccessible = true
             val jedis = Jedis("127.0.0.1", 7000)
-            val exception = assertThrows(InvocationTargetException::class.java) {
-                method.invoke(cluster, jedis, "missing-node-id")
+            assertThrows(ValkeyShardedClusterSetupException::class.java) {
+                cluster.waitForNodeToAppearInCluster(jedis, "missing-node-id")
             }
-            assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
         }
     }
 
@@ -254,13 +242,10 @@ class ValkeyShardedClusterUnitTest {
                 initializationTimeout = Duration.ZERO
             )
 
-            val method = cluster.javaClass.getDeclaredMethod("waitForClusterToHaveStatusOK", Jedis::class.java)
-            method.isAccessible = true
             val jedis = Jedis("127.0.0.1", 7000)
-            val exception = assertThrows(InvocationTargetException::class.java) {
-                method.invoke(cluster, jedis)
+            assertThrows(ValkeyShardedClusterSetupException::class.java) {
+                cluster.waitForClusterToHaveStatusOK(jedis)
             }
-            assertThat(exception.targetException).isInstanceOf(ValkeyShardedClusterSetupException::class.java)
         }
     }
 
@@ -272,15 +257,13 @@ class ValkeyShardedClusterUnitTest {
             replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
             initializationTimeout = Duration.ofMillis(500)
         )
-        val method = cluster.javaClass.getDeclaredMethod("waitForPredicateToPass", Supplier::class.java)
-        method.isAccessible = true
         val failure = AtomicReference<Throwable?>()
 
         val thread = Thread {
             try {
-                method.invoke(cluster, Supplier { false })
-            } catch (e: InvocationTargetException) {
-                failure.set(e.targetException)
+                cluster.waitForPredicateToPass(Supplier { false })
+            } catch (e: ValkeyShardedClusterSetupException) {
+                failure.set(e)
             }
         }
         thread.start()

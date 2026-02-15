@@ -16,7 +16,7 @@ class ValkeyHighAvailabilityUnitTest {
     @DisplayName("Construction should require at least one sentinel")
     fun `requires at least one sentinel`() {
         val server = ValkeyStandalone(
-            createInstallationSupplier("#!/bin/sh\nsleep 1\n"),
+            createInstallationSupplier(),
             ValkeyConfBuilder().port(6380).build()
         )
 
@@ -27,7 +27,7 @@ class ValkeyHighAvailabilityUnitTest {
     @DisplayName("Construction should require at least one server")
     fun `requires at least one server`() {
         val sentinel = ValkeySentinel(
-            createInstallationSupplier("#!/bin/sh\nsleep 1\n"),
+            createInstallationSupplier(),
             ValkeyConfBuilder().port(26379).build()
         )
 
@@ -44,18 +44,18 @@ class ValkeyHighAvailabilityUnitTest {
     @DisplayName("Should return correct server ports, sentinel ports, and all nodes")
     fun `returns server and sentinel ports`() {
         val sentinel = ValkeySentinel(
-            createInstallationSupplier("#!/bin/sh\nsleep 1\n"),
+            createInstallationSupplier(),
             ValkeyConfBuilder().port(26379).build()
         )
         val server = ValkeyStandalone(
-            createInstallationSupplier("#!/bin/sh\nsleep 1\n"),
+            createInstallationSupplier(),
             ValkeyConfBuilder().port(6380).build()
         )
 
-        val cluster = ValkeyHighAvailability(listOf(sentinel), listOf(server))
+        val highAvailabilityCluster = ValkeyHighAvailability(listOf(sentinel), listOf(server))
 
-        assertThat(cluster.sentinelPorts()).containsExactly(26379)
-        assertThat(cluster.serverPorts()).containsExactly(6380)
-        assertThat(cluster.nodes).containsExactly(sentinel, server)
+        assertThat(highAvailabilityCluster.sentinelPorts()).containsExactly(26379)
+        assertThat(highAvailabilityCluster.serverPorts()).containsExactly(6380)
+        assertThat(highAvailabilityCluster.nodes).containsExactly(sentinel, server)
     }
 }
