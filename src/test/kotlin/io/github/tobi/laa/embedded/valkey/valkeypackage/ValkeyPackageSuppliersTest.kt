@@ -1,15 +1,18 @@
 package io.github.tobi.laa.embedded.valkey.valkeypackage
 
+import io.github.netmikey.logunit.api.LogCapturer
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.ThrowableAssert
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.*
 import org.junit.jupiter.params.provider.Arguments.arguments
 import org.junit.jupiter.params.support.ParameterDeclarations
+import org.slf4j.event.Level
 import java.util.stream.Stream
 
 @DisplayName("Tests for Valkey package suppliers provided by this library")
@@ -190,54 +193,160 @@ class ValkeyPackageSuppliersTest {
     @DisplayName("Tests for download-based package suppliers")
     inner class DownloadPackageSuppliers {
 
-        @Test
-        @DisplayName("Should accept a supported Linux operating system")
-        fun `download Linux package supplier accepts supported OS`() {
-            val supplier = downloadLinuxPackageFromValkeyIo(
-                operatingSystem = OperatingSystem.LINUX_X86_64,
-                sha256FileChecksum = null
-            )
+        private var supplierCreation: (() -> ValkeyPackageSupplier)? = null
+        private var createSupplier: ThrowableAssert.ThrowingCallable? = null
+        private var createdSupplier: ValkeyPackageSupplier? = null
 
-            assertThat(supplier).isInstanceOf(ValkeyPackageDownloader::class.java)
-            val downloader = supplier as ValkeyPackageDownloader
-            assertThat(downloader.operatingSystem).isEqualTo(OperatingSystem.LINUX_X86_64)
-            assertThat(downloader.sha256FileChecksum).isNull()
-            assertThat(downloader.verifyFileChecksum).isFalse()
+        @JvmField
+        @RegisterExtension
+        val logs: LogCapturer =
+            LogCapturer.create().captureForLogger("io.github.tobi.laa.embedded.valkey.valkeypackage", Level.WARN)
+
+        @BeforeEach
+        fun reset() {
+            supplierCreation = null
+            createSupplier = null
+            createdSupplier = null
+        }
+
+        @Test
+        @DisplayName("Should accept a supported Linux operating system with null checksum")
+        fun `download Linux package supplier accepts supported OS`() {
+            givenLinuxDownloadSupplier()
+            whenSupplierIsCreated()
+            thenNoErrorOccurs()
+            thenSupplierIsValid(OperatingSystem.LINUX_X86_64)
+        }
+
+        @Test
+        @DisplayName("Creating Linux download supplier with null checksum should log a warning")
+        fun `download Linux package supplier with null checksum logs warning`() {
+            givenLinuxDownloadSupplier()
+            whenSupplierIsCreated()
+            thenNoErrorOccurs()
+            thenChecksumWarningIsLogged(DEFAULT_VALKEY_LINUX_VERSION, OperatingSystem.LINUX_X86_64)
         }
 
         @Test
         @DisplayName("Should reject an unsupported Linux operating system")
         fun `download Linux package supplier rejects unsupported OS`() {
-            assertThatCode {
-                downloadLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
-            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+            givenLinuxDownloadSupplierWithUnsupportedOs()
+            whenSupplierIsCreated()
+            thenValidationErrorOccurs()
+        }
+
+        @Test
+        @DisplayName("Creating macOS download supplier with null checksum should log a warning")
+        fun `download macOS package supplier with null checksum logs warning`() {
+            givenMacOsDownloadSupplier()
+            whenSupplierIsCreated()
+            thenNoErrorOccurs()
+            thenChecksumWarningIsLogged(DEFAULT_VALKEY_MAC_OS_VERSION, OperatingSystem.MAC_OS_X86_64)
         }
 
         @Test
         @DisplayName("Should reject an unsupported macOS operating system")
         fun `download macOS package supplier rejects unsupported OS`() {
-            assertThatCode {
-                downloadMacOsPackageFromMacPorts(operatingSystem = OperatingSystem.LINUX_X86_64)
-            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+            givenMacOsDownloadSupplierWithUnsupportedOs()
+            whenSupplierIsCreated()
+            thenValidationErrorOccurs()
         }
 
         @Test
-        @DisplayName("Should require a build file path for macOS packages")
+        @DisplayName("Should require a build file path for macOS packages with unknown version")
         fun `download macOS package supplier requires build file path`() {
-            assertThatCode {
-                downloadMacOsPackageFromMacPorts(valkeyVersion = "0.0.0")
-            }.isExactlyInstanceOf(IllegalArgumentException::class.java)
+            givenMacOsDownloadSupplierWithUnknownVersion()
+            whenSupplierIsCreated()
+            thenValidationErrorOccurs()
         }
 
         @Test
-        @DisplayName("Should allow missing checksum for Windows packages")
+        @DisplayName("Creating Windows download supplier with null checksum should succeed and log a warning")
         fun `download windows package supplier allows missing checksum`() {
-            val supplier = downloadWinX64MemuraiPackageFromNuget(sha256FileChecksum = null)
+            givenWindowsDownloadSupplier()
+            whenSupplierIsCreated()
+            thenNoErrorOccurs()
+            thenWindowsSupplierIsValid()
+            thenWindowsChecksumWarningIsLogged()
+        }
 
-            assertThat(supplier).isInstanceOf(ValkeyPackageDownloader::class.java)
-            val downloader = supplier as ValkeyPackageDownloader
+        private fun givenLinuxDownloadSupplier() {
+            supplierCreation = {
+                downloadLinuxPackageFromValkeyIo(
+                    operatingSystem = OperatingSystem.LINUX_X86_64,
+                    sha256FileChecksum = null
+                )
+            }
+        }
+
+        private fun givenLinuxDownloadSupplierWithUnsupportedOs() {
+            supplierCreation = {
+                downloadLinuxPackageFromValkeyIo(operatingSystem = OperatingSystem.MAC_OS_X86_64)
+            }
+        }
+
+        private fun givenMacOsDownloadSupplier() {
+            supplierCreation = {
+                downloadMacOsPackageFromMacPorts(sha256FileChecksum = null)
+            }
+        }
+
+        private fun givenMacOsDownloadSupplierWithUnsupportedOs() {
+            supplierCreation = {
+                downloadMacOsPackageFromMacPorts(operatingSystem = OperatingSystem.LINUX_X86_64)
+            }
+        }
+
+        private fun givenMacOsDownloadSupplierWithUnknownVersion() {
+            supplierCreation = {
+                downloadMacOsPackageFromMacPorts(valkeyVersion = "0.0.0")
+            }
+        }
+
+        private fun givenWindowsDownloadSupplier() {
+            supplierCreation = {
+                downloadWinX64MemuraiPackageFromNuget(sha256FileChecksum = null)
+            }
+        }
+
+        private fun whenSupplierIsCreated() {
+            createSupplier = ThrowableAssert.ThrowingCallable {
+                createdSupplier = supplierCreation!!()
+            }
+        }
+
+        private fun thenNoErrorOccurs() {
+            assertThatCode(createSupplier!!).doesNotThrowAnyException()
+        }
+
+        private fun thenSupplierIsValid(expectedOperatingSystem: OperatingSystem) {
+            assertThat(createdSupplier).isInstanceOf(ValkeyPackageDownloader::class.java)
+            val downloader = createdSupplier as ValkeyPackageDownloader
+            assertThat(downloader.operatingSystem).isEqualTo(expectedOperatingSystem)
             assertThat(downloader.sha256FileChecksum).isNull()
             assertThat(downloader.verifyFileChecksum).isFalse()
+        }
+
+        private fun thenWindowsSupplierIsValid() {
+            assertThat(createdSupplier).isInstanceOf(ValkeyPackageDownloader::class.java)
+            val downloader = createdSupplier as ValkeyPackageDownloader
+            assertThat(downloader.sha256FileChecksum).isNull()
+            assertThat(downloader.verifyFileChecksum).isFalse()
+        }
+
+        private fun thenValidationErrorOccurs() {
+            assertThatCode(createSupplier!!).isExactlyInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        private fun thenChecksumWarningIsLogged(
+            expectedVersion: String,
+            expectedOperatingSystem: OperatingSystem
+        ) {
+            logs.assertContains("No SHA-256 checksum present for Valkey version $expectedVersion and operating system ${expectedOperatingSystem.displayName}. File integrity will not be verified!")
+        }
+
+        private fun thenWindowsChecksumWarningIsLogged() {
+            logs.assertContains("No SHA-256 checksum present for Memurai Developer version $DEFAULT_MEMURAI_VERSION. File integrity will not be verified!")
         }
     }
 
