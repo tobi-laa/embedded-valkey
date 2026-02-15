@@ -13,6 +13,15 @@ import org.junit.jupiter.params.provider.*
 import org.junit.jupiter.params.provider.Arguments.arguments
 import org.junit.jupiter.params.support.ParameterDeclarations
 import org.slf4j.event.Level
+import java.io.IOException
+import java.io.InputStream
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ServerSocket
+import java.net.Socket
+import java.nio.file.Files
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 
 @DisplayName("Tests for Valkey package suppliers provided by this library")
@@ -196,6 +205,9 @@ class ValkeyPackageSuppliersTest {
         private var supplierCreation: (() -> ValkeyPackageSupplier)? = null
         private var createSupplier: ThrowableAssert.ThrowingCallable? = null
         private var createdSupplier: ValkeyPackageSupplier? = null
+        private var retrievePackage: ThrowableAssert.ThrowingCallable? = null
+        private var retrievedPackage: ValkeyPackage? = null
+        private var connectProxy: ConnectCountingProxy? = null
 
         @JvmField
         @RegisterExtension
@@ -207,6 +219,14 @@ class ValkeyPackageSuppliersTest {
             supplierCreation = null
             createSupplier = null
             createdSupplier = null
+            retrievePackage = null
+            retrievedPackage = null
+            connectProxy = null
+        }
+
+        @AfterEach
+        fun cleanUpProxy() {
+            connectProxy?.close()
         }
 
         @Test
@@ -270,6 +290,16 @@ class ValkeyPackageSuppliersTest {
             thenWindowsChecksumWarningIsLogged()
         }
 
+        @Test
+        @DisplayName("Downloading a Linux package through a proxy should route the request through the proxy")
+        fun `download Linux package through proxy routes request through proxy`() {
+            givenLinuxDownloadSupplierWithProxy()
+            whenPackageIsRetrievedFromSupplier()
+            thenNoRetrievalErrorOccurs()
+            thenPackageIsDownloadedSuccessfully()
+            thenRequestWasRoutedThroughProxy()
+        }
+
         private fun givenLinuxDownloadSupplier() {
             supplierCreation = {
                 downloadLinuxPackageFromValkeyIo(
@@ -309,9 +339,24 @@ class ValkeyPackageSuppliersTest {
             }
         }
 
+        private fun givenLinuxDownloadSupplierWithProxy() {
+            connectProxy = ConnectCountingProxy().also { it.start() }
+            createdSupplier = downloadLinuxPackageFromValkeyIo(
+                proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress("localhost", connectProxy!!.port))
+            )
+            val downloader = createdSupplier as ValkeyPackageDownloader
+            Files.deleteIfExists(downloader.cacheFileLocation)
+        }
+
         private fun whenSupplierIsCreated() {
             createSupplier = ThrowableAssert.ThrowingCallable {
                 createdSupplier = supplierCreation!!()
+            }
+        }
+
+        private fun whenPackageIsRetrievedFromSupplier() {
+            retrievePackage = ThrowableAssert.ThrowingCallable {
+                retrievedPackage = createdSupplier!!.retrievePackage()
             }
         }
 
@@ -348,6 +393,21 @@ class ValkeyPackageSuppliersTest {
         private fun thenWindowsChecksumWarningIsLogged() {
             logs.assertContains("No SHA-256 checksum present for Memurai Developer version $DEFAULT_MEMURAI_VERSION. File integrity will not be verified!")
         }
+
+        private fun thenNoRetrievalErrorOccurs() {
+            assertThatCode(retrievePackage!!).doesNotThrowAnyException()
+        }
+
+        private fun thenPackageIsDownloadedSuccessfully() {
+            assertThat(retrievedPackage).isNotNull
+            assertThat(retrievedPackage!!.path).exists()
+            assertThat(retrievedPackage!!.version).isEqualTo(DEFAULT_VALKEY_LINUX_VERSION)
+            assertThat(retrievedPackage!!.operatingSystem).isEqualTo(OperatingSystem.LINUX_X86_64)
+        }
+
+        private fun thenRequestWasRoutedThroughProxy() {
+            assertThat(connectProxy!!.requestCount).isGreaterThan(0)
+        }
     }
 
     class LinuxPackagesOnClasspath : ArgumentsProvider {
@@ -372,5 +432,77 @@ class ValkeyPackageSuppliersTest {
                 arguments(OperatingSystem.MAC_OS_ARM64, "/valkey-packages/valkey-9.0.2_0.darwin_25.arm64.tbz2")
             )
         }
+    }
+}
+
+/**
+ * Minimal HTTP CONNECT proxy that tunnels HTTPS connections and counts requests.
+ * Used to verify that the proxy parameter is actually used during downloads.
+ */
+private class ConnectCountingProxy : AutoCloseable {
+    private val serverSocket = ServerSocket(0)
+    val port: Int = serverSocket.localPort
+    private val executor = Executors.newCachedThreadPool()
+    private val connectRequests = AtomicInteger(0)
+
+    fun start() {
+        executor.submit {
+            while (!serverSocket.isClosed) {
+                try {
+                    val client = serverSocket.accept()
+                    connectRequests.incrementAndGet()
+                    handleConnect(client)
+                } catch (_: IOException) {
+                }
+            }
+        }
+    }
+
+    val requestCount: Int get() = connectRequests.get()
+
+    private fun handleConnect(client: Socket) {
+        executor.submit {
+            client.use { clientSocket ->
+                val input = clientSocket.getInputStream()
+                val requestLine = readLine(input)
+                val parts = requestLine.split(" ")
+                if (parts.size < 2 || parts[0] != "CONNECT") return@submit
+                val hostPort = parts[1].split(":")
+                // Drain remaining headers
+                while (readLine(input).isNotEmpty()) {
+                }
+                Socket(hostPort[0], hostPort[1].toInt()).use { target ->
+                    clientSocket.getOutputStream().write("HTTP/1.1 200 Connection Established\r\n\r\n".toByteArray())
+                    clientSocket.getOutputStream().flush()
+                    val toTarget = executor.submit {
+                        try {
+                            input.transferTo(target.getOutputStream())
+                        } catch (_: IOException) {
+                        }
+                    }
+                    try {
+                        target.getInputStream().transferTo(clientSocket.getOutputStream())
+                    } catch (_: IOException) {
+                    }
+                    toTarget.cancel(true)
+                }
+            }
+        }
+    }
+
+    /** Reads a single line from the input stream without buffering ahead. */
+    private fun readLine(input: InputStream): String {
+        val sb = StringBuilder()
+        while (true) {
+            val b = input.read()
+            if (b == -1 || b == '\n'.code) break
+            if (b != '\r'.code) sb.append(b.toChar())
+        }
+        return sb.toString()
+    }
+
+    override fun close() {
+        serverSocket.close()
+        executor.shutdownNow()
     }
 }

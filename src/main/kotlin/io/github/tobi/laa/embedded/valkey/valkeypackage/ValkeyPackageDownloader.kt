@@ -192,7 +192,7 @@ internal fun resolveDefaultTempFilePath(
 )
 
 internal fun humanReadableByteCount(bytes: Long) = when {
-    bytes == Long.MIN_VALUE || bytes < 0 -> "N/A"
+    bytes < 0 -> "N/A"
     bytes < 1024L -> "$bytes B"
     bytes <= 0xfffccccccccccccL shr 40 -> "%.1f KiB".format(bytes.toDouble() / (0x1 shl 10))
     bytes <= 0xfffccccccccccccL shr 30 -> "%.1f MiB".format(bytes.toDouble() / (0x1 shl 20))
