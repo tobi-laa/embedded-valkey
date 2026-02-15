@@ -139,6 +139,9 @@ constructor(
 
     private fun makeBinaryExecutable() {
         val binaryPath = locateBinary()
+        if (!Files.exists(binaryPath)) {
+            throw IOException("${valkeyPackage.distributionType.displayName} binary at $binaryPath does not exist after extraction.")
+        }
         if (!binaryPath.toFile().setExecutable(true)) {
             throw IOException("Failed to make ${valkeyPackage.distributionType.displayName} binary at $binaryPath executable.")
         }
