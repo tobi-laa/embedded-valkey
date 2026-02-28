@@ -15,10 +15,7 @@ import org.junit.jupiter.params.support.ParameterDeclarations
 import org.slf4j.event.Level
 import java.io.IOException
 import java.io.InputStream
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ServerSocket
-import java.net.Socket
+import java.net.*
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -269,7 +266,7 @@ class ValkeyPackageSuppliersTest {
         fun `download macOS package supplier rejects unsupported OS`() {
             givenMacOsDownloadSupplierWithUnsupportedOs()
             whenSupplierIsCreated()
-            thenValidationErrorOccurs()
+            thenValidationErrorOccursSinceOperatingSystemIsNotMacOs()
         }
 
         @Test
@@ -323,7 +320,10 @@ class ValkeyPackageSuppliersTest {
 
         private fun givenMacOsDownloadSupplierWithUnsupportedOs() {
             supplierCreation = {
-                downloadMacOsPackageFromMacPorts(operatingSystem = OperatingSystem.LINUX_X86_64)
+                downloadMacOsPackageFromMacPorts(
+                    operatingSystem = OperatingSystem.LINUX_X86_64,
+                    buildFilePath = "valkey-${DEFAULT_VALKEY_MAC_OS_VERSION}_0.darwin_24.x86_64.tbz2"
+                )
             }
         }
 
@@ -407,6 +407,11 @@ class ValkeyPackageSuppliersTest {
 
         private fun thenRequestWasRoutedThroughProxy() {
             assertThat(connectProxy!!.requestCount).isGreaterThan(0)
+        }
+
+        private fun thenValidationErrorOccursSinceOperatingSystemIsNotMacOs() {
+            assertThatCode(createSupplier!!).isExactlyInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("Operating system must be either ${OperatingSystem.MAC_OS_X86_64} or ${OperatingSystem.MAC_OS_ARM64}")
         }
     }
 
