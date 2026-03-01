@@ -49,7 +49,7 @@ class ValkeyHighAvailability(
         return servers.map { it.port }.toList()
     }
 
-    private fun promoteConfiguredMasters() {
+    internal fun promoteConfiguredMasters() {
         for (server in servers) {
             val port = server.config.port() ?: continue
             val isReplica = server.config.directives(ValkeyDirective.KEYWORD_REPLICAOF).isNotEmpty()

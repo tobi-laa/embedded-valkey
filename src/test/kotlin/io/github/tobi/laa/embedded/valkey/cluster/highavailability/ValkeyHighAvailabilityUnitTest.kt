@@ -5,57 +5,125 @@ import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.ThrowableAssert
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 @DisplayName("Unit tests for ValkeyHighAvailability")
 class ValkeyHighAvailabilityUnitTest {
 
+    private var performAction: ThrowableAssert.ThrowingCallable? = null
+    private var builtHighAvailability: ValkeyHighAvailability? = null
+    private var resolvedBuilder: ValkeyHighAvailabilityBuilder? = null
+
+    @BeforeEach
+    fun reset() {
+        performAction = null
+        builtHighAvailability = null
+        resolvedBuilder = null
+    }
+
     @Test
     @DisplayName("Construction should require at least one sentinel")
     fun `requires at least one sentinel`() {
-        val server = ValkeyStandalone(
-            createInstallationSupplier(),
-            ValkeyConfBuilder().port(6380).build()
-        )
-
-        assertThrows(IllegalStateException::class.java) { ValkeyHighAvailability(emptyList(), listOf(server)) }
+        whenHighAvailabilityIsConstructedWith(sentinels = emptyList(), servers = listOf(serverWithPort(6380)))
+        thenIllegalStateExceptionIsThrownContaining("At least one sentinel")
     }
 
     @Test
     @DisplayName("Construction should require at least one server")
     fun `requires at least one server`() {
-        val sentinel = ValkeySentinel(
-            createInstallationSupplier(),
-            ValkeyConfBuilder().port(26379).build()
-        )
-
-        assertThrows(IllegalStateException::class.java) { ValkeyHighAvailability(listOf(sentinel), emptyList()) }
+        whenHighAvailabilityIsConstructedWith(sentinels = listOf(sentinelWithPort(26379)), servers = emptyList())
+        thenIllegalStateExceptionIsThrownContaining("At least one server")
     }
 
     @Test
-    @DisplayName("Companion builder should return a ValkeyHighAvailabilityBuilder")
+    @DisplayName("Companion builder should return a ValkeyHighAvailabilityBuilder instance")
     fun `companion builder returns builder`() {
-        assertThat(ValkeyHighAvailability.builder()).isInstanceOf(ValkeyHighAvailabilityBuilder::class.java)
+        whenBuilderFactoryMethodIsCalled()
+        thenNoErrorOccurs()
+        thenResolvedBuilderIsValkeyHighAvailabilityBuilder()
     }
 
     @Test
-    @DisplayName("Should return correct server ports, sentinel ports, and all nodes")
-    fun `returns server and sentinel ports`() {
-        val sentinel = ValkeySentinel(
-            createInstallationSupplier(),
-            ValkeyConfBuilder().port(26379).build()
-        )
-        val server = ValkeyStandalone(
-            createInstallationSupplier(),
-            ValkeyConfBuilder().port(6380).build()
-        )
+    @DisplayName("Should return the correct sentinel ports, server ports, and all nodes in sentinels-first order")
+    fun `returns server ports, sentinel ports, and all nodes`() {
+        givenBuiltHighAvailability(sentinelPort = 26379, serverPort = 6380)
+        thenSentinelPortsContainExactly(26379)
+        thenServerPortsContainExactly(6380)
+        thenNodesAreSentinelsFollowedByServers()
+    }
 
-        val highAvailabilityCluster = ValkeyHighAvailability(listOf(sentinel), listOf(server))
+    @Test
+    @DisplayName("promoteConfiguredMasters should skip servers with no port configured")
+    fun `promoteConfiguredMasters skips server with no port configured`() {
+        givenBuiltHighAvailabilityWithServerHavingNoPort()
+        whenPromoteConfiguredMastersIsCalled()
+        thenNoErrorOccurs()
+    }
 
-        assertThat(highAvailabilityCluster.sentinelPorts()).containsExactly(26379)
-        assertThat(highAvailabilityCluster.serverPorts()).containsExactly(6380)
-        assertThat(highAvailabilityCluster.nodes).containsExactly(sentinel, server)
+    private fun givenBuiltHighAvailability(sentinelPort: Int, serverPort: Int) {
+        builtHighAvailability = ValkeyHighAvailability(listOf(sentinelWithPort(sentinelPort)), listOf(serverWithPort(serverPort)))
+    }
+
+    private fun givenBuiltHighAvailabilityWithServerHavingNoPort() {
+        builtHighAvailability = ValkeyHighAvailability(
+            listOf(sentinelWithPort(26379)),
+            listOf(ValkeyStandalone(createInstallationSupplier(), ValkeyConfBuilder().build()))
+        )
+    }
+
+    private fun sentinelWithPort(port: Int): ValkeySentinel {
+        return ValkeySentinel(createInstallationSupplier(), ValkeyConfBuilder().port(port).build())
+    }
+
+    private fun serverWithPort(port: Int): ValkeyStandalone {
+        return ValkeyStandalone(createInstallationSupplier(), ValkeyConfBuilder().port(port).build())
+    }
+
+    private fun whenHighAvailabilityIsConstructedWith(sentinels: List<ValkeySentinel>, servers: List<ValkeyStandalone>) {
+        performAction = ThrowableAssert.ThrowingCallable {
+            builtHighAvailability = ValkeyHighAvailability(sentinels, servers)
+        }
+    }
+
+    private fun whenBuilderFactoryMethodIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            resolvedBuilder = ValkeyHighAvailability.builder()
+        }
+    }
+
+    private fun whenPromoteConfiguredMastersIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            builtHighAvailability!!.promoteConfiguredMasters()
+        }
+    }
+
+    private fun thenNoErrorOccurs() {
+        assertThatCode(performAction!!).doesNotThrowAnyException()
+    }
+
+    private fun thenIllegalStateExceptionIsThrownContaining(message: String) {
+        assertThatCode(performAction!!).isExactlyInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining(message)
+    }
+
+    private fun thenSentinelPortsContainExactly(vararg ports: Int) {
+        assertThat(builtHighAvailability!!.sentinelPorts()).containsExactly(*ports.toTypedArray())
+    }
+
+    private fun thenServerPortsContainExactly(vararg ports: Int) {
+        assertThat(builtHighAvailability!!.serverPorts()).containsExactly(*ports.toTypedArray())
+    }
+
+    private fun thenNodesAreSentinelsFollowedByServers() {
+        assertThat(builtHighAvailability!!.nodes)
+            .isEqualTo(builtHighAvailability!!.sentinels + builtHighAvailability!!.servers)
+    }
+
+    private fun thenResolvedBuilderIsValkeyHighAvailabilityBuilder() {
+        assertThat(resolvedBuilder).isInstanceOf(ValkeyHighAvailabilityBuilder::class.java)
     }
 }
