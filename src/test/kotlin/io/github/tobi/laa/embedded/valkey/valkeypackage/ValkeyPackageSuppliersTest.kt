@@ -261,8 +261,13 @@ class ValkeyPackageSuppliersTest {
             thenChecksumWarningIsLogged(DEFAULT_VALKEY_MAC_OS_VERSION, OperatingSystem.MAC_OS_X86_64)
         }
 
-        @Test
-        @DisplayName("Should reject an unsupported macOS operating system")
+        @ParameterizedTest(name = "Creating MacOS package supplier for {0} should not work")
+        @EnumSource(
+            value = OperatingSystem::class,
+            names = ["MAC_OS_X86_64", "MAC_OS_ARM64"],
+            mode = EnumSource.Mode.EXCLUDE
+        )
+        @DisplayName("Creating MacOS package supplier for unsupported OS should not work")
         fun `download macOS package supplier rejects unsupported OS`() {
             givenMacOsDownloadSupplierWithUnsupportedOs()
             whenSupplierIsCreated()
