@@ -181,7 +181,7 @@ fun installWinX64MemuraiPackageFromClasspath(
  * - macOS x86_64: Valkey version [DEFAULT_VALKEY_MAC_OS_VERSION] from [MacPorts](https://www.macports.org/)
  * - macOS arm64: Valkey version [DEFAULT_VALKEY_MAC_OS_VERSION] from [MacPorts](https://www.macports.org/)
  */
-val DEFAULT_SUPPLIERS: Map<OperatingSystem, ValkeyInstallationSupplier> = mapOf(
+internal val DEFAULT_SUPPLIERS: Map<OperatingSystem, ValkeyInstallationSupplier> = mapOf(
     LINUX_X86_64 to downloadAndInstallLinuxPackageFromValkeyIo(operatingSystem = LINUX_X86_64),
     LINUX_ARM64 to downloadAndInstallLinuxPackageFromValkeyIo(operatingSystem = LINUX_ARM64),
     WINDOWS_X86_64 to downloadAndInstallMemuraiDeveloperForX64FromNuget(),
