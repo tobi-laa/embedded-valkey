@@ -3,150 +3,264 @@ package io.github.tobi.laa.embedded.valkey.installation
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.valkeypackage.ArchiveType
 import io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackage
+import org.mockito.MockedConstruction
+import org.mockito.Mockito
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
-import org.apache.commons.compress.archivers.ArchiveEntry
-import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
+import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.ThrowableAssert
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.TempDir
+import java.io.File
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
 
 @DisplayName("Tests for ValkeyPackageExtractor")
 class ValkeyPackageExtractorTest {
 
+    companion object {
+        private const val BINARY_RELATIVE_PATH = "bin/valkey-server"
+    }
+
     @TempDir
     private lateinit var tempDir: Path
 
+    private var givenExtractor: ValkeyPackageExtractor? = null
+    private var givenArchiveStream: ArchiveInputStream<ArchiveEntry>? = null
+    private var givenBinaryPath: Path? = null
+    private var givenMockedFileConstruction: MockedConstruction<File>? = null
+    private var performAction: ThrowableAssert.ThrowingCallable? = null
+    private var installation: ValkeyInstallation? = null
+    private var resolvedPath: Path? = null
+
+    @BeforeEach
+    fun reset() {
+        givenExtractor = null
+        givenArchiveStream = null
+        givenBinaryPath = null
+        givenMockedFileConstruction = null
+        performAction = null
+        installation = null
+        resolvedPath = null
+    }
+
+    @AfterEach
+    fun cleanUpMocks() {
+        givenMockedFileConstruction?.close()
+    }
+
     @Test
-    @DisplayName("ZIP archive should be extracted to the installation path")
+    @DisplayName("ZIP archive should be extracted to the installation path, creating both file entries and directory entries")
     fun `extracts zip archive to installation path`() {
-        val archive = createZipArchive(mapOf("bin/valkey-server" to "binary".toByteArray(), "dir/" to ByteArray(0)))
-        val installPath = tempDir.resolve("zip-install")
-        Files.createDirectories(installPath)
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
-            installationPath = installPath,
-            alwaysExtract = true,
-            ensureBinaryIsExecutable = false
-        )
-
-        val installation = extractor.installValkey()
-
-        assertThat(installation.binaryPath).exists()
-        assertThat(installPath.resolve("dir")).isDirectory()
+        givenZipExtractor(mapOf(BINARY_RELATIVE_PATH to "binary".toByteArray(), "dir/" to ByteArray(0)))
+        whenInstallValkeyIsCalled()
+        thenNoErrorOccurs()
+        thenBinaryExists()
+        thenDirectoryExists("dir")
     }
 
     @Test
     @DisplayName("TAR.GZ archive should be extracted to the installation path")
     fun `extracts tar gz archive to installation path`() {
-        val archive = createTarArchive(ArchiveType.TAR_GZ, mapOf("bin/valkey-server" to "binary".toByteArray()))
-        val installPath = tempDir.resolve("targz-install")
-        Files.createDirectories(installPath)
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(archive, ArchiveType.TAR_GZ, Paths.get("bin/valkey-server")),
-            installationPath = installPath,
-            alwaysExtract = true,
-            ensureBinaryIsExecutable = false
-        )
-
-        val installation = extractor.installValkey()
-
-        assertThat(installation.binaryPath).exists()
+        givenTarGzExtractor(mapOf(BINARY_RELATIVE_PATH to "binary".toByteArray()))
+        whenInstallValkeyIsCalled()
+        thenNoErrorOccurs()
+        thenBinaryExists()
     }
 
     @Test
     @DisplayName("TAR.BZ2 archive should be extracted to the installation path")
     fun `extracts tar bzip2 archive to installation path`() {
-        val archive = createTarArchive(ArchiveType.TAR_BZ2, mapOf("bin/valkey-server" to "binary".toByteArray()))
-        val installPath = tempDir.resolve("tarbz2-install")
-        Files.createDirectories(installPath)
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(archive, ArchiveType.TAR_BZ2, Paths.get("bin/valkey-server")),
-            installationPath = installPath,
-            alwaysExtract = true,
-            ensureBinaryIsExecutable = false
-        )
-
-        val installation = extractor.installValkey()
-
-        assertThat(installation.binaryPath).exists()
+        givenTarBz2Extractor(mapOf(BINARY_RELATIVE_PATH to "binary".toByteArray()))
+        whenInstallValkeyIsCalled()
+        thenNoErrorOccurs()
+        thenBinaryExists()
     }
 
     @Test
-    @DisplayName("Extraction should be skipped when the binary already exists")
+    @DisplayName("Extraction should be skipped when the binary already exists at the installation path")
     fun `skips extraction when binary already exists`() {
-        val installPath = tempDir.resolve("skip-install")
-        val binaryPath = installPath.resolve("bin/valkey-server")
+        givenExtractorWithPreexistingBinary()
+        whenInstallValkeyIsCalled()
+        thenNoErrorOccurs()
+        thenBinaryIsPreExistingBinary()
+    }
+
+    @Test
+    @DisplayName("An IOException with a zip slip message should be thrown when an archive entry would be extracted outside the installation path")
+    fun `throws when archive extraction attempts zip slip`() {
+        givenExtractorWithZipSlipArchiveStream()
+        whenExtractArchiveIsCalled()
+        thenIOExceptionIsThrownContaining("Zip (or archive) slip detected")
+    }
+
+    @Test
+    @DisplayName("An IOException with a 'does not exist' message should be thrown when the binary is missing after extraction")
+    fun `throws when binary is missing after extraction`() {
+        givenExtractorWithMissingBinary()
+        whenInstallValkeyIsCalled()
+        thenIOExceptionIsThrownContaining("does not exist after extraction")
+    }
+
+    @Test
+    @DisplayName("An IOException with a 'Failed to make executable' message should be thrown when the binary could not be made executable")
+    fun `throws when binary could not be made executable`() {
+        givenExtractorWithNonExecutableBinary()
+        whenInstallValkeyIsCalled()
+        thenIOExceptionIsThrownContaining("Failed to make")
+    }
+
+    @Test
+    @DisplayName("Default temp installation path should follow the naming convention '<distribution>-<version>-<os>'")
+    fun `resolves default temp installation path`() {
+        whenDefaultInstallationPathIsResolved()
+        thenResolvedPathContains("valkey-9.0.2-linux_x86_64")
+    }
+
+    private fun givenZipExtractor(entries: Map<String, ByteArray>) {
+        val archive = createZipArchive(entries)
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get(BINARY_RELATIVE_PATH)),
+            installationPath = createInstallDir("zip-install"),
+            alwaysExtract = true,
+            ensureBinaryIsExecutable = false
+        )
+    }
+
+    private fun givenTarGzExtractor(entries: Map<String, ByteArray>) {
+        val archive = createTarArchive(ArchiveType.TAR_GZ, entries)
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(archive, ArchiveType.TAR_GZ, Paths.get(BINARY_RELATIVE_PATH)),
+            installationPath = createInstallDir("targz-install"),
+            alwaysExtract = true,
+            ensureBinaryIsExecutable = false
+        )
+    }
+
+    private fun givenTarBz2Extractor(entries: Map<String, ByteArray>) {
+        val archive = createTarArchive(ArchiveType.TAR_BZ2, entries)
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(archive, ArchiveType.TAR_BZ2, Paths.get(BINARY_RELATIVE_PATH)),
+            installationPath = createInstallDir("tarbz2-install"),
+            alwaysExtract = true,
+            ensureBinaryIsExecutable = false
+        )
+    }
+
+    private fun givenExtractorWithPreexistingBinary() {
+        val installPath = createInstallDir("skip-install")
+        val binaryPath = installPath.resolve(BINARY_RELATIVE_PATH)
         Files.createDirectories(binaryPath.parent)
         Files.write(binaryPath, "ready".toByteArray())
-        val archive = tempDir.resolve("dummy.zip")
-        Files.createFile(archive)
-
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
+        givenBinaryPath = binaryPath
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(
+                Files.createFile(tempDir.resolve("dummy.zip")),
+                ArchiveType.ZIP,
+                Paths.get(BINARY_RELATIVE_PATH)
+            ),
             installationPath = installPath,
             alwaysExtract = false,
             ensureBinaryIsExecutable = false
         )
-
-        val installation = extractor.installValkey()
-
-        assertThat(installation.binaryPath).isEqualTo(binaryPath)
     }
 
-    @Test
-    @DisplayName("Zip slip attack should be detected and rejected")
-    fun `throws when archive extraction attempts zip slip`() {
-        val installPath = tempDir.resolve("zipslip-install")
-        Files.createDirectories(installPath)
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(createZipArchive(mapOf("bin/valkey-server" to "ok".toByteArray())), ArchiveType.ZIP, Paths.get("bin/valkey-server")),
-            installationPath = installPath,
+    private fun givenExtractorWithZipSlipArchiveStream() {
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(
+                Files.createTempFile(tempDir, "dummy", ".zip"),
+                ArchiveType.ZIP,
+                Paths.get(BINARY_RELATIVE_PATH)
+            ),
+            installationPath = createInstallDir("zipslip-install"),
             alwaysExtract = true,
             ensureBinaryIsExecutable = false
         )
-
-        val entry = ZipArchiveEntry("/etc/passwd")
-        val stream = SingleEntryArchiveInputStream(entry)
-        assertThrows(IOException::class.java) { extractor.extractArchive(stream, installPath) }
+        givenArchiveStream = SingleEntryArchiveInputStream(ZipArchiveEntry("/etc/passwd"))
     }
 
-    @Test
-    @DisplayName("Missing binary after extraction should cause an error")
-    fun `throws when binary is missing after extraction`() {
+    private fun givenExtractorWithMissingBinary() {
         val archive = createZipArchive(mapOf("bin/other" to "missing".toByteArray()))
-        val installPath = tempDir.resolve("missing-install")
-        Files.createDirectories(installPath)
-        val extractor = ValkeyPackageExtractor(
-            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get("bin/valkey-server")),
-            installationPath = installPath,
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get(BINARY_RELATIVE_PATH)),
+            installationPath = createInstallDir("missing-install"),
             alwaysExtract = true,
             ensureBinaryIsExecutable = true
         )
-
-        assertThrows(IOException::class.java) { extractor.installValkey() }
     }
 
-    @Test
-    @DisplayName("Default temp installation path should follow the expected naming convention")
-    fun `resolves default temp installation path`() {
-        val path = resolveDefaultTempInstallationPath(
-            DistributionType.VALKEY,
-            "9.0.2",
-            OperatingSystem.LINUX_X86_64
+    private fun givenExtractorWithNonExecutableBinary() {
+        givenMockedFileConstruction = Mockito.mockConstruction(File::class.java) { mock, _ ->
+            Mockito.`when`(mock.setExecutable(true)).thenReturn(false)
+        }
+        val archive = createZipArchive(mapOf(BINARY_RELATIVE_PATH to "binary".toByteArray()))
+        givenExtractor = ValkeyPackageExtractor(
+            valkeyPackage = createPackage(archive, ArchiveType.ZIP, Paths.get(BINARY_RELATIVE_PATH)),
+            installationPath = createInstallDir("non-exec-install"),
+            alwaysExtract = true,
+            ensureBinaryIsExecutable = true
         )
+    }
 
-        assertThat(path.toString()).contains("valkey-9.0.2-linux_x86_64")
+    private fun whenInstallValkeyIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            installation = givenExtractor!!.installValkey()
+        }
+    }
+
+    private fun whenExtractArchiveIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            givenExtractor!!.extractArchive(givenArchiveStream!!, givenExtractor!!.installationPath)
+        }
+    }
+
+    private fun whenDefaultInstallationPathIsResolved() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            resolvedPath = resolveDefaultTempInstallationPath(
+                DistributionType.VALKEY,
+                "9.0.2",
+                OperatingSystem.LINUX_X86_64
+            )
+        }
+    }
+
+    private fun thenNoErrorOccurs() {
+        assertThatCode(performAction!!).doesNotThrowAnyException()
+    }
+
+    private fun thenBinaryExists() {
+        assertThat(installation!!.binaryPath).exists()
+    }
+
+    private fun thenDirectoryExists(name: String) {
+        assertThat(givenExtractor!!.installationPath.resolve(name)).isDirectory()
+    }
+
+    private fun thenBinaryIsPreExistingBinary() {
+        assertThat(installation!!.binaryPath).isEqualTo(givenBinaryPath)
+    }
+
+    private fun thenIOExceptionIsThrownContaining(message: String) {
+        assertThatCode(performAction!!).isExactlyInstanceOf(IOException::class.java)
+            .hasMessageContaining(message)
+    }
+
+    private fun thenResolvedPathContains(expected: String) {
+        assertThatCode(performAction!!).doesNotThrowAnyException()
+        assertThat(resolvedPath!!.toString()).contains(expected)
+    }
+
+    private fun createInstallDir(name: String): Path {
+        val path = tempDir.resolve(name)
+        Files.createDirectories(path)
+        return path
     }
 
     private fun createPackage(archive: Path, archiveType: ArchiveType, binaryPath: Path): ValkeyPackage {
