@@ -10,7 +10,7 @@ import java.nio.file.Paths
 
 private val log = getLogger("io.github.tobi.laa.embedded.valkey.valkeypackage")
 
-const val DEFAULT_VALKEY_LINUX_VERSION = "9.0.2"
+const val DEFAULT_VALKEY_LINUX_VERSION = "9.0.3"
 
 // SHA-256 file checksums can be retrieved from https://valkey.io/download/ per release
 internal val VALKEY_IO_FILE_CHECKSUMS =
@@ -18,11 +18,11 @@ internal val VALKEY_IO_FILE_CHECKSUMS =
         Pair(
             DEFAULT_VALKEY_LINUX_VERSION,
             LINUX_X86_64,
-        ) to "94340bbfb2100fab98cb3e59b2422534305b65080e59dceb7a5bae36dc9844bd",
+        ) to "1d41842804f301d20db9dbec37eac71b27b5090b483b2440265fda62caa3702d",
         Pair(
             DEFAULT_VALKEY_LINUX_VERSION,
             LINUX_ARM64,
-        ) to "1d646bf7e28da08f889a1b132f4c210f2ed5382bb3e1559b0bed079add90050f"
+        ) to "ef7cf233fc6b11e8c9d590fd000009e530169f663444d897332fce9374f8eccb"
     )
 
 /**
@@ -73,7 +73,7 @@ fun downloadLinuxPackageFromValkeyIo(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Valkey download page](https://valkey.io/download/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.2-linux-x86_64.tar.gz"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.3-linux-x86_64.tar.gz"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [LINUX_X86_64]. *Must* be a Linux operating system.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].
  * @return A [ValkeyPackageSupplier] that loads the specified Valkey package for Linux from the classpath.
@@ -101,7 +101,7 @@ fun loadValkeyIoLinuxPackageFromClasspath(
     )
 }
 
-const val DEFAULT_VALKEY_MAC_OS_VERSION = "9.0.2"
+const val DEFAULT_VALKEY_MAC_OS_VERSION = "9.0.3"
 
 // see https://packages.macports.com/valkey/ for possible build file paths
 // The darwin version (e.g. `darwin_24`) can change between Valkey versions.
@@ -123,11 +123,11 @@ internal val DEFAULT_MACPORTS_CHECKSUMS =
         DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(
             DEFAULT_VALKEY_MAC_OS_VERSION,
             MAC_OS_X86_64
-        )]!! to "a1a8ff574884eeee3b4120b2f87fad739ca3566706a29aa916782a6c8d0db551",
+        )]!! to "179d67fea0110a37e4b95a40fa0db932edf712ef4cd46cb17af830d098822e1a",
         DEFAULT_MACPORTS_BUILD_FILE_PATHS[Pair(
             DEFAULT_VALKEY_MAC_OS_VERSION,
             MAC_OS_ARM64
-        )]!! to "78401db09488e5977f4c4dc272dc80b55d1c97a5c6ccc4f00ba09d79609e593e"
+        )]!! to "541af5ef7d198391e960b6929b1d85a8adbadb246c88167cacbd6f8e29561fe1"
     )
 
 /**
@@ -137,7 +137,7 @@ internal val DEFAULT_MACPORTS_CHECKSUMS =
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [MAC_OS_X86_64]. *Must* be a macOS operating system.
  * @param valkeyVersion The Valkey version to download. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
  * @param buildFilePath The build file path within the MacPorts package repository. This *must* be specified if a (non-default) Valkey version should be downloaded.
- * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-9.0.2_0.darwin_24.x86_64.tbz2`.
+ * A build file path can be looked up in the [MacPorts package repository](https://packages.macports.org/valkey/) and has a format like `valkey-9.0.3_0.darwin_24.x86_64.tbz2`.
  * @param sha256FileChecksum The expected SHA-256 checksum of the downloaded package for integrity verification. If `null`, no integrity verification will be performed.
  * If a checksum is available for the specified version and operating system, it will be used by default.
  * As MacPorts does not publish SHA-256 checksums, you will have to compute them manually for other versions and operating systems.
@@ -177,7 +177,7 @@ fun downloadMacOsPackageFromMacPorts(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [MacPorts package repository](https://packages.macports.org/valkey/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.2_0.darwin_24.x86_64.tbz2"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.3_0.darwin_24.x86_64.tbz2"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [MAC_OS_X86_64]. *Must* be a macOS operating system.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_MAC_OS_VERSION].
  * @return A [ValkeyPackageSupplier] that downloads the specified Valkey package for macOS.

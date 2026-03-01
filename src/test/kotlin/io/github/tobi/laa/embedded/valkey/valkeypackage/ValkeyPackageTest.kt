@@ -16,7 +16,13 @@ class ValkeyPackageTest {
         val path = Files.createTempFile("valkey", ".zip")
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyPackage("", OperatingSystem.LINUX_X86_64, path = path, binaryPathWithinPackage = Paths.get("bin/valkey"), archiveType = ArchiveType.ZIP)
+            ValkeyPackage(
+                "",
+                OperatingSystem.LINUX_X86_64,
+                path = path,
+                binaryPathWithinPackage = Paths.get("bin/valkey"),
+                archiveType = ArchiveType.ZIP
+            )
         }
     }
 
@@ -27,7 +33,13 @@ class ValkeyPackageTest {
         Files.deleteIfExists(missing)
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyPackage("9.0.2", OperatingSystem.LINUX_X86_64, path = missing, binaryPathWithinPackage = Paths.get("bin/valkey"), archiveType = ArchiveType.ZIP)
+            ValkeyPackage(
+                "9.0.3",
+                OperatingSystem.LINUX_X86_64,
+                path = missing,
+                binaryPathWithinPackage = Paths.get("bin/valkey"),
+                archiveType = ArchiveType.ZIP
+            )
         }
     }
 
@@ -38,7 +50,13 @@ class ValkeyPackageTest {
         val absoluteBinary = path.toAbsolutePath()
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyPackage("9.0.2", OperatingSystem.LINUX_X86_64, path = path, binaryPathWithinPackage = absoluteBinary, archiveType = ArchiveType.ZIP)
+            ValkeyPackage(
+                "9.0.3",
+                OperatingSystem.LINUX_X86_64,
+                path = path,
+                binaryPathWithinPackage = absoluteBinary,
+                archiveType = ArchiveType.ZIP
+            )
         }
     }
 }

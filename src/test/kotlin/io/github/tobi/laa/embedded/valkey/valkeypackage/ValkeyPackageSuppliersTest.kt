@@ -144,7 +144,7 @@ class ValkeyPackageSuppliersTest {
         private fun whenLinuxPackageFromClasspathSupplierIsCreated() {
             retrievePackage = ThrowableAssert.ThrowingCallable {
                 loadValkeyIoLinuxPackageFromClasspath(
-                    classpathResource = "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz",
+                    classpathResource = "/valkey-packages/valkey-9.0.3-jammy-x86_64.tar.gz",
                     operatingSystem = givenOperatingSystem!!
                 )
             }
@@ -153,7 +153,7 @@ class ValkeyPackageSuppliersTest {
         private fun whenMacOsPackageFromClasspathSupplierIsCreated() {
             retrievePackage = ThrowableAssert.ThrowingCallable {
                 loadMacPortsPackageFromClasspath(
-                    classpathResource = "/valkey-packages/valkey-9.0.2_0.darwin_24.x86_64.tbz2",
+                    classpathResource = "/valkey-packages/valkey-9.0.3_0.darwin_24.x86_64.tbz2",
                     operatingSystem = givenOperatingSystem!!
                 )
             }
@@ -426,8 +426,8 @@ class ValkeyPackageSuppliersTest {
             context: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
-                arguments(OperatingSystem.LINUX_X86_64, "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz"),
-                arguments(OperatingSystem.LINUX_ARM64, "/valkey-packages/valkey-9.0.2-jammy-arm64.tar.gz")
+                arguments(OperatingSystem.LINUX_X86_64, "/valkey-packages/valkey-9.0.3-jammy-x86_64.tar.gz"),
+                arguments(OperatingSystem.LINUX_ARM64, "/valkey-packages/valkey-9.0.3-jammy-arm64.tar.gz")
             )
         }
     }
@@ -438,8 +438,8 @@ class ValkeyPackageSuppliersTest {
             context: ExtensionContext
         ): Stream<Arguments> {
             return Stream.of(
-                arguments(OperatingSystem.MAC_OS_X86_64, "/valkey-packages/valkey-9.0.2_0.darwin_24.x86_64.tbz2"),
-                arguments(OperatingSystem.MAC_OS_ARM64, "/valkey-packages/valkey-9.0.2_0.darwin_25.arm64.tbz2")
+                arguments(OperatingSystem.MAC_OS_X86_64, "/valkey-packages/valkey-9.0.3_0.darwin_24.x86_64.tbz2"),
+                arguments(OperatingSystem.MAC_OS_ARM64, "/valkey-packages/valkey-9.0.3_0.darwin_25.arm64.tbz2")
             )
         }
     }

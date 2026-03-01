@@ -42,7 +42,7 @@ fun downloadAndInstallLinuxPackageFromValkeyIo(
  *
  * ⚠️ Make sure that the classpath resource you provide is the one found on the [Valkey download page](https://valkey.io/download/) for the specified version and operating system.
  *
- * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.2-linux-x86_64.tar.gz"`.
+ * @param classpathResource The classpath resource path to the Valkey package, e.g. `"/valkey/valkey-9.0.3-linux-x86_64.tar.gz"`.
  * @param operatingSystem The operating system for which the Valkey package is built. Defaults to [LINUX_X86_64]. *Must* be a Linux operating system.
  * @param installationPath The path where the Valkey package should be installed. If `null`, a temporary directory will be used.
  * @param valkeyVersion The Valkey version to load. Defaults to [DEFAULT_VALKEY_LINUX_VERSION].

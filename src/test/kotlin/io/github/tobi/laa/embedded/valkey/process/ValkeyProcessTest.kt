@@ -4,9 +4,7 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.installation.DistributionType
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
-import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
-import io.github.tobi.laa.embedded.valkey.testing.createExecutableScript
-import io.github.tobi.laa.embedded.valkey.testing.isWindows
+import io.github.tobi.laa.embedded.valkey.testing.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -36,7 +34,8 @@ class ValkeyProcessTest {
     @DisplayName("Sentinel process should start and match sentinel-specific readiness output")
     fun `starts sentinel and matches sentinel readiness`() {
         val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_SENTINEL_READY_AND_SLEEP))
-        val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build(), sentinel = true)
+        val process =
+            ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build(), sentinel = true)
 
         process.start(awaitServerReady = true, maxWaitTimeSeconds = 2)
         process.stop(forcibly = true, maxWaitTimeSeconds = 1)
@@ -109,7 +108,7 @@ class ValkeyProcessTest {
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
                 valkeyInstallation = ValkeyInstallation(
-                    version = "9.0.2",
+                    version = "9.0.3",
                     operatingSystem = detectOperatingSystem(),
                     distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
                     installationPath = installDir,
@@ -131,7 +130,7 @@ class ValkeyProcessTest {
         assertThrows(IllegalArgumentException::class.java) {
             ValkeyProcess(
                 valkeyInstallation = ValkeyInstallation(
-                    version = "9.0.2",
+                    version = "9.0.3",
                     operatingSystem = detectOperatingSystem(),
                     distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
                     installationPath = installDir,
@@ -213,7 +212,7 @@ class ValkeyProcessTest {
     private fun createInstallation(binary: Path): ValkeyInstallation {
         val installDir = Files.createTempDirectory("valkey-install")
         return ValkeyInstallation(
-            version = "9.0.2",
+            version = "9.0.3",
             operatingSystem = detectOperatingSystem(),
             distributionType = if (isWindows()) DistributionType.MEMURAI else DistributionType.VALKEY,
             installationPath = installDir,

@@ -5,9 +5,7 @@ import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.ThrowableAssert
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -149,10 +147,10 @@ class ValkeyPackageDownloaderTest {
     @Test
     @DisplayName("Default cache path should follow the expected naming layout")
     fun `default cache path builder uses expected layout`() {
-        val path = resolveDefaultTempFilePath("9.0.2", OperatingSystem.LINUX_X86_64, ArchiveType.ZIP)
+        val path = resolveDefaultTempFilePath("9.0.3", OperatingSystem.LINUX_X86_64, ArchiveType.ZIP)
         val pathAsString = path.toString()
 
-        assertThat(pathAsString).contains("valkey-9.0.2-linux_x86_64")
+        assertThat(pathAsString).contains("valkey-9.0.3-linux_x86_64")
         assertThat(pathAsString).endsWith(".zip")
     }
 
@@ -183,7 +181,7 @@ class ValkeyPackageDownloaderTest {
 
     private fun givenDownloaderWithCachingAndChecksumVerification() {
         givenDownloader = ValkeyPackageDownloader(
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = BINARY_PATH,
             archiveType = ArchiveType.ZIP,
@@ -198,7 +196,7 @@ class ValkeyPackageDownloaderTest {
 
     private fun givenDownloaderUsingCacheWithNonExistentUri() {
         givenDownloader = ValkeyPackageDownloader(
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = BINARY_PATH,
             archiveType = ArchiveType.ZIP,
@@ -211,7 +209,7 @@ class ValkeyPackageDownloaderTest {
 
     private fun givenDownloaderWithoutCaching() {
         givenDownloader = ValkeyPackageDownloader(
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = BINARY_PATH,
             archiveType = ArchiveType.ZIP,
@@ -223,7 +221,7 @@ class ValkeyPackageDownloaderTest {
 
     private fun givenDownloaderWithoutCachingButWithChecksumVerification() {
         givenDownloader = ValkeyPackageDownloader(
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = BINARY_PATH,
             archiveType = ArchiveType.ZIP,
@@ -237,7 +235,7 @@ class ValkeyPackageDownloaderTest {
 
     private fun givenDownloaderWithWrongChecksum() {
         givenDownloader = ValkeyPackageDownloader(
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = BINARY_PATH,
             archiveType = ArchiveType.ZIP,
@@ -262,7 +260,7 @@ class ValkeyPackageDownloaderTest {
     private fun givenDownloaderConstructionWithNullChecksumAndVerificationEnabled() {
         retrievePackage = ThrowableAssert.ThrowingCallable {
             ValkeyPackageDownloader(
-                valkeyVersion = "9.0.2",
+                valkeyVersion = "9.0.3",
                 operatingSystem = OperatingSystem.LINUX_X86_64,
                 binaryPathWithinPackage = BINARY_PATH,
                 archiveType = ArchiveType.ZIP,
@@ -276,7 +274,7 @@ class ValkeyPackageDownloaderTest {
     private fun givenDownloaderConstructionWithBlankChecksumAndVerificationEnabled() {
         retrievePackage = ThrowableAssert.ThrowingCallable {
             ValkeyPackageDownloader(
-                valkeyVersion = "9.0.2",
+                valkeyVersion = "9.0.3",
                 operatingSystem = OperatingSystem.LINUX_X86_64,
                 binaryPathWithinPackage = BINARY_PATH,
                 archiveType = ArchiveType.ZIP,

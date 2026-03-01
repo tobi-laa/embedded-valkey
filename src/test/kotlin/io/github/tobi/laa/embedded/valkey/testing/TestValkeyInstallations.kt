@@ -1,8 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.testing
 
-import io.github.tobi.laa.embedded.valkey.installation.DistributionType
-import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
-import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
+import io.github.tobi.laa.embedded.valkey.installation.*
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import java.nio.file.Files
@@ -34,7 +32,7 @@ fun createValkeyInstallation(
 ): ValkeyInstallation {
     val installDir = Files.createTempDirectory("valkey-install")
     return ValkeyInstallation(
-        version = "9.0.2",
+        version = "9.0.3",
         operatingSystem = operatingSystem,
         distributionType = if (operatingSystem == OperatingSystem.WINDOWS_X86_64) DistributionType.MEMURAI else DistributionType.VALKEY,
         installationPath = installDir,

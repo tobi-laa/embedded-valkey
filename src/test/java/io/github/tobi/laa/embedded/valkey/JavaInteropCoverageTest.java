@@ -23,11 +23,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.*;
-import static io.github.tobi.laa.embedded.valkey.testing.TestValkeyInstallationsKt.*;
-import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.*;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.downloadAndInstallLinuxPackageFromValkeyIo;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.downloadAndInstallMacOsPackageFromMacports;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.downloadAndInstallMemuraiDeveloperForX64FromNuget;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.installMacPortsPackageFromClasspath;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.installValkeyIoLinuxPackageFromClasspath;
+import static io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt.installWinX64MemuraiPackageFromClasspath;
+import static io.github.tobi.laa.embedded.valkey.testing.TestValkeyInstallationsKt.createExecutableScript;
+import static io.github.tobi.laa.embedded.valkey.testing.TestValkeyInstallationsKt.createValkeyInstallation;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.downloadLinuxPackageFromValkeyIo;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.downloadMacOsPackageFromMacPorts;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.downloadWinX64MemuraiPackageFromNuget;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.loadMacPortsPackageFromClasspath;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.loadValkeyIoLinuxPackageFromClasspath;
+import static io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackageSuppliersKt.loadWinX64MemuraiPackageFromClasspath;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests that exercise Kotlin @JvmOverloads-generated Java overloads and interface default methods.
@@ -72,13 +85,13 @@ class JavaInteropCoverageTest {
             assertThat(downloadAndInstallLinuxPackageFromValkeyIo(null)).isNotNull();
             assertThat(downloadAndInstallLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_ARM64)).isNotNull();
             assertThat(downloadAndInstallLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_X86_64, null)).isNotNull();
-            assertThat(downloadAndInstallLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_X86_64, null, "9.0.2")).isNotNull();
+            assertThat(downloadAndInstallLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_X86_64, null, "9.0.3")).isNotNull();
         }
 
         @Test
         @DisplayName("installValkeyIoLinuxPackageFromClasspath should accept classpath with optional OS and installationPath")
         void installLinuxFromClasspathWithDefaultParams() {
-            var classpathResource = "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz";
+            var classpathResource = "/valkey-packages/valkey-9.0.3-jammy-x86_64.tar.gz";
             assertThat(installValkeyIoLinuxPackageFromClasspath(classpathResource)).isNotNull();
             assertThat(installValkeyIoLinuxPackageFromClasspath(classpathResource, OperatingSystem.LINUX_ARM64)).isNotNull();
             assertThat(installValkeyIoLinuxPackageFromClasspath(classpathResource, OperatingSystem.LINUX_X86_64, null)).isNotNull();
@@ -91,13 +104,13 @@ class JavaInteropCoverageTest {
             assertThat(downloadAndInstallMacOsPackageFromMacports(null)).isNotNull();
             assertThat(downloadAndInstallMacOsPackageFromMacports(null, OperatingSystem.MAC_OS_ARM64)).isNotNull();
             assertThat(downloadAndInstallMacOsPackageFromMacports(null, OperatingSystem.MAC_OS_X86_64, null)).isNotNull();
-            assertThat(downloadAndInstallMacOsPackageFromMacports(null, OperatingSystem.MAC_OS_X86_64, null, "9.0.2")).isNotNull();
+            assertThat(downloadAndInstallMacOsPackageFromMacports(null, OperatingSystem.MAC_OS_X86_64, null, "9.0.3")).isNotNull();
         }
 
         @Test
         @DisplayName("installMacPortsPackageFromClasspath should accept classpath with optional OS and installationPath")
         void installMacOsFromClasspathWithDefaultParams() {
-            var classpathResource = "/valkey-packages/valkey-9.0.2_0.darwin_24.x86_64.tbz2";
+            var classpathResource = "/valkey-packages/valkey-9.0.3_0.darwin_24.x86_64.tbz2";
             assertThat(installMacPortsPackageFromClasspath(classpathResource)).isNotNull();
             assertThat(installMacPortsPackageFromClasspath(classpathResource, OperatingSystem.MAC_OS_ARM64)).isNotNull();
             assertThat(installMacPortsPackageFromClasspath(classpathResource, OperatingSystem.MAC_OS_X86_64, null)).isNotNull();
@@ -131,13 +144,13 @@ class JavaInteropCoverageTest {
             assertThat(downloadLinuxPackageFromValkeyIo()).isNotNull();
             assertThat(downloadLinuxPackageFromValkeyIo(null)).isNotNull();
             assertThat(downloadLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_ARM64)).isNotNull();
-            assertThat(downloadLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_X86_64, "9.0.2")).isNotNull();
+            assertThat(downloadLinuxPackageFromValkeyIo(null, OperatingSystem.LINUX_X86_64, "9.0.3")).isNotNull();
         }
 
         @Test
         @DisplayName("loadValkeyIoLinuxPackageFromClasspath should accept classpath with optional OS")
         void loadLinuxPackageFromClasspathWithDefaultParams() {
-            var classpathResource = "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz";
+            var classpathResource = "/valkey-packages/valkey-9.0.3-jammy-x86_64.tar.gz";
             assertThat(loadValkeyIoLinuxPackageFromClasspath(classpathResource)).isNotNull();
             assertThat(loadValkeyIoLinuxPackageFromClasspath(classpathResource, OperatingSystem.LINUX_ARM64)).isNotNull();
         }
@@ -148,13 +161,13 @@ class JavaInteropCoverageTest {
             assertThat(downloadMacOsPackageFromMacPorts()).isNotNull();
             assertThat(downloadMacOsPackageFromMacPorts(null)).isNotNull();
             assertThat(downloadMacOsPackageFromMacPorts(null, OperatingSystem.MAC_OS_ARM64)).isNotNull();
-            assertThat(downloadMacOsPackageFromMacPorts(null, OperatingSystem.MAC_OS_X86_64, "9.0.2")).isNotNull();
+            assertThat(downloadMacOsPackageFromMacPorts(null, OperatingSystem.MAC_OS_X86_64, "9.0.3")).isNotNull();
         }
 
         @Test
         @DisplayName("loadMacPortsPackageFromClasspath should accept classpath with optional OS")
         void loadMacOsPackageFromClasspathWithDefaultParams() {
-            var classpathResource = "/valkey-packages/valkey-9.0.2_0.darwin_24.x86_64.tbz2";
+            var classpathResource = "/valkey-packages/valkey-9.0.3_0.darwin_24.x86_64.tbz2";
             assertThat(loadMacPortsPackageFromClasspath(classpathResource)).isNotNull();
             assertThat(loadMacPortsPackageFromClasspath(classpathResource, OperatingSystem.MAC_OS_ARM64)).isNotNull();
         }
@@ -186,19 +199,19 @@ class JavaInteropCoverageTest {
             var cacheLocation = Paths.get("/tmp/cache.tar.gz");
             var downloadLocation = Paths.get("/tmp/download.tar.gz");
             // 5-arg (required only)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri)).isNotNull();
             // 6-arg (+ proxy)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null)).isNotNull();
             // 7-arg (+ proxy + cacheDownload)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false)).isNotNull();
             // 8-arg (+ proxy + cacheDownload + cacheFileLocation)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation)).isNotNull();
             // 9-arg (+ sha256)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null)).isNotNull();
             // 10-arg (+ verifyChecksum)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null, false)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null, false)).isNotNull();
             // 11-arg (+ downloadLocation)
-            assertThat(new ValkeyPackageDownloader("9.0.2", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null, false, downloadLocation)).isNotNull();
+            assertThat(new ValkeyPackageDownloader("9.0.3", OperatingSystem.LINUX_X86_64, binaryPath, ArchiveType.TAR_GZ, downloadUri, null, false, cacheLocation, null, false, downloadLocation)).isNotNull();
         }
     }
 
@@ -215,7 +228,7 @@ class JavaInteropCoverageTest {
             var packagePath = tempDir.resolve("dummy.tar.gz");
             Files.createFile(packagePath);
             var valkeyPackage = new ValkeyPackage(
-                    "9.0.2", OperatingSystem.LINUX_X86_64, packagePath, Paths.get("bin", "valkey-server"), ArchiveType.TAR_GZ
+                    "9.0.3", OperatingSystem.LINUX_X86_64, packagePath, Paths.get("bin", "valkey-server"), ArchiveType.TAR_GZ
             );
             // 1-arg (package only, defaults installationPath and alwaysExtract)
             assertThat(new ValkeyPackageExtractor(valkeyPackage)).isNotNull();
@@ -315,7 +328,7 @@ class JavaInteropCoverageTest {
             var binary = Files.createTempFile(installDir, "valkey-server", ".sh");
             binary.toFile().setExecutable(true);
             var installation = new ValkeyInstallation(
-                    "9.0.2", OperatingSystem.LINUX_X86_64, installDir, binary
+                    "9.0.3", OperatingSystem.LINUX_X86_64, installDir, binary
             );
             assertThat(installation.getDistributionType()).isEqualTo(io.github.tobi.laa.embedded.valkey.installation.DistributionType.VALKEY);
         }
@@ -329,7 +342,7 @@ class JavaInteropCoverageTest {
         @DisplayName("5-arg constructor without distributionType should default to VALKEY")
         void constructorWithoutDistributionTypeDefaultsToValkey() {
             var supplier = new ClasspathPackageSupplier(
-                    "/nonexistent/pkg.tar.gz", "9.0.2", OperatingSystem.LINUX_X86_64,
+                    "/nonexistent/pkg.tar.gz", "9.0.3", OperatingSystem.LINUX_X86_64,
                     Paths.get("bin", "valkey-server"), ArchiveType.TAR_GZ
             );
             assertThat(supplier).isNotNull();

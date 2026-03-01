@@ -27,7 +27,12 @@ class ValkeyInstallationTest {
         val binary = Files.createTempFile("valkey", "bin")
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyInstallation("9.0.2", OperatingSystem.LINUX_X86_64, installationPath = missingDir, binaryPath = binary)
+            ValkeyInstallation(
+                "9.0.3",
+                OperatingSystem.LINUX_X86_64,
+                installationPath = missingDir,
+                binaryPath = binary
+            )
         }
     }
 
@@ -38,7 +43,7 @@ class ValkeyInstallationTest {
         val binary = Files.createTempFile("valkey", "bin")
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyInstallation("9.0.2", OperatingSystem.LINUX_X86_64, installationPath = filePath, binaryPath = binary)
+            ValkeyInstallation("9.0.3", OperatingSystem.LINUX_X86_64, installationPath = filePath, binaryPath = binary)
         }
     }
 
@@ -49,7 +54,12 @@ class ValkeyInstallationTest {
         val missingBinary = dir.resolve("valkey-server")
 
         assertThrows(IllegalArgumentException::class.java) {
-            ValkeyInstallation("9.0.2", OperatingSystem.LINUX_X86_64, installationPath = dir, binaryPath = missingBinary)
+            ValkeyInstallation(
+                "9.0.3",
+                OperatingSystem.LINUX_X86_64,
+                installationPath = dir,
+                binaryPath = missingBinary
+            )
         }
     }
 }

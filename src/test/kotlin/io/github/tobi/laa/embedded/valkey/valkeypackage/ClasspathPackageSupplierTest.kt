@@ -29,7 +29,7 @@ class ClasspathPackageSupplierTest {
     fun `throws when classpath resource missing`() {
         val supplier = ClasspathPackageSupplier(
             classpathResource = "/nonexistent/package.tar.gz",
-            valkeyVersion = "9.0.2",
+            valkeyVersion = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             binaryPathWithinPackage = Path.of("bin/valkey-server"),
             archiveType = ArchiveType.TAR_GZ

@@ -3,8 +3,6 @@ package io.github.tobi.laa.embedded.valkey.installation
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.valkeypackage.ArchiveType
 import io.github.tobi.laa.embedded.valkey.valkeypackage.ValkeyPackage
-import org.mockito.MockedConstruction
-import org.mockito.Mockito
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -18,6 +16,8 @@ import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.ThrowableAssert
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.MockedConstruction
+import org.mockito.Mockito
 import java.io.File
 import java.io.IOException
 import java.nio.file.*
@@ -121,7 +121,7 @@ class ValkeyPackageExtractorTest {
     @DisplayName("Default temp installation path should follow the naming convention '<distribution>-<version>-<os>'")
     fun `resolves default temp installation path`() {
         whenDefaultInstallationPathIsResolved()
-        thenResolvedPathContains("valkey-9.0.2-linux_x86_64")
+        thenResolvedPathContains("valkey-9.0.3-linux_x86_64")
     }
 
     private fun givenZipExtractor(entries: Map<String, ByteArray>) {
@@ -225,7 +225,7 @@ class ValkeyPackageExtractorTest {
         performAction = ThrowableAssert.ThrowingCallable {
             resolvedPath = resolveDefaultTempInstallationPath(
                 DistributionType.VALKEY,
-                "9.0.2",
+                "9.0.3",
                 OperatingSystem.LINUX_X86_64
             )
         }
@@ -265,7 +265,7 @@ class ValkeyPackageExtractorTest {
 
     private fun createPackage(archive: Path, archiveType: ArchiveType, binaryPath: Path): ValkeyPackage {
         return ValkeyPackage(
-            version = "9.0.2",
+            version = "9.0.3",
             operatingSystem = OperatingSystem.LINUX_X86_64,
             path = archive,
             binaryPathWithinPackage = binaryPath,

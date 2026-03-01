@@ -87,7 +87,7 @@ class ValkeyPackageSupplierTest {
         givenPackageSupplier = object : ValkeyPackageSupplier {
             override fun retrievePackage(): ValkeyPackage {
                 return ValkeyPackage(
-                    version = "9.0.2",
+                    version = "9.0.3",
                     operatingSystem = OperatingSystem.LINUX_X86_64,
                     distributionType = DistributionType.VALKEY,
                     path = givenPackage!!,
