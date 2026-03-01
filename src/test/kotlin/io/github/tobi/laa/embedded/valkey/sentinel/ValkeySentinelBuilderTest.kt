@@ -3,6 +3,8 @@ package io.github.tobi.laa.embedded.valkey.sentinel
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
+import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_SUPPLIERS
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
 import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
@@ -160,7 +162,7 @@ class ValkeySentinelBuilderTest {
     fun `throws when no installation supplier available for OS`() {
         givenBuilderWithNoInstallationSupplierForCurrentOs()
         whenBuildIsCalled()
-        thenIllegalStateExceptionIsThrownContaining("No installation supplier available for Haiku for RISC-V")
+        thenIllegalStateExceptionIsThrownContaining("No installation supplier available for Linux for x86_64")
     }
 
     private fun givenBuilderWithDefaultSupplier() {
@@ -227,7 +229,9 @@ class ValkeySentinelBuilderTest {
 
     private fun givenBuilderWithNoInstallationSupplierForCurrentOs() {
         mockkStatic("io.github.tobi.laa.embedded.valkey.operatingsystem.DetectOperatingSystemKt")
-        every { detectOperatingSystem() } returns OperatingSystem.HAIKU_OS_RISC_V
+        every { detectOperatingSystem() } returns OperatingSystem.LINUX_X86_64
+        mockkStatic("io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt")
+        every { DEFAULT_SUPPLIERS } returns emptyMap<OperatingSystem, ValkeyInstallationSupplier>()
         givenBuilder = ValkeySentinelBuilder()
     }
 
