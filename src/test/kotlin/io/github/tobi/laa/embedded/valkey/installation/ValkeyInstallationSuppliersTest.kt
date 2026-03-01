@@ -21,13 +21,14 @@ class ValkeyInstallationSuppliersTest {
 
         @DisplayName("Latest stable Valkey/Redis/Memurai version is provided")
         @ParameterizedTest(name = "Latest available stable version for OS/Architecture {0} is provided")
-        @EnumSource(OperatingSystem::class)
+        @EnumSource(value = OperatingSystem::class, mode = EnumSource.Mode.EXCLUDE, names = ["HAIKU_OS_RISC_V"])
         fun `latest available version is provided`(operatingSystem: OperatingSystem) {
             val providedVersion = DEFAULT_SUPPLIERS[operatingSystem]!!.installValkey().version
             val newestAvailableVersion = when (operatingSystem) {
                 WINDOWS_X86_64 -> identifyLatestAvailableMemuraiVersionOnNuget()
                 MAC_OS_X86_64, MAC_OS_ARM64 -> identifyLatestAvailableMacportsValkeyVersion()
                 LINUX_X86_64, LINUX_ARM64 -> identifyLatestAvailableValkeyVersion()
+                else -> error("No version check available for $operatingSystem")
             }
             assert(providedVersion == newestAvailableVersion) {
                 "\uD83D\uDC74 Provided version $providedVersion is not the latest available version $newestAvailableVersion for ${operatingSystem.displayName}"
@@ -109,7 +110,7 @@ class ValkeyInstallationSuppliersTest {
         fun `classpath linux installer rejects non-linux operating system`() {
             assertThrows(IllegalArgumentException::class.java) {
                 installValkeyIoLinuxPackageFromClasspath(
-                    classpathResource = "/valkey-packages/valkey-9.0.2-jammy-x86_64.tar.gz",
+                    classpathResource = "/valkey-packages/valkey-9.0.3-jammy-x86_64.tar.gz",
                     operatingSystem = OperatingSystem.MAC_OS_X86_64
                 )
             }
