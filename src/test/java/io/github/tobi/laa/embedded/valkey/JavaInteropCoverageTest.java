@@ -1,5 +1,6 @@
 package io.github.tobi.laa.embedded.valkey;
 
+import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ValkeyHighAvailability;
 import io.github.tobi.laa.embedded.valkey.cluster.sharded.Shard;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder;
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation;
@@ -359,6 +360,17 @@ class JavaInteropCoverageTest {
             var shard = new Shard("test-shard", new PortProvider(), 2);
             assertThat(shard.getReplicaPorts()).hasSize(2);
             assertThat(shard.getName()).isEqualTo("test-shard");
+        }
+    }
+
+    @Nested
+    @DisplayName("ValkeyHighAvailability @JvmStatic builder")
+    class ValkeyHighAvailabilityBuilderMethod {
+
+        @Test
+        @DisplayName("builder() called as static method from Java should return a ValkeyHighAvailabilityBuilder instance")
+        void builderReturnsBuilderInstance() {
+            assertThat(ValkeyHighAvailability.builder()).isNotNull();
         }
     }
 }
