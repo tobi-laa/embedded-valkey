@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import redis.clients.jedis.HostAndPort
-import redis.clients.jedis.JedisCluster
+import redis.clients.jedis.RedisClusterClient
 import java.io.IOException
 import java.nio.file.Path
 
@@ -34,9 +34,9 @@ internal class ValkeyShardedClusterIntegrationTest {
     @Test
     @DisplayName("It should be possible to read and write data after the cluster has started")
     fun testSimpleOperationsAfterClusterStart() {
-        JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jedisCluster ->
-            jedisCluster.set("somekey", "somevalue")
-            Assertions.assertEquals("somevalue", jedisCluster.get("somekey"))
+        RedisClusterClient.create(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { clusterClient ->
+            clusterClient.set("somekey", "somevalue")
+            Assertions.assertEquals("somevalue", clusterClient.get("somekey"))
         }
     }
 
@@ -51,9 +51,9 @@ internal class ValkeyShardedClusterIntegrationTest {
             .shard("master3", 1)
             .build()
         cluster!!.start()
-        JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jedisCluster ->
-            jedisCluster.set("somekey", "somevalue")
-            Assertions.assertEquals("somevalue", jedisCluster.get("somekey"))
+        RedisClusterClient.create(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { clusterClient ->
+            clusterClient.set("somekey", "somevalue")
+            Assertions.assertEquals("somevalue", clusterClient.get("somekey"))
         }
     }
 
@@ -63,9 +63,9 @@ internal class ValkeyShardedClusterIntegrationTest {
     fun shouldAllowSubsequentRuns() {
         cluster!!.stop()
         cluster!!.start()
-        JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jedisCluster ->
-            jedisCluster.set("somekey", "somevalue")
-            Assertions.assertEquals("somevalue", jedisCluster.get("somekey"))
+        RedisClusterClient.create(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { clusterClient ->
+            clusterClient.set("somekey", "somevalue")
+            Assertions.assertEquals("somevalue", clusterClient.get("somekey"))
         }
     }
 
@@ -81,9 +81,9 @@ internal class ValkeyShardedClusterIntegrationTest {
         cluster!!.start()
         cluster!!.stop()
         cluster!!.start()
-        JedisCluster(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { jedisCluster ->
-            jedisCluster.set("somekey", "somevalue")
-            Assertions.assertEquals("somevalue", jedisCluster.get("somekey"))
+        RedisClusterClient.create(HostAndPort("127.0.0.1", cluster!!.nodes.get(0).port)).use { clusterClient ->
+            clusterClient.set("somekey", "somevalue")
+            Assertions.assertEquals("somevalue", clusterClient.get("somekey"))
         }
     }
 

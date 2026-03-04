@@ -13,8 +13,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisCluster
+import redis.clients.jedis.RedisClusterClient
 import redis.clients.jedis.args.ClusterResetType
 import java.io.IOException
 import java.time.Duration
@@ -45,22 +46,24 @@ class ValkeyShardedClusterUnitTest {
             Mockito.`when`(mock.clusterNodes()).thenReturn("node-id")
             Mockito.`when`(mock.clusterInfo()).thenReturn("cluster_state:ok")
         }.use {
-            Mockito.mockConstruction(JedisCluster::class.java) { mock, _ ->
-                Mockito.`when`(mock.get(Mockito.anyString())).thenReturn("value")
-            }.use {
-            val secondMain = mockk<ValkeyStandalone>(relaxed = true) {
-                every { port } returns 7002
-            }
-            val cluster = ValkeyShardedCluster(
-                nodes = listOf(mainNode, replicaNode, secondMain),
-                replicasPortsByMainNodePort = linkedMapOf(
-                    7000 to mutableSetOf(7001),
-                    7002 to mutableSetOf()
-                ),
-                initializationTimeout = Duration.ZERO
-            )
-
-            cluster.start(awaitReadiness = false, maxWaitTimeSeconds = 1)
+            val mockClusterClient = Mockito.mock(RedisClusterClient::class.java)
+            Mockito.`when`(mockClusterClient.get(Mockito.anyString())).thenReturn("value")
+            Mockito.mockStatic(RedisClusterClient::class.java).use { staticMock ->
+                staticMock.`when`<RedisClusterClient> {
+                    RedisClusterClient.create(Mockito.any(HostAndPort::class.java))
+                }.thenReturn(mockClusterClient)
+                val secondMain = mockk<ValkeyStandalone>(relaxed = true) {
+                    every { port } returns 7002
+                }
+                val cluster = ValkeyShardedCluster(
+                    nodes = listOf(mainNode, replicaNode, secondMain),
+                    replicasPortsByMainNodePort = linkedMapOf(
+                        7000 to mutableSetOf(7001),
+                        7002 to mutableSetOf()
+                    ),
+                    initializationTimeout = Duration.ZERO
+                )
+                cluster.start(awaitReadiness = false, maxWaitTimeSeconds = 1)
             }
         }
     }
@@ -173,18 +176,14 @@ class ValkeyShardedClusterUnitTest {
     @Test
     @DisplayName("Waiting for cluster readiness should throw when the cluster never stabilizes")
     fun `waitForClusterToBeInteractReady throws when cluster never stabilizes`() {
-        Mockito.mockConstruction(JedisCluster::class.java) { mock, _ ->
-            Mockito.`when`(mock.get(Mockito.anyString())).thenThrow(RuntimeException("down"))
-        }.use {
-            val cluster = ValkeyShardedCluster(
-                nodes = listOf(mainNode),
-                replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
-                initializationTimeout = Duration.ZERO
-            )
+        val cluster = ValkeyShardedCluster(
+            nodes = listOf(mainNode),
+            replicasPortsByMainNodePort = linkedMapOf(7000 to mutableSetOf()),
+            initializationTimeout = Duration.ZERO
+        )
 
-            assertThrows(ValkeyShardedClusterSetupException::class.java) {
-                cluster.waitForClusterToBeInteractReady()
-            }
+        assertThrows(ValkeyShardedClusterSetupException::class.java) {
+            cluster.waitForClusterToBeInteractReady()
         }
     }
 

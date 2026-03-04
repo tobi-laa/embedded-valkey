@@ -4,7 +4,7 @@ import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
-import io.github.tobi.laa.embedded.valkey.testing.awaitMasterPool
+import io.github.tobi.laa.embedded.valkey.testing.awaitSentinelClient
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
@@ -13,8 +13,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisSentinelPool
+import redis.clients.jedis.RedisSentinelClient
 
 @IntegrationTest
 @DisplayName("Tests for ValkeyHighAvailability")
@@ -24,8 +23,7 @@ internal class ValkeyHighAvailabilityTest {
     private var cluster: ValkeyHighAvailability? = null
     private var resolvedBuilder: ValkeyHighAvailabilityBuilder? = null
     private var sentinelHosts: Set<String>? = null
-    private var pool: JedisSentinelPool? = null
-    private var jedis: Jedis? = null
+    private var sentinelClient: RedisSentinelClient? = null
 
     @BeforeEach
     fun reset() {
@@ -33,14 +31,12 @@ internal class ValkeyHighAvailabilityTest {
         cluster = null
         resolvedBuilder = null
         sentinelHosts = null
-        pool = null
-        jedis = null
+        sentinelClient = null
     }
 
     @AfterEach
     fun cleanUpClientResources() {
-        jedis?.close()
-        pool?.destroy()
+        sentinelClient?.close()
     }
 
     @Test
@@ -195,9 +191,8 @@ internal class ValkeyHighAvailabilityTest {
     }
 
     private fun whenDataIsReadAndWrittenVia(masterName: String) {
-        pool = awaitMasterPool(masterName, sentinelHosts!!)
-        jedis = pool!!.resource
-        jedis!!.mset("abc", "1", "def", "2")
+        sentinelClient = awaitSentinelClient(masterName, sentinelHosts!!)
+        sentinelClient!!.mset("abc", "1", "def", "2")
     }
 
     // --- then* ---
@@ -228,20 +223,18 @@ internal class ValkeyHighAvailabilityTest {
     }
 
     private fun thenReadDataMatchesWritten() {
-        assertThat(jedis!!.mget("abc")[0]).isEqualTo("1")
-        assertThat(jedis!!.mget("def")[0]).isEqualTo("2")
-        assertThat(jedis!!.mget("xyz")[0]).isNull()
+        assertThat(sentinelClient!!.mget("abc")[0]).isEqualTo("1")
+        assertThat(sentinelClient!!.mget("def")[0]).isEqualTo("2")
+        assertThat(sentinelClient!!.mget("xyz")[0]).isNull()
     }
 
     private fun thenDataCanBeReadAndWrittenOnAllGroups(vararg masterNames: String) {
         for (masterName in masterNames) {
-            awaitMasterPool(masterName, sentinelHosts!!).use { masterPool ->
-                masterPool.resource.use { masterJedis ->
-                    masterJedis.mset("abc", "1", "def", "2")
-                    assertThat(masterJedis.mget("abc")[0]).isEqualTo("1")
-                    assertThat(masterJedis.mget("def")[0]).isEqualTo("2")
-                    assertThat(masterJedis.mget("xyz")[0]).isNull()
-                }
+            awaitSentinelClient(masterName, sentinelHosts!!).use { client ->
+                client.mset("abc", "1", "def", "2")
+                assertThat(client.mget("abc")[0]).isEqualTo("1")
+                assertThat(client.mget("def")[0]).isEqualTo("2")
+                assertThat(client.mget("xyz")[0]).isNull()
             }
         }
     }

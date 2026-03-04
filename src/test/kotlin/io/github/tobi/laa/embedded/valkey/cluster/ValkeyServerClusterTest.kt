@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisPool
+import redis.clients.jedis.RedisClient
 
 @IntegrationTest
 @DisplayName("Tests for Valkey server cluster replication")
@@ -29,23 +28,12 @@ class ValkeyServerClusterTest {
     @Test
     @DisplayName("It should be possible to perform simple read/write operations on a replicated cluster")
     fun testSimpleOperationsAfterRun() {
-        var pool: JedisPool? = null
-        var jedis: Jedis? = null
-        try {
-            pool = JedisPool("localhost", 6300)
-            jedis = pool.getResource()
-            jedis.mset("abc", "1", "def", "2")
+        RedisClient.create("localhost", 6300).use { redisClient ->
+            redisClient.mset("abc", "1", "def", "2")
 
-            Assertions.assertEquals("1", jedis.mget("abc").get(0))
-            Assertions.assertEquals("2", jedis.mget("def").get(0))
-            Assertions.assertNull(jedis.mget("xyz").get(0))
-        } finally {
-            if (jedis != null) {
-                jedis.close()
-            }
-            if (pool != null) {
-                pool.destroy()
-            }
+            Assertions.assertEquals("1", redisClient.mget("abc").get(0))
+            Assertions.assertEquals("2", redisClient.mget("def").get(0))
+            Assertions.assertNull(redisClient.mget("xyz").get(0))
         }
     }
 }

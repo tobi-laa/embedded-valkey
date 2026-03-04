@@ -1,5 +1,3 @@
-@file:Suppress("kotlin:S1874") // JedisCluster is deprecated but no non-deprecated cluster API exists in Jedis 7.x
-
 package io.github.tobi.laa.embedded.valkey.cluster.sharded
 
 import io.github.tobi.laa.embedded.valkey.cluster.ValkeyCluster
@@ -8,7 +6,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisCluster
+import redis.clients.jedis.RedisClusterClient
 import redis.clients.jedis.args.ClusterResetType
 import java.io.IOException
 import java.time.Duration
@@ -176,8 +174,8 @@ class ValkeyShardedCluster(
     internal fun waitForClusterToBeInteractReady() {
         val clusterIsReady = waitForPredicateToPass(Supplier {
             try {
-                JedisCluster(HostAndPort(CLUSTER_IP, nodes.first().port)).use { jc ->
-                    jc["someKey"]
+                RedisClusterClient.create(HostAndPort(CLUSTER_IP, nodes.first().port)).use { clusterClient ->
+                    clusterClient["someKey"]
                     return@Supplier true
                 }
             } catch (e: Exception) {

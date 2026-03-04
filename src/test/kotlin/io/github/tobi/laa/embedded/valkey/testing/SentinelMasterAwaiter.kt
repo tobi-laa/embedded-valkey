@@ -1,20 +1,25 @@
 package io.github.tobi.laa.embedded.valkey.testing
 
 import org.awaitility.Awaitility.await
+import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisSentinelPool
+import redis.clients.jedis.RedisSentinelClient
 import java.time.Duration
 
 /**
  * Waits until a sentinel-monitored master becomes available and writable,
- * then returns a [JedisSentinelPool] connected to it.
+ * then returns a [RedisSentinelClient] connected to it.
  */
-fun awaitMasterPool(masterName: String, sentinelHosts: Set<String>): JedisSentinelPool {
+fun awaitSentinelClient(masterName: String, sentinelHosts: Set<String>): RedisSentinelClient {
     await()
         .atMost(Duration.ofSeconds(30))
         .pollInterval(Duration.ofMillis(250))
         .until { isMasterWritable(masterName, sentinelHosts) }
-    return JedisSentinelPool(masterName, sentinelHosts)
+    val sentinels = sentinelHosts.map { HostAndPort.from(it) }.toSet()
+    return RedisSentinelClient.builder()
+        .masterName(masterName)
+        .sentinels(sentinels)
+        .build()
 }
 
 private fun isMasterWritable(masterName: String, sentinelHosts: Set<String>): Boolean {

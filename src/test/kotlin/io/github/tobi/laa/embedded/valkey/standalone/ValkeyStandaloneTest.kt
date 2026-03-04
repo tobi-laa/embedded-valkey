@@ -5,7 +5,7 @@ import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import redis.clients.jedis.JedisPool
+import redis.clients.jedis.RedisClient
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -55,13 +55,11 @@ internal class ValkeyStandaloneTest {
         valkeyStandalone = builder().port(6381).build()
         valkeyStandalone!!.start()
 
-        JedisPool("localhost", 6381).use { pool ->
-            pool.getResource().use { jedis ->
-                jedis.mset("abc", "1", "def", "2")
-                Assertions.assertEquals("1", jedis.mget("abc").get(0))
-                Assertions.assertEquals("2", jedis.mget("def").get(0))
-                Assertions.assertNull(jedis.mget("xyz").get(0))
-            }
+        RedisClient.create("localhost", 6381).use { redisClient ->
+            redisClient.mset("abc", "1", "def", "2")
+            Assertions.assertEquals("1", redisClient.mget("abc").get(0))
+            Assertions.assertEquals("2", redisClient.mget("def").get(0))
+            Assertions.assertNull(redisClient.mget("xyz").get(0))
         }
     }
 
