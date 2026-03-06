@@ -3,6 +3,11 @@
 `embedded-valkey` is released under the Apache 2.0 license.
 Read on if you would like to contribute!
 
+== Code of Conduct
+
+This project adheres to the Contributor Covenant xref:CODE_OF_CONDUCT.adoc[code of conduct].
+By participating, you are expected to uphold this code.
+
 == Using GitHub Issues
 
 This project uses GitHub issues to track bugs and enhancements.
