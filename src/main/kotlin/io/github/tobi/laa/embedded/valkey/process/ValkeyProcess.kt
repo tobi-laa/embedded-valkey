@@ -170,7 +170,7 @@ constructor(
             )
     }
 
-    private fun awaitReady(maxWaitTimeSeconds: Long) {
+    internal fun awaitReady(maxWaitTimeSeconds: Long) {
         for (i in 0 until maxWaitTimeSeconds) {
             if (ready) {
                 return

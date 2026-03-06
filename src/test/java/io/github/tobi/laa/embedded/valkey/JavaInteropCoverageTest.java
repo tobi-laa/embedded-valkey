@@ -23,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -265,7 +266,7 @@ class JavaInteropCoverageTest {
     class ProcessOverloads {
 
         @Test
-        @DisplayName("Constructor should accept 1-2 args (valkeyInstallation, optional workingDirectory) with defaults for remaining params")
+        @DisplayName("Constructor should accept 1 to 6 args (valkeyInstallation through stdoutLogLevel) with defaults for remaining params")
         void constructorWithVaryingOptionalParams() throws IOException {
             var scriptPath = createExecutableScript(ScriptBehavior.ECHO_READY_AND_SLEEP);
             var installation = createValkeyInstallation(scriptPath);
@@ -276,6 +277,18 @@ class JavaInteropCoverageTest {
             var workingDir = Files.createTempDirectory(installation.getInstallationPath(), "wd");
             var processWithWorkDir = new ValkeyProcess(installation, workingDir);
             assertThat(processWithWorkDir.getWorkingDirectory()).isEqualTo(workingDir);
+            // 3-arg constructor (+ config)
+            var processWithConfig = new ValkeyProcess(installation, workingDir, new ValkeyConfBuilder().build());
+            assertThat(processWithConfig.getWorkingDirectory()).isEqualTo(workingDir);
+            // 4-arg constructor (+ charset)
+            var processWithCharset = new ValkeyProcess(installation, workingDir, new ValkeyConfBuilder().build(), StandardCharsets.UTF_8);
+            assertThat(processWithCharset.getCharset()).isEqualTo(StandardCharsets.UTF_8);
+            // 5-arg constructor (+ sentinel)
+            var processWithSentinel = new ValkeyProcess(installation, workingDir, new ValkeyConfBuilder().build(), StandardCharsets.UTF_8, false);
+            assertThat(processWithSentinel.getSentinel()).isFalse();
+            // 6-arg constructor (+ stdoutLogLevel)
+            var processWithLogLevel = new ValkeyProcess(installation, workingDir, new ValkeyConfBuilder().build(), StandardCharsets.UTF_8, false, org.slf4j.event.Level.DEBUG);
+            assertThat(processWithLogLevel.getSentinel()).isFalse();
         }
 
         @Test

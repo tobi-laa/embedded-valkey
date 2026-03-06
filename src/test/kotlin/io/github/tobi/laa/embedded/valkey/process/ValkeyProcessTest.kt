@@ -101,6 +101,27 @@ class ValkeyProcessTest {
     }
 
     @Test
+    @DisplayName("Starting should throw IOException when the process exits unexpectedly during the readiness wait")
+    fun `start throws when process exits during readiness wait`() {
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.SLEEP_BRIEFLY))
+        val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
+
+        assertThrows(IOException::class.java) { process.start(awaitServerReady = true, maxWaitTimeSeconds = 3) }
+    }
+
+    @Test
+    @DisplayName("awaitReady should return without throwing when the process became ready during the preceding loop wait")
+    fun `awaitReady succeeds when ready is true after loop completes`() {
+        val installation = createInstallation(createExecutableScript(ScriptBehavior.ECHO_READY_AND_SLEEP))
+        val process = ValkeyProcess(valkeyInstallation = installation, config = ValkeyConfBuilder().build())
+        process.start(awaitServerReady = false)
+        Thread.sleep(1000)
+
+        assertDoesNotThrow { process.awaitReady(0) }
+        process.stop(forcibly = true, maxWaitTimeSeconds = 1)
+    }
+
+    @Test
     @DisplayName("Constructor should reject a non-existent binary path")
     fun `constructor rejects non-existent binary`() {
         val installDir = Files.createTempDirectory("valkey-install")

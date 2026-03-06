@@ -142,6 +142,14 @@ class ValkeySentinelBuilderTest {
     }
 
     @Test
+    @DisplayName("Starting an already-started sentinel should reuse the existing process, not recreate it")
+    fun `start reuses existing process when called twice`() {
+        givenBuiltAndStartedSentinel()
+        whenStartIsCalledAgain()
+        thenNoErrorOccurs()
+    }
+
+    @Test
     @DisplayName("importConf(Path) should import the loglevel directive from a file")
     fun `importConf with path imports file`() {
         givenBuilderWithImportedConfPath()
@@ -253,6 +261,12 @@ class ValkeySentinelBuilderTest {
         mockkStatic("io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt")
         every { DEFAULT_SUPPLIERS } returns emptyMap<OperatingSystem, ValkeyInstallationSupplier>()
         givenBuilder = ValkeySentinelBuilder()
+    }
+
+    private fun whenStartIsCalledAgain() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            givenSentinel!!.start()
+        }
     }
 
     private fun whenBuildIsCalled() {
