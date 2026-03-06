@@ -414,7 +414,12 @@
                             <relocations>
                                 <relocation>
                                     <pattern>redis.clients.jedis</pattern>
-                                    <shadedPattern>io.github.tobi_laa.embedded_valkey.shaded.redis.clients.jedis
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.jedis
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.compress</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.compress
                                     </shadedPattern>
                                 </relocation>
                             </relocations>
