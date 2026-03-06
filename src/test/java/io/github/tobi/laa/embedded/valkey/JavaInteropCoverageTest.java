@@ -1,6 +1,8 @@
 package io.github.tobi.laa.embedded.valkey;
 
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ValkeyHighAvailability;
+import io.github.tobi.laa.embedded.valkey.cluster.sharded.ValkeyShardedCluster;
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel;
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import io.github.tobi.laa.embedded.valkey.cluster.sharded.Shard;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder;
@@ -383,6 +385,28 @@ class JavaInteropCoverageTest {
         @DisplayName("builder() called as static method from Java should return a ValkeyStandaloneBuilder instance")
         void builderReturnsBuilderInstance() {
             assertThat(ValkeyStandalone.builder()).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("ValkeySentinel @JvmStatic builder")
+    class ValkeySentinelBuilderMethod {
+
+        @Test
+        @DisplayName("builder() called as static method from Java should return a ValkeySentinelBuilder instance")
+        void builderReturnsBuilderInstance() {
+            assertThat(ValkeySentinel.builder()).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("ValkeyShardedCluster @JvmStatic builder")
+    class ValkeyShardedClusterBuilderMethod {
+
+        @Test
+        @DisplayName("builder() called as static method from Java should return a ValkeyShardedClusterBuilder instance")
+        void builderReturnsBuilderInstance() {
+            assertThat(ValkeyShardedCluster.builder()).isNotNull();
         }
     }
 }

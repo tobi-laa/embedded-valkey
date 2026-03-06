@@ -1,5 +1,6 @@
 package io.github.tobi.laa.embedded.valkey.sentinel
 
+import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ReplicationGroup
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
+@IntegrationTest
 @DisplayName("Tests for ValkeySentinelBuilder")
 class ValkeySentinelBuilderTest {
 
@@ -37,6 +39,7 @@ class ValkeySentinelBuilderTest {
     private var performAction: ThrowableAssert.ThrowingCallable? = null
     private var builtSentinel: ValkeySentinel? = null
     private var resolvedBuilder: ValkeySentinelBuilder? = null
+    private var workingDirectory: Path? = null
 
     @BeforeEach
     fun reset() {
@@ -45,6 +48,7 @@ class ValkeySentinelBuilderTest {
         performAction = null
         builtSentinel = null
         resolvedBuilder = null
+        workingDirectory = null
     }
 
     @AfterEach
@@ -112,6 +116,13 @@ class ValkeySentinelBuilderTest {
         givenBuiltSentinelWithDefaultSupplier()
         whenWorkingDirectoryIsAccessed()
         thenIllegalStateExceptionIsThrownContaining("Process not started")
+    }
+
+    @Test
+    @DisplayName("The workingDirectory should be an existing directory after the sentinel has started")
+    fun `workingDirectory is an existing directory after start`() {
+        givenBuiltAndStartedSentinel()
+        thenWorkingDirectoryIsAnExistingDirectory()
     }
 
     @Test
@@ -199,6 +210,15 @@ class ValkeySentinelBuilderTest {
         givenSentinel = ValkeySentinelBuilder()
             .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
             .build()
+    }
+
+    private fun givenBuiltAndStartedSentinel() {
+        val operatingSystem = detectOperatingSystem()
+        givenSentinel = ValkeySentinelBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.ECHO_SENTINEL_READY_AND_SLEEP, operatingSystem))
+            .build()
+        givenSentinel!!.start()
+        workingDirectory = givenSentinel!!.workingDirectory
     }
 
     private fun givenBuilderWithImportedConfPath() {
@@ -304,5 +324,9 @@ class ValkeySentinelBuilderTest {
     private fun thenIllegalStateExceptionIsThrownContaining(message: String) {
         assertThatCode(performAction!!).isExactlyInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining(message)
+    }
+
+    private fun thenWorkingDirectoryIsAnExistingDirectory() {
+        assertThat(workingDirectory).isNotNull().isDirectory()
     }
 }

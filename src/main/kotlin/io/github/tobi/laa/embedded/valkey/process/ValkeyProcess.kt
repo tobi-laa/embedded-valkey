@@ -170,7 +170,7 @@ constructor(
             )
     }
 
-    private fun awaitReady(maxWaitTimeSeconds: Long = 10) {
+    private fun awaitReady(maxWaitTimeSeconds: Long) {
         for (i in 0 until maxWaitTimeSeconds) {
             if (ready) {
                 return
@@ -207,7 +207,7 @@ constructor(
         }
     }
 
-    private fun stopProcess(forcibly: Boolean = false, maxWaitTimeSeconds: Long = 10) {
+    private fun stopProcess(forcibly: Boolean, maxWaitTimeSeconds: Long) {
         if (forcibly) {
             process.destroyForcibly().waitFor()
         } else {

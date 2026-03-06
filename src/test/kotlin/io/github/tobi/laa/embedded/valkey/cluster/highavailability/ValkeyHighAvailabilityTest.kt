@@ -3,8 +3,11 @@ package io.github.tobi.laa.embedded.valkey.cluster.highavailability
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
 import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinel
+import io.github.tobi.laa.embedded.valkey.sentinel.ValkeySentinelBuilder
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandaloneBuilder
 import io.github.tobi.laa.embedded.valkey.testing.awaitSentinelClient
+import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
@@ -68,6 +71,20 @@ internal class ValkeyHighAvailabilityTest {
         thenSentinelPortsContainExactly(26379)
         thenServerPortsContainExactly(6380)
         thenNodesAreSentinelsFollowedByServers()
+    }
+
+    @Test
+    @DisplayName("withSentinelBuilder should use the provided sentinel builder when building the cluster")
+    fun `withSentinelBuilder uses provided builder`() {
+        givenBuiltClusterWithCustomSentinelBuilder()
+        thenClusterHasSentinelCount(1)
+    }
+
+    @Test
+    @DisplayName("withServerBuilder should use the provided server builder when building the cluster")
+    fun `withServerBuilder uses provided builder`() {
+        givenBuiltClusterWithCustomServerBuilder()
+        thenClusterHasServerCount(1)
     }
 
     @Test
@@ -136,6 +153,26 @@ internal class ValkeyHighAvailabilityTest {
             listOf(sentinelWithPort(sentinelPort)),
             listOf(serverWithPort(serverPort))
         )
+    }
+
+    private fun givenBuiltClusterWithCustomSentinelBuilder() {
+        val operatingSystem = detectOperatingSystem()
+        val customSentinelBuilder = ValkeySentinelBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(operatingSystem = operatingSystem))
+        cluster = ValkeyHighAvailabilityBuilder()
+            .withSentinelBuilder(customSentinelBuilder)
+            .replicationGroup("main", 0)
+            .build()
+    }
+
+    private fun givenBuiltClusterWithCustomServerBuilder() {
+        val operatingSystem = detectOperatingSystem()
+        val customServerBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(operatingSystem = operatingSystem))
+        cluster = ValkeyHighAvailabilityBuilder()
+            .withServerBuilder(customServerBuilder)
+            .replicationGroup("main", 0)
+            .build()
     }
 
     private fun givenBuiltClusterWithServerHavingNoPort() {
@@ -220,6 +257,14 @@ internal class ValkeyHighAvailabilityTest {
 
     private fun thenResolvedBuilderIsValkeyHighAvailabilityBuilder() {
         assertThat(resolvedBuilder).isInstanceOf(ValkeyHighAvailabilityBuilder::class.java)
+    }
+
+    private fun thenClusterHasSentinelCount(count: Int) {
+        assertThat(cluster!!.sentinels).hasSize(count)
+    }
+
+    private fun thenClusterHasServerCount(count: Int) {
+        assertThat(cluster!!.servers).hasSize(count)
     }
 
     private fun thenReadDataMatchesWritten() {
