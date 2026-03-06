@@ -1,6 +1,7 @@
 package io.github.tobi.laa.embedded.valkey;
 
 import io.github.tobi.laa.embedded.valkey.cluster.highavailability.ValkeyHighAvailability;
+import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone;
 import io.github.tobi.laa.embedded.valkey.cluster.sharded.Shard;
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder;
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation;
@@ -371,6 +372,17 @@ class JavaInteropCoverageTest {
         @DisplayName("builder() called as static method from Java should return a ValkeyHighAvailabilityBuilder instance")
         void builderReturnsBuilderInstance() {
             assertThat(ValkeyHighAvailability.builder()).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("ValkeyStandalone @JvmStatic builder")
+    class ValkeyStandaloneBuilderMethod {
+
+        @Test
+        @DisplayName("builder() called as static method from Java should return a ValkeyStandaloneBuilder instance")
+        void builderReturnsBuilderInstance() {
+            assertThat(ValkeyStandalone.builder()).isNotNull();
         }
     }
 }

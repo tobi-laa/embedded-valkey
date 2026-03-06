@@ -2,11 +2,20 @@ package io.github.tobi.laa.embedded.valkey.standalone
 
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConf
 import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfBuilder
+import io.github.tobi.laa.embedded.valkey.installation.DEFAULT_SUPPLIERS
+import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSupplier
+import io.github.tobi.laa.embedded.valkey.operatingsystem.OperatingSystem
 import io.github.tobi.laa.embedded.valkey.operatingsystem.detectOperatingSystem
 import io.github.tobi.laa.embedded.valkey.testing.ScriptBehavior
 import io.github.tobi.laa.embedded.valkey.testing.createInstallationSupplier
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.ThrowableAssert
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -16,114 +25,188 @@ import java.nio.file.Path
 @DisplayName("Tests for ValkeyStandaloneBuilder")
 class ValkeyStandaloneBuilderTest {
 
+    @TempDir
+    private lateinit var tempDir: Path
+
+    private var givenBuilder: ValkeyStandaloneBuilder? = null
+    private var performAction: ThrowableAssert.ThrowingCallable? = null
+    private var builtServer: ValkeyStandalone? = null
+    private var resolvedBuilder: ValkeyStandaloneBuilder? = null
+
+    @BeforeEach
+    fun reset() {
+        givenBuilder = null
+        performAction = null
+        builtServer = null
+        resolvedBuilder = null
+    }
+
+    @AfterEach
+    fun cleanUpMocks() {
+        unmockkAll()
+    }
+
     @Test
-    @DisplayName("Building should apply default port and bind addresses")
+    @DisplayName("Building should apply a default port and bind addresses when none are configured")
     fun `build applies default port and binds`() {
-        val os = detectOperatingSystem()
-        val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-
-        val server = builder.build()
-
-        assertThat(server.config.port()).isNotNull
-        assertThat(server.config.binds()).contains("::1", "127.0.0.1")
+        givenBuilderWithDefaultSupplier()
+        whenBuildIsCalled()
+        thenNoErrorOccurs()
+        thenBuiltServerHasPort()
+        thenBuiltServerHasBinds("::1", "127.0.0.1")
     }
 
     @Test
     @DisplayName("Cloning should preserve custom installation suppliers and configuration")
-    fun `clone preserves custom suppliers and configuration`() {
-        val os = detectOperatingSystem()
-        val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-            .bind("0.0.0.0")
-            .port(6390)
-            .directive("maxmemory", "1mb")
-
-        val cloned = builder.clone()
-        val server = cloned.build()
-
-        assertThat(server.config.port()).isEqualTo(6390)
-        assertThat(server.config.binds()).contains("0.0.0.0")
-        assertThat(server.config.directives("maxmemory")).isNotEmpty
+    fun `clone preserves configuration`() {
+        givenBuilderWithDefaultSupplierAndConfig(bind = "0.0.0.0", port = 6390, directive = "maxmemory" to "1mb")
+        whenCloneAndBuildAreCalled()
+        thenNoErrorOccurs()
+        thenBuiltServerHasPort(6390)
+        thenBuiltServerHasBinds("0.0.0.0")
+        thenBuiltServerHasDirective("maxmemory")
     }
 
     @Test
-    @DisplayName("Building should use replicaOf directive when configured")
+    @DisplayName("Building should include the replicaOf directive when configured")
     fun `build applies replicaOf`() {
-        val os = detectOperatingSystem()
-        val builder = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-            .replicaOf("localhost", 6379)
-
-        val server = builder.build()
-
-        assertThat(server.config.directives("replicaof")).isNotEmpty
+        givenBuilderWithDefaultSupplierAndReplicaOf(hostname = "localhost", port = 6379)
+        whenBuildIsCalled()
+        thenNoErrorOccurs()
+        thenBuiltServerHasDirective("replicaof")
     }
 
     @Test
-    @DisplayName("ValkeyStandalone should report inactive when not started")
-    fun `standalone reports inactive when not started`() {
-        val os = detectOperatingSystem()
-        val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-            .build()
-
-        assertThat(server.active).isFalse()
+    @DisplayName("importConf(Path) should apply port configuration from a file")
+    fun `importConf with path applies configured port`() {
+        givenBuilderWithImportedConfFile(port = 6399)
+        whenBuildIsCalled()
+        thenNoErrorOccurs()
+        thenBuiltServerHasPort(6399)
     }
 
     @Test
-    @DisplayName("ValkeyStandalone should throw when accessing workingDirectory before start")
-    fun `standalone throws on workingDirectory before start`() {
-        val os = detectOperatingSystem()
-        val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-            .build()
-
-        assertThrows(IllegalStateException::class.java) { server.workingDirectory }
+    @DisplayName("importConf(ValkeyConf) should apply the configured port from a ValkeyConf object")
+    fun `importConf with ValkeyConf applies configured port`() {
+        givenBuilderWithImportedValkeyConf(port = 6398)
+        whenBuildIsCalled()
+        thenNoErrorOccurs()
+        thenBuiltServerHasPort(6398)
     }
 
     @Test
-    @DisplayName("ValkeyStandalone stop should be safe when not started")
-    fun `standalone stop is safe when not started`() {
-        val os = detectOperatingSystem()
-        val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
-            .build()
-
-        server.stop()
-    }
-
-    @Test
-    @DisplayName("ValkeyStandalone companion builder method should return a builder")
+    @DisplayName("ValkeyStandalone companion builder() method should return a ValkeyStandaloneBuilder instance")
     fun `companion builder returns builder`() {
-        assertThat(ValkeyStandalone.builder()).isInstanceOf(ValkeyStandaloneBuilder::class.java)
+        whenBuilderFactoryMethodIsCalled()
+        thenNoErrorOccurs()
+        thenResolvedBuilderIsValkeyStandaloneBuilder()
     }
 
     @Test
-    @DisplayName("importConf(Path) should import configuration from a file")
-    fun `importConf with path imports file`(@TempDir tempDir: Path) {
+    @DisplayName("An IllegalStateException containing 'No installation supplier available' should be thrown when no supplier is registered for the detected OS")
+    fun `throws when no installation supplier available for OS`() {
+        givenBuilderWithNoInstallationSupplierForCurrentOs()
+        whenBuildIsCalled()
+        thenIllegalStateExceptionIsThrownContaining("No installation supplier available for Linux for x86_64")
+    }
+
+    // --- given* ---
+
+    private fun givenBuilderWithDefaultSupplier() {
+        val operatingSystem = detectOperatingSystem()
+        givenBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
+    }
+
+    private fun givenBuilderWithDefaultSupplierAndConfig(bind: String, port: Int, directive: Pair<String, String>) {
+        val operatingSystem = detectOperatingSystem()
+        givenBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
+            .bind(bind)
+            .port(port)
+            .directive(directive.first, directive.second)
+    }
+
+    private fun givenBuilderWithDefaultSupplierAndReplicaOf(hostname: String, port: Int) {
+        val operatingSystem = detectOperatingSystem()
+        givenBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
+            .replicaOf(hostname, port)
+    }
+
+    private fun givenBuilderWithImportedConfFile(port: Int) {
         val confFile = tempDir.resolve("test.conf")
-        Files.writeString(confFile, "port 6399" + System.lineSeparator())
-
-        val os = detectOperatingSystem()
-        val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
+        Files.writeString(confFile, "port $port" + System.lineSeparator())
+        val operatingSystem = detectOperatingSystem()
+        givenBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
             .importConf(confFile)
-            .build()
-
-        assertThat(server.config.port()).isEqualTo(6399)
     }
 
-    @Test
-    @DisplayName("importConf(ValkeyConf) should import configuration from ValkeyConf object")
-    fun `importConf with ValkeyConf imports directives`() {
-        val conf = ValkeyConfBuilder().port(6398).build()
-        val os = detectOperatingSystem()
-        val server = ValkeyStandaloneBuilder()
-            .installationSupplier(os, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, os))
+    private fun givenBuilderWithImportedValkeyConf(port: Int) {
+        val conf: ValkeyConf = ValkeyConfBuilder().port(port).build()
+        val operatingSystem = detectOperatingSystem()
+        givenBuilder = ValkeyStandaloneBuilder()
+            .installationSupplier(operatingSystem, createInstallationSupplier(ScriptBehavior.SLEEP_BRIEFLY, operatingSystem))
             .importConf(conf)
-            .build()
+    }
 
-        assertThat(server.config.port()).isEqualTo(6398)
+    private fun givenBuilderWithNoInstallationSupplierForCurrentOs() {
+        mockkStatic("io.github.tobi.laa.embedded.valkey.operatingsystem.DetectOperatingSystemKt")
+        every { detectOperatingSystem() } returns OperatingSystem.LINUX_X86_64
+        mockkStatic("io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallationSuppliersKt")
+        every { DEFAULT_SUPPLIERS } returns emptyMap<OperatingSystem, ValkeyInstallationSupplier>()
+        givenBuilder = ValkeyStandaloneBuilder()
+    }
+
+    // --- when* ---
+
+    private fun whenBuildIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            builtServer = givenBuilder!!.build()
+        }
+    }
+
+    private fun whenCloneAndBuildAreCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            builtServer = givenBuilder!!.clone().build()
+        }
+    }
+
+    private fun whenBuilderFactoryMethodIsCalled() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            resolvedBuilder = ValkeyStandalone.builder()
+        }
+    }
+
+    // --- then* ---
+
+    private fun thenNoErrorOccurs() {
+        assertThatCode(performAction!!).doesNotThrowAnyException()
+    }
+
+    private fun thenIllegalStateExceptionIsThrownContaining(message: String) {
+        assertThatCode(performAction!!).isExactlyInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining(message)
+    }
+
+    private fun thenBuiltServerHasPort() {
+        assertThat(builtServer!!.config.port()).isNotNull()
+    }
+
+    private fun thenBuiltServerHasPort(expectedPort: Int) {
+        assertThat(builtServer!!.config.port()).isEqualTo(expectedPort)
+    }
+
+    private fun thenBuiltServerHasBinds(vararg binds: String) {
+        assertThat(builtServer!!.config.binds()).contains(*binds)
+    }
+
+    private fun thenBuiltServerHasDirective(keyword: String) {
+        assertThat(builtServer!!.config.directives(keyword)).isNotEmpty()
+    }
+
+    private fun thenResolvedBuilderIsValkeyStandaloneBuilder() {
+        assertThat(resolvedBuilder).isInstanceOf(ValkeyStandaloneBuilder::class.java)
     }
 }

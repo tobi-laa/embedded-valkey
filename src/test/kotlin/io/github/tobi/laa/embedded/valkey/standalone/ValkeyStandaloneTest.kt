@@ -2,134 +2,203 @@ package io.github.tobi.laa.embedded.valkey.standalone
 
 import io.github.tobi.laa.embedded.valkey.IntegrationTest
 import io.github.tobi.laa.embedded.valkey.standalone.ValkeyStandalone.Companion.builder
-import org.junit.jupiter.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
+import org.assertj.core.api.ThrowableAssert
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import redis.clients.jedis.RedisClient
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.util.regex.Pattern
+import java.nio.file.Files
+import java.nio.file.Path
 
 @IntegrationTest
-@DisplayName("Integration tests for ValkeyStandalone")
+@DisplayName("Tests for ValkeyStandalone")
 internal class ValkeyStandaloneTest {
+
+    @TempDir
+    private lateinit var tempDir: Path
+
     private var valkeyStandalone: ValkeyStandalone? = null
+    private var performAction: ThrowableAssert.ThrowingCallable? = null
+    private var workingDirectory: Path? = null
+
+    @BeforeEach
+    fun reset() {
+        valkeyStandalone = null
+        performAction = null
+        workingDirectory = null
+    }
 
     @Test
-    @DisplayName("Starting a standalone Valkey instance should work without errors")
-    @Throws(Exception::class)
-    fun testSimpleRun() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
+    @DisplayName("Starting a standalone Valkey instance with default configuration should work without errors")
+    fun `starts with default configuration`() {
+        givenStandaloneServer()
+        whenServerIsStarted()
+        thenNoErrorOccurs()
     }
 
     @Test
     @DisplayName("Calling start multiple times without stopping should not cause errors")
-    @Throws(IOException::class)
-    fun shouldAllowMultipleRunsWithoutStop() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
-        valkeyStandalone!!.start()
+    fun `allows multiple starts without stop`() {
+        givenStandaloneServer()
+        whenServerIsStartedTwice()
+        thenNoErrorOccurs()
     }
 
     @Test
     @DisplayName("Multiple start/stop cycles should work without errors")
-    @Throws(IOException::class)
-    fun shouldAllowSubsequentRuns() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
-        valkeyStandalone!!.stop()
-
-        valkeyStandalone!!.start()
-        valkeyStandalone!!.stop()
-
-        valkeyStandalone!!.start()
-        valkeyStandalone!!.stop()
-    }
-
-    @Test
-    @DisplayName("It should be possible to read and write data after the server has started")
-    @Throws(IOException::class)
-    fun testSimpleOperationsAfterRun() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
-
-        RedisClient.create("localhost", 6381).use { redisClient ->
-            redisClient.mset("abc", "1", "def", "2")
-            Assertions.assertEquals("1", redisClient.mget("abc").get(0))
-            Assertions.assertEquals("2", redisClient.mget("def").get(0))
-            Assertions.assertNull(redisClient.mget("xyz").get(0))
-        }
+    fun `allows multiple start-stop cycles`() {
+        givenStandaloneServer()
+        whenServerIsStartedAndStoppedThrice()
+        thenNoErrorOccurs()
     }
 
     @Test
     @DisplayName("The active flag should be false before the server is started")
-    @Throws(IOException::class)
-    fun shouldIndicateInactiveBeforeStart() {
-        valkeyStandalone = builder().port(6381).build()
-        Assertions.assertFalse(valkeyStandalone!!.active)
+    fun `reports inactive before start`() {
+        givenStandaloneServer()
+        thenServerIsInactive()
     }
 
     @Test
     @DisplayName("The active flag should be true after the server is started")
-    @Throws(IOException::class)
-    fun shouldIndicateActiveAfterStart() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
-        Assertions.assertTrue(valkeyStandalone!!.active)
+    fun `reports active after start`() {
+        givenStartedServer()
+        thenServerIsActive()
     }
 
     @Test
     @DisplayName("The active flag should be false after the server is stopped")
-    @Throws(IOException::class)
-    fun shouldIndicateInactiveAfterStop() {
-        valkeyStandalone = builder().port(6381).build()
-        valkeyStandalone!!.start()
-        valkeyStandalone!!.stop()
-        Assertions.assertFalse(valkeyStandalone!!.active)
+    fun `reports inactive after stop`() {
+        givenStartedServer()
+        whenServerIsStopped()
+        thenNoErrorOccurs()
+        thenServerIsInactive()
     }
 
-    companion object {
-        //    @Disabled
-        //    @Test
-        //    void shouldOverrideDefaultExecutable() throws IOException {
-        //        final Map<OsArchitecture, String> map = new HashMap<>();
-        //        map.put(UNIX_X86_64, "redis-server-6.2.6-v5-linux-amd64");
-        //        map.put(UNIX_ARM64, "redis-server-6.2.7-linux-arm64");
-        //        map.put(WINDOWS_X86_64, "redis-server-5.0.14.1-windows-amd64.exe");
-        //        map.put(MAC_OS_X_X86_64, "redis-server-6.2.6-v5-darwin-amd64");
-        //        map.put(MAC_OS_X_ARM64, "redis-server-6.2.6-v5-darwin-arm64");
-        //
-        //        redisServer = newRedisServer()
-        //                .executableProvider(newJarResourceProvider(map))
-        //                .build();
-        //    }
-        //
-        //    @Test
-        //    void shouldFailWhenBadExecutableGiven() throws IOException {
-        //        final Map<OsArchitecture, String> buggyMap = new HashMap<>();
-        //        buggyMap.put(UNIX_X86_64, "some");
-        //        buggyMap.put(UNIX_ARM64, "some");
-        //        buggyMap.put(WINDOWS_X86_64, "some");
-        //        buggyMap.put(MAC_OS_X_X86_64, "some");
-        //        buggyMap.put(MAC_OS_X_ARM64, "some");
-        //
-        //        assertThatThrownBy(() -> redisServer = newRedisServer()
-        //                .executableProvider(newJarResourceProvider(buggyMap))
-        //                .build()).isExactlyInstanceOf(FileNotFoundException.class);
-        //    }
-        @Throws(IOException::class)
-        private fun testReadyPattern(resourcePath: String, readyPattern: Pattern) {
-            val `in` = ValkeyStandaloneTest::class.java.getResourceAsStream(resourcePath)
-            Assertions.assertNotNull(`in`)
-            BufferedReader(InputStreamReader(`in`)).use { reader ->
-                var line: String?
-                do {
-                    line = reader.readLine()
-                    Assertions.assertNotNull(line)
-                } while (!readyPattern.matcher(line).matches())
+    @Test
+    @DisplayName("Accessing workingDirectory should throw IllegalStateException containing 'Process not started' when the server has not been started")
+    fun `throws on workingDirectory before start`() {
+        givenStandaloneServer()
+        whenWorkingDirectoryIsAccessed()
+        thenIllegalStateExceptionIsThrownContaining("Process not started")
+    }
+
+    @Test
+    @DisplayName("The workingDirectory should be an existing directory after the server has started")
+    fun `workingDirectory is an existing directory after start`() {
+        givenStartedServer()
+        whenWorkingDirectoryIsAccessed()
+        thenNoErrorOccurs()
+        thenWorkingDirectoryIsAnExistingDirectory()
+    }
+
+    @Test
+    @DisplayName("Stop should be safe to call when the server has not been started")
+    fun `stop is safe when not started`() {
+        givenStandaloneServer()
+        whenServerIsStopped()
+        thenNoErrorOccurs()
+        thenServerIsInactive()
+    }
+
+    @Test
+    @DisplayName("It should be possible to read and write data after the server has started")
+    fun `supports read and write after start`() {
+        givenStartedServer()
+        thenDataCanBeReadAndWritten()
+    }
+
+    @Test
+    @DisplayName("importConf(Path) should apply port configuration from a file to the built server")
+    fun `builder importConf from file applies configured port`() {
+        givenServerBuiltWithImportedConfFile(port = 6399)
+        thenServerHasPort(6399)
+    }
+
+    // --- given* ---
+
+    private fun givenStandaloneServer() {
+        valkeyStandalone = builder().build()
+    }
+
+    private fun givenStartedServer() {
+        givenStandaloneServer()
+        valkeyStandalone!!.start()
+    }
+
+    private fun givenServerBuiltWithImportedConfFile(port: Int) {
+        val confFile = tempDir.resolve("test.conf")
+        Files.writeString(confFile, "port $port" + System.lineSeparator())
+        valkeyStandalone = builder().importConf(confFile).build()
+    }
+
+    // --- when* ---
+
+    private fun whenServerIsStarted() {
+        performAction = ThrowableAssert.ThrowingCallable { valkeyStandalone!!.start() }
+    }
+
+    private fun whenServerIsStartedTwice() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            valkeyStandalone!!.start()
+            valkeyStandalone!!.start()
+        }
+    }
+
+    private fun whenServerIsStartedAndStoppedThrice() {
+        performAction = ThrowableAssert.ThrowingCallable {
+            repeat(3) {
+                valkeyStandalone!!.start()
+                valkeyStandalone!!.stop()
             }
+        }
+    }
+
+    private fun whenServerIsStopped() {
+        performAction = ThrowableAssert.ThrowingCallable { valkeyStandalone!!.stop() }
+    }
+
+    private fun whenWorkingDirectoryIsAccessed() {
+        performAction = ThrowableAssert.ThrowingCallable { workingDirectory = valkeyStandalone!!.workingDirectory }
+    }
+
+    // --- then* ---
+
+    private fun thenNoErrorOccurs() {
+        assertThatCode(performAction!!).doesNotThrowAnyException()
+    }
+
+    private fun thenIllegalStateExceptionIsThrownContaining(message: String) {
+        assertThatCode(performAction!!).isExactlyInstanceOf(IllegalStateException::class.java)
+            .hasMessageContaining(message)
+    }
+
+    private fun thenServerIsActive() {
+        assertThat(valkeyStandalone!!.active).isTrue()
+    }
+
+    private fun thenServerIsInactive() {
+        assertThat(valkeyStandalone!!.active).isFalse()
+    }
+
+    private fun thenWorkingDirectoryIsAnExistingDirectory() {
+        assertThat(workingDirectory).isNotNull()
+        assertThat(workingDirectory!!).isDirectory()
+    }
+
+    private fun thenServerHasPort(expectedPort: Int) {
+        assertThat(valkeyStandalone!!.config.port()).isEqualTo(expectedPort)
+    }
+
+    private fun thenDataCanBeReadAndWritten() {
+        RedisClient.create("localhost", valkeyStandalone!!.port).use { client ->
+            client.mset("abc", "1", "def", "2")
+            assertThat(client.mget("abc")[0]).isEqualTo("1")
+            assertThat(client.mget("def")[0]).isEqualTo("2")
+            assertThat(client.mget("xyz")[0]).isNull()
         }
     }
 }
