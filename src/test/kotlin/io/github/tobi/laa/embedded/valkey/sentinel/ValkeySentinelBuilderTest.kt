@@ -142,6 +142,13 @@ class ValkeySentinelBuilderTest {
     }
 
     @Test
+    @DisplayName("ValkeySentinel should report active=true after it has been started")
+    fun `sentinel is active after start`() {
+        givenBuiltAndStartedSentinel()
+        thenSentinelIsActive()
+    }
+
+    @Test
     @DisplayName("Starting an already-started sentinel should reuse the existing process, not recreate it")
     fun `start reuses existing process when called twice`() {
         givenBuiltAndStartedSentinel()
@@ -329,6 +336,10 @@ class ValkeySentinelBuilderTest {
 
     private fun thenSentinelIsInactive() {
         assertThat(givenSentinel!!.active).isFalse()
+    }
+
+    private fun thenSentinelIsActive() {
+        assertThat(givenSentinel!!.active).isTrue()
     }
 
     private fun thenResolvedBuilderIsValkeySentinelBuilder() {
