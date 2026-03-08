@@ -412,17 +412,62 @@
                         </goals>
                         <configuration>
                             <relocations>
+                                <!-- jedis and its transitive dependencies -->
                                 <relocation>
                                     <pattern>redis.clients.jedis</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.jedis
-                                    </shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.jedis</shadedPattern>
                                 </relocation>
                                 <relocation>
+                                    <pattern>redis.clients.authentication</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.authentication</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.pool2</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.pool2</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.json</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.json</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.gson</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.com.google.gson</shadedPattern>
+                                </relocation>
+                                <!-- commons-compress and its transitive dependencies -->
+                                <relocation>
                                     <pattern>org.apache.commons.compress</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.compress
-                                    </shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.compress</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.codec</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.codec</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.io</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.io</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.lang3</pattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.lang3</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <filters>
+                                <!-- SLF4J must not be bundled: its service-loader binding discovery
+                                     requires the API classes to come from the user's environment -->
+                                <filter>
+                                    <artifact>org.slf4j:slf4j-api</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <!-- Annotation-only jar; not needed at runtime -->
+                                <filter>
+                                    <artifact>com.google.errorprone:error_prone_annotations</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
