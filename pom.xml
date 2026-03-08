@@ -3,7 +3,7 @@
 
     <groupId>io.github.tobi-laa</groupId>
     <artifactId>embedded-valkey</artifactId>
-    <version>0.0.1</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -415,15 +415,19 @@
                                 <!-- jedis and its transitive dependencies -->
                                 <relocation>
                                     <pattern>redis.clients.jedis</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.jedis</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.jedis
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>redis.clients.authentication</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.redis.clients.authentication</shadedPattern>
+                                    <shadedPattern>
+                                        io.github.tobi.laa.embedded.valkey.shaded.redis.clients.authentication
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache.commons.pool2</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.pool2</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.pool2
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.json</pattern>
@@ -431,24 +435,30 @@
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.gson</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.com.google.gson</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.com.google.gson
+                                    </shadedPattern>
                                 </relocation>
                                 <!-- commons-compress and its transitive dependencies -->
                                 <relocation>
                                     <pattern>org.apache.commons.compress</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.compress</shadedPattern>
+                                    <shadedPattern>
+                                        io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.compress
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache.commons.codec</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.codec</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.codec
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache.commons.io</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.io</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.io
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache.commons.lang3</pattern>
-                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.lang3</shadedPattern>
+                                    <shadedPattern>io.github.tobi.laa.embedded.valkey.shaded.org.apache.commons.lang3
+                                    </shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>
