@@ -5,6 +5,7 @@ import io.github.tobi.laa.embedded.valkey.conf.ValkeyConfWriter
 import io.github.tobi.laa.embedded.valkey.installation.ValkeyInstallation
 import org.slf4j.LoggerFactory.getLogger
 import org.slf4j.event.Level
+import java.io.BufferedReader
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -52,9 +53,6 @@ constructor(
         private set
 
     init {
-        require(Files.exists(valkeyInstallation.binaryPath)) {
-            "${valkeyInstallation.distributionType.displayName} binary does not exist at path: ${valkeyInstallation.binaryPath}"
-        }
         require(Files.isExecutable(valkeyInstallation.binaryPath)) {
             "${valkeyInstallation.distributionType.displayName} binary is not executable at path: ${valkeyInstallation.binaryPath}"
         }
@@ -112,52 +110,35 @@ constructor(
 
     private fun startStdoutStderrConsumingThreads() {
         stdoutConsumingThread = Thread(
-            {
-                try {
-                    process.inputReader().useLines { lines ->
-                        lines.forEach { line ->
-                            if (readyPattern.matches(line)) {
-                                ready = true
-                            }
-                            log.atLevel(stdoutLogLevel)
-                                .log(
-                                    "[{} v{} - pid: {} - stdout] {}",
-                                    valkeyInstallation.distributionType.displayName,
-                                    valkeyInstallation.version,
-                                    process.pid(),
-                                    line
-                                )
-                        }
-                    }
-                } catch (e: Exception) {
-                    log.trace("Error while consuming stdout for {}, probably the process has been stopped.", this, e)
-                }
-            },
+            { consumeStream(process.inputReader(), stdoutLogLevel, "stdout") { line -> if (readyPattern.matches(line)) ready = true } },
             "${valkeyInstallation.distributionType.name.lowercase()}-${process.pid()}-stdout-consuming-thread"
         )
         stdoutConsumingThread.start()
 
         stderrConsumingThread = Thread(
-            {
-                try {
-                    process.errorReader().useLines { lines ->
-                        lines.forEach { line ->
-                            log.atLevel(stderrLogLevel).log(
-                                "[{} v{} - pid: {} - stderr] {}",
-                                valkeyInstallation.distributionType.displayName,
-                                valkeyInstallation.version,
-                                process.pid(),
-                                line
-                            )
-                        }
-                    }
-                } catch (e: Exception) {
-                    log.trace("Error while consuming stderr for {}, probably the process has been stopped.", this, e)
-                }
-            },
+            { consumeStream(process.errorReader(), stderrLogLevel, "stderr") },
             "${valkeyInstallation.distributionType.name.lowercase()}-${process.pid()}-stderr-consuming-thread"
         )
         stderrConsumingThread.start()
+    }
+
+    private fun consumeStream(reader: BufferedReader, logLevel: Level, streamType: String, onEachLine: (String) -> Unit = {}) {
+        try {
+            reader.useLines { lines ->
+                lines.forEach { line ->
+                    onEachLine(line)
+                    log.atLevel(logLevel).log(
+                        "[{} v{} - pid: {} - $streamType] {}",
+                        valkeyInstallation.distributionType.displayName,
+                        valkeyInstallation.version,
+                        process.pid(),
+                        line
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            log.trace("Error while consuming $streamType for {}, probably the process has been stopped.", this, e)
+        }
     }
 
     private fun addShutdownHook() {
@@ -221,15 +202,11 @@ constructor(
 
     private fun stopStdoutStderrConsumingThreads() {
         try {
-            if (this::stdoutConsumingThread.isInitialized && stdoutConsumingThread.isAlive) {
-                stdoutConsumingThread.interrupt()
-                stdoutConsumingThread.join()
-            }
+            stdoutConsumingThread.interrupt()
+            stdoutConsumingThread.join()
         } finally {
-            if (this::stderrConsumingThread.isInitialized && stderrConsumingThread.isAlive) {
-                stderrConsumingThread.interrupt()
-                stderrConsumingThread.join()
-            }
+            stderrConsumingThread.interrupt()
+            stderrConsumingThread.join()
         }
     }
 
@@ -238,6 +215,6 @@ constructor(
     }
 
     override fun toString(): String {
-        return "${valkeyInstallation.distributionType.displayName} v${valkeyInstallation.version} for ${valkeyInstallation.operatingSystem.displayName} (working directory: $workingDirectory, args: ${if (this::args.isInitialized) args else "not yet built"}, pid: ${if (this::process.isInitialized) process.pid() else "not started"})"
+        return "${valkeyInstallation.distributionType.displayName} v${valkeyInstallation.version} for ${valkeyInstallation.operatingSystem.displayName} (working directory: $workingDirectory, args: ${if (this::args.isInitialized) args.toString() else "not yet built"}, pid: ${if (this::process.isInitialized) process.pid().toString() else "not started"})"
     }
 }
