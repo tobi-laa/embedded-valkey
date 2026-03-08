@@ -56,3 +56,5 @@ dependency-reduced-pom.xml
 CLAUDE.md
 .mcp.json
 .claude
+/pom.xml.releaseBackup
+/release.properties
