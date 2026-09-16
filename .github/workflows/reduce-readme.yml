@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.REDUCE_README_TOKEN }}
       - name: Install Asciidoctor Reducer
@@ -19,7 +19,7 @@ jobs:
         # to preserve preprocessor conditionals, add the --preserve-conditionals option
         run: asciidoctor-reducer -o README.adoc src/main/asciidoc/README.adoc
       - name: Commit and Push README
-        uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9
+        uses: EndBug/add-and-commit@cc9c08ba6c8df3b93a8f2db63e89b98368ae2ae8 # v11
         with:
           add: README.adoc
           message: ':memo: Rebuild reduced README'
